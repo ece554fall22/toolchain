@@ -1,0 +1,6 @@
+registers:
+  'r[31:0]':
+    width: 36
+  'v[31:0]':
+    width: 32
+    lanes: 4
