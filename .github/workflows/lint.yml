@@ -24,4 +24,4 @@ jobs:
         env:
           CC: clang
           CXX: clang++
-      - run: ninja -C builddir clang-format
+      - run: ninja -C builddir clang-format-check
