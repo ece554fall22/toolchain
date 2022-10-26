@@ -4,3 +4,23 @@ registers:
   'v[31:0]':
     width: 32
     lanes: 4
+
+instructions:
+- mnemonic: halt
+  desc: stop processor execution
+  category: supervisory
+
+- mnemonic: nop
+  desc: do nothing
+  semantics:
+
+- mnemonic: jmp
+  operands:
+    - simm0
+  encoding:
+    bits:
+      31-26: 0
+      25: 1
+      24-0: simm0
+  semantics: |
+    nextPC = SEXT(simm0);

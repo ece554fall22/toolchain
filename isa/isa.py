@@ -36,7 +36,7 @@ class ISA:
                 for i in range(end, start):
                     registers.append(Register(name=f'{name}{i}', width=props['width'], lanes=props.get('lanes', 1)))
 
-        return cls(registers, None)
+        return cls(registers, d['instructions'])
 
 @click.group()
 def cli(): ...
