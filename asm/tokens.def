@@ -1,0 +1,21 @@
+#if !defined(TOKEN)
+#error "???"
+#endif
+
+TOKEN(IDENTIFIER),
+TOKEN(COLON),      // :
+TOKEN(COMMA),      // ,
+TOKEN(L_SQUARE),   // [
+TOKEN(L_BRACE),    // {
+TOKEN(R_SQUARE),   // ]
+TOKEN(R_BRACE),    // }
+TOKEN(HASH),       // #
+TOKEN(PLUS),       // +
+TOKEN(PLUSEQUAL),  // +=
+
+TOKEN(INTEGER),
+
+TOKEN(UNEXPECTED),
+TOKEN(ENDOFFILE),
+
+#undef TOKEN

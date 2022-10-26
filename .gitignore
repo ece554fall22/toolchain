@@ -1,2 +1,10 @@
+## python
 *.pyc
 __pycache__/
+
+## meson
+build/
+builddir/
+/subprojects/*
+!/subprojects/*.wrap
+!/subprojects/packagefiles
