@@ -1,0 +1,27 @@
+name: lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'asm/**'
+      - '.clang-tidy'
+      - '.clang-format'
+      - 'meson.build'
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install meson ninja
+      - run: meson setup builddir/
+        env:
+          CC: clang
+          CXX: clang++
+      - run: ninja -C builddir clang-format
