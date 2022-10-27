@@ -2,14 +2,19 @@ name: ci
 
 on:
   push:
-    paths: &watchpaths
+    paths:
       - 'asm/**'
       - 'isa/**'
       - '.clang-tidy'
       - '.clang-format'
       - 'meson.build'
   pull_request:
-    paths: *watchpaths
+    paths:
+      - 'asm/**'
+      - 'isa/**'
+      - '.clang-tidy'
+      - '.clang-format'
+      - 'meson.build'
 
 jobs:
   build-and-test:

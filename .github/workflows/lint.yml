@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - 'asm/**'
+      - 'isa/**'
       - '.clang-tidy'
       - '.clang-format'
       - 'meson.build'
   pull_request:
     paths:
       - 'asm/**'
+      - 'isa/**'
       - '.clang-tidy'
       - '.clang-format'
       - 'meson.build'
