@@ -1,21 +1,18 @@
-name: lint
+name: ci
 
 on:
   push:
-    paths:
+    paths: &watchpaths
       - 'asm/**'
+      - 'isa/**'
       - '.clang-tidy'
       - '.clang-format'
       - 'meson.build'
   pull_request:
-    paths:
-      - 'asm/**'
-      - '.clang-tidy'
-      - '.clang-format'
-      - 'meson.build'
+    paths: *watchpaths
 
 jobs:
-  clang-format:
+  build-and-test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -27,4 +24,5 @@ jobs:
         env:
           CC: clang
           CXX: clang++
-      - run: ninja -C builddir clang-format-check
+      - run: meson compile -C builddir
+      - run: meson test -C builddir -v
