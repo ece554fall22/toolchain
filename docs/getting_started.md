@@ -25,4 +25,15 @@ ninja -C builddir/
 ```
 (or just `ninja` if you're inside `builddir/`).
 
-the assembler is then in ``./builddir/asm/asm`. most of the time when im working i do something like (hits up arrow to get `ninja -C builddir && ./builddir/asm/asm asm/tests/sketch.s`) (hits enter)
+the assembler is then in `./builddir/asm/asm`. most of the time when im working i do something like (hits up arrow to get `ninja -C builddir && ./builddir/asm/asm asm/tests/sketch.s`) (hits enter)
+
+## how is stuff structured
+the machine-readable isa description lives in `isa/`. the assembler lives in `asm/`. everything else will live in a subdir when it exists, too. if you look at how meson is set up, each of these is just a `subdir()`, and then the `meson.build` living in the toolchain component's directory sets everything up.
+
+testing architecture is tba because i don't know what's good for unit testing in 2022 in c++20 🙂
+
+
+# oh yeah the assembler
+it completely unnecessarily has a lex-parse frontend → codegen backend structure like a compiler. macros are implemented via AST grafting. inclusion (will probably) be done by AST grafting. etc.
+
+i want to move the serdes of instructions to a `libisa` minilibrary so we can consume the encoder in the assembler/linker and the decoder in the simulator
