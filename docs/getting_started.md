@@ -15,13 +15,13 @@ python3.9 -m pip install --user --upgrade meson ninja
 
 once you have everything set up just do the following in the root of the repository:
 ```sh
-$ meson setup builddir
+meson setup builddir
 ```
 this sets up a build directory called `builddir/`. you can `cd` there and do stuff or just work from the root. i'll do the latter.
 
 to build all targets,
 ```sh
-$ ninja -C builddir/
+ninja -C builddir/
 ```
 (or just `ninja` if you're inside `builddir/`).
 
