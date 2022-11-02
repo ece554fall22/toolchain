@@ -3,3 +3,4 @@ project('toolchain', 'cpp',
     version: '0.1.0')
 
 subdir('asm')
+subdir('sim')
