@@ -13,6 +13,7 @@ instructions:
 - mnemonic: nop
   desc: do nothing
   semantics:
+  category: controlflow
 
 - mnemonic: jmp
   operands:
@@ -24,3 +25,4 @@ instructions:
       24-0: simm0
   semantics: |
     nextPC = SEXT(simm0);
+  category: controlflow

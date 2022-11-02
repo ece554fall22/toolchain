@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>morpheus isa docs</title>
+
+    <style>
+    .desc { font-style: italic; }
+    </style>
+</head>
+<body>
+    
+
+    {&#39;mnemonic&#39;: &#39;halt&#39;, &#39;desc&#39;: &#39;stop processor execution&#39;, &#39;category&#39;: &#39;supervisory&#39;}
+<section>
+<h1>[supervisory] halt</h1>
+<p class="desc">stop processor execution</p>
+</section>
+
+    {&#39;mnemonic&#39;: &#39;nop&#39;, &#39;desc&#39;: &#39;do nothing&#39;, &#39;semantics&#39;: None, &#39;category&#39;: &#39;controlflow&#39;}
+<section>
+<h1>[controlflow] nop</h1>
+<p class="desc">do nothing</p>
+</section>
+
+    {&#39;mnemonic&#39;: &#39;jmp&#39;, &#39;operands&#39;: [&#39;simm0&#39;], &#39;encoding&#39;: {&#39;bits&#39;: {&#39;31-26&#39;: 0, 25: 1, &#39;24-0&#39;: &#39;simm0&#39;}}, &#39;semantics&#39;: &#39;nextPC = SEXT(simm0);\n&#39;, &#39;category&#39;: &#39;controlflow&#39;}
+<section>
+<h1>[controlflow] jmp</h1>
+<p class="desc"></p>
+</section>
+
+
+</body>
+</html>

@@ -1,10 +1,14 @@
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from isa import ISA
 
-with open('isa.yml') as f: isa = ISA.load(f)
+if __name__ == '__main__':
+    env = Environment(
+        loader=FileSystemLoader('templates'),
+        autoescape=select_autoescape(),
+    )
 
-def gen_instr_page(instr):
-	print('\\newpage')
-	print(f"\\subsection{{{instr['mnemonic']}}}")
+    template = env.get_template('doc.html')
 
-for instr in isa.instructions:
-	gen_instr_page(instr)
+    with open('isa.yml') as f: isa = ISA.load(f)
+    with open('doc.html', 'w') as f:
+        f.write(template.render(isa=isa))

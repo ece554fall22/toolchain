@@ -32,7 +32,6 @@ class ISA:
             if m := cls._WIDE_RE.match(name):
                 name, start, end = m.groups()
                 start, end = int(start), int(end)
-                print(name, start, end)
                 for i in range(end, start):
                     registers.append(Register(name=f'{name}{i}', width=props['width'], lanes=props.get('lanes', 1)))
 

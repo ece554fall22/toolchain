@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% for instr in isa.instructions %}
+    {{ instr }}
+<section>
+<h1>[{{ instr.category }}] {{instr.mnemonic}}</h1>
+<p class="desc">{{ instr.desc }}</p>
+</section>
+{% endfor %}
+{% endblock content %}
