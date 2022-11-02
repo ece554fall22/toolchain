@@ -23,8 +23,8 @@ void cmp(CPUState& cpu, u<4> rD, u<4> rA, u<4> rB) {
     // compute flags
     cpu.f.zero = (res == 0);
     cpu.f.sign = (res < 0);
-    cpu.f.overflow = (valA.sign() && valB.sign() && !res.sign())
-        || (!valA.sign() && !valB.sign() && res.sign());
+    cpu.f.overflow = (valA.sign() && valB.sign() && !res.sign()) ||
+                     (!valA.sign() && !valB.sign() && res.sign());
 }
 
-}
+} // namespace instructions

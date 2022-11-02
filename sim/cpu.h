@@ -1,8 +1,8 @@
 #pragma once
 
-#include <iostream>
-#include <iomanip>
 #include <fmt/core.h>
+#include <iomanip>
+#include <iostream>
 
 #include "varint.h"
 
@@ -22,16 +22,13 @@ struct VReg {
     float w;
 };
 
-
 struct ScalarRegisterFile {
     static constexpr size_t N_REGS = 32;
     std::array<Reg, 32> inner;
 
     ScalarRegisterFile() : inner{} {}
 
-    const Reg& operator[](size_t i) const {
-        return inner[i];
-    }
+    const Reg& operator[](size_t i) const { return inner[i]; }
 };
 
 struct VectorRegisterFile {
@@ -50,15 +47,15 @@ struct CPUState {
     VectorRegisterFile v;
     ConditionFlags f;
 
-    CPUState() {
-    }
+    CPUState() {}
 
     void dump() const {
         std::cout << "scalar registers\n"
                   << "----------------\n";
         for (size_t i = 0; i < ScalarRegisterFile::N_REGS; i++) {
             auto reg = this->r[i];
-            std::cout << std::setw(4) << fmt::format("r{}", i) << ": " << reg.val << '\n';
+            std::cout << std::setw(4) << fmt::format("r{}", i) << ": "
+                      << reg.val << '\n';
         }
 
         // std::cout << "vector registers\n"
@@ -69,4 +66,3 @@ struct CPUState {
         // }
     }
 };
-

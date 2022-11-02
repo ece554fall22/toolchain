@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cstdint>
 #include <cassert>
+#include <cstdint>
 
-template<bool SIGNED, size_t SIZE>
-class varint {
-public:
+template <bool SIGNED, size_t SIZE> class varint {
+  public:
     static constexpr bool is_signed = SIGNED;
     static constexpr size_t size = SIZE;
 
@@ -22,29 +21,24 @@ public:
         return inner & (1 << i);
     }
 
-private:
+  private:
     uint64_t inner;
 };
 
 // template<size_t N> using s = varint<true, N>;
 // template<size_t N> using u = varint<false, N>;
-template<size_t N> class u;
-template<size_t N> class s;
+template <size_t N> class u;
+template <size_t N> class s;
 
-
-template<size_t N>
-class u : public varint<false, N> {
-    template<size_t M>
-    s<M> asSigned() {
+template <size_t N> class u : public varint<false, N> {
+    template <size_t M> s<M> asSigned() {
         // sign ext
     }
 };
 
-template<size_t N>
-class s : public varint<true, N> {
-};
+template <size_t N> class s : public varint<true, N> {};
 
-template<bool SIGNED, size_t SIZE>
+template <bool SIGNED, size_t SIZE>
 std::ostream& operator<<(std::ostream& os, const varint<SIGNED, SIZE>& v) {
     os << v.as_u64() << (SIGNED ? "s" : "u") << SIZE;
     return os;
