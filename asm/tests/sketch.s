@@ -31,7 +31,7 @@ st32 r1, [r2+0x10]
 st36 r1, [r2+0x10]
 ;; vector movement
 ; explicit mask
-vldi v0, [r0+=0x30], 0b1011
+vldi 0b1011, v0, [r0+=0x30]
 ; better syntax
 vldi {v0.0, v0.2, v0.3}, [r0+=0x30]
 ; register stride

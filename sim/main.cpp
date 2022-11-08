@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "cpu.h"
-// #include "instructions.h"
+#include "instructions.h"
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
@@ -16,6 +16,10 @@ int main(int argc, char* argv[]) {
     }
 
     CPUState cpuState;
+    MemSystem mem;
+
+    // "run" a little program
+    instructions::addi(cpuState, mem, /*r*/ 0, /*r*/ 0, 1);
 
     cpuState.dump();
 }

@@ -1,13 +1,13 @@
 #pragma once
 
+#include <array>
 #include <fmt/core.h>
 #include <iomanip>
 #include <iostream>
 #include <optional>
-#include <array>
 
-#include "varint.h"
 #include "ty.h"
+#include "varint.h"
 
 using reg_idx = u<5>;
 using vreg_idx = u<5>;
@@ -50,12 +50,12 @@ struct VectorRegisterFile {
 };
 
 struct ConditionFlags {
-    bool zero;
-    bool sign;
-    bool overflow;
+    bool zero = false;
+    bool sign = false;
+    bool overflow = false;
 };
 
-std::ostream& operator<<(std::ostream& os, const ConditionFlags& f) {
+inline std::ostream& operator<<(std::ostream& os, const ConditionFlags& f) {
     if (f.zero)
         os << 'Z';
     if (f.sign)
@@ -70,14 +70,10 @@ struct PC {
     addr_t current;
     std::optional<addr_t> redirect_to;
 
-    void redirect(addr_t to) noexcept {
-        redirect_to = to;
-    }
+    void redirect(addr_t to) noexcept { redirect_to = to; }
 
     /// Return the current PC.
-    addr_t get() noexcept {
-        return current;
-    }
+    addr_t get() noexcept { return current; }
 
     /// Updates the PC to its next value, returning it.
     /// This is where we decide to either grab PC+4 or the redirect target.
@@ -91,7 +87,6 @@ struct PC {
         return current;
     }
 };
-
 
 struct CPUState {
     ScalarRegisterFile r;
@@ -108,15 +103,16 @@ struct CPUState {
                   << "----------------\n";
         for (size_t i = 0; i < ScalarRegisterFile::N_REGS; i++) {
             auto reg = this->r[i];
-            std::cout << std::setw(4) << fmt::format("r{}", i) << ": "
-                      << reg << '\n';
+            std::cout << std::setw(4) << fmt::format("r{}", i) << ": " << reg
+                      << '\n';
         }
 
         std::cout << "vector registers\n"
                   << "----------------\n";
         for (size_t i = 0; i < VectorRegisterFile::N_REGS; i++) {
             auto reg = this->v[i];
-            std::cout << i << ": " << reg << '\n';
+            std::cout << std::setw(4) << fmt::format("v{}", i) << ": " << reg
+                      << '\n';
         }
     }
 };
