@@ -8,3 +8,9 @@ builddir/
 /subprojects/*
 !/subprojects/*.wrap
 !/subprojects/packagefiles
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*

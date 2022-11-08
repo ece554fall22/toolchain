@@ -6,8 +6,10 @@
 #include <iostream>
 #include <optional>
 
-#include "ty.h"
-#include "varint.h"
+#include <ty.h>
+#include <varint.h>
+
+using addr_t = u<36>;
 
 using reg_idx = u<5>;
 using vreg_idx = u<5>;
@@ -73,7 +75,7 @@ struct PC {
     void redirect(addr_t to) noexcept { redirect_to = to; }
 
     /// Return the current PC.
-    addr_t get() noexcept { return current; }
+    addr_t get() const noexcept { return current; }
 
     /// Updates the PC to its next value, returning it.
     /// This is where we decide to either grab PC+4 or the redirect target.
@@ -98,6 +100,7 @@ struct CPUState {
     CPUState() {}
 
     void dump() const {
+        std::cout << "pc: " << pc.get() << '\n';
         std::cout << "flags: " << f << "\n\n";
         std::cout << "scalar registers\n"
                   << "----------------\n";

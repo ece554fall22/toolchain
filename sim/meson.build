@@ -4,4 +4,7 @@ fmt_dep      = dependency('fmt', required: true)
 
 sim_sources = files('main.cpp', 'cpu.cpp')
 sim_exe = executable('sim', sim_sources,
-                     dependencies: [argparse_dep, fmt_dep])
+                     dependencies: [
+                         libmorph_dep,
+                         argparse_dep, fmt_dep
+                    ])

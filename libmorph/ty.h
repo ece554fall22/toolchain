@@ -6,8 +6,6 @@
 
 #include "varint.h"
 
-using addr_t = u<36>;
-
 struct f32x4 {
     float v[4];
 
