@@ -40,6 +40,8 @@ Token Lexer::next() noexcept {
             return tokAtom(Token::Kind::R_SQUARE);
         case '}':
             return tokAtom(Token::Kind::R_BRACE);
+        case '%':
+            return tokAtom(Token::Kind::PERCENT);
         case '#':
             return tokAtom(Token::Kind::HASH);
         case '+':

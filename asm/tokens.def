@@ -5,12 +5,13 @@
 TOKEN(IDENTIFIER),
 TOKEN(COLON),      // :
 TOKEN(COMMA),      // ,
+TOKEN(PERCENT),    // %
+TOKEN(HASH),       // #
+TOKEN(PLUS),       // +
 TOKEN(L_SQUARE),   // [
 TOKEN(L_BRACE),    // {
 TOKEN(R_SQUARE),   // ]
 TOKEN(R_BRACE),    // }
-TOKEN(HASH),       // #
-TOKEN(PLUS),       // +
 TOKEN(PLUSEQUAL),  // +=
 
 TOKEN(INTEGER),
