@@ -5,6 +5,8 @@ on:
     paths:
       - 'asm/**'
       - 'isa/**'
+      - 'sim/**'
+      - 'libmorph/**'
       - '.clang-tidy'
       - '.clang-format'
       - 'meson.build'
@@ -12,6 +14,8 @@ on:
     paths:
       - 'asm/**'
       - 'isa/**'
+      - 'sim/**'
+      - 'libmorph/**'
       - '.clang-tidy'
       - '.clang-format'
       - 'meson.build'
