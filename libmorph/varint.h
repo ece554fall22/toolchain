@@ -105,7 +105,7 @@ template <size_t N> struct s : public bits<N> {
         v.inner = x & bits<N>::mask;
 
         // check sign bit and sign extend
-        if (v.bit(N-1)) {
+        if (v.bit(N - 1)) {
             v.inner |= ((1UL << (bits<N>::backing_size - N)) - 1) << N;
         }
 

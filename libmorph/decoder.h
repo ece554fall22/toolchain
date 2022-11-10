@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdint>
-#include "varint.h"
 #include "ty.h"
 #include "util.h"
+#include "varint.h"
+#include <cstdint>
 
 namespace isa {
 
@@ -20,21 +20,13 @@ struct InstructionVisitor {
 struct PrintVisitor : public InstructionVisitor {
     virtual ~PrintVisitor() = default;
 
-    virtual void nop() {
-        std::cout << "nop\n";
-    }
-    virtual void halt() {
-        std::cout << "halt\n";
-    }
-    virtual void jmp(s<25> to) {
-        std::cout << "jmp " << to << "\n";
-    }
-    virtual void jal(s<25> to) {
-        std::cout << "jal " << to << "\n";
-    }
+    virtual void nop() { std::cout << "nop\n"; }
+    virtual void halt() { std::cout << "halt\n"; }
+    virtual void jmp(s<25> to) { std::cout << "jmp " << to << "\n"; }
+    virtual void jal(s<25> to) { std::cout << "jal " << to << "\n"; }
 };
 
 void decodeJ(InstructionVisitor& visit, uint32_t instr);
 void decodeInstruction(InstructionVisitor& visit, uint32_t instr);
 
-}
+} // namespace isa
