@@ -8,6 +8,7 @@
 
 template <size_t SIZE> struct bits {
     typedef uint64_t inner_t;
+    static constexpr size_t backing_size = 64;
     typedef int64_t signed_inner_t;
     static constexpr size_t size = SIZE;
     static constexpr inner_t mask = (1UL << size) - 1;
@@ -45,7 +46,7 @@ template <size_t N> struct u : public bits<N> {
     }
 
     /// Interpret as signed integer data.
-    s<N> asSigned() const {
+    auto asSigned() const noexcept -> s<N> {
         s<N> v;
         v.inner = this->inner;
         return v;
@@ -99,9 +100,21 @@ template <size_t N> struct s : public bits<N> {
         this->inner = static_cast<typename bits<N>::inner_t>(v);
     }
 
-    bool sign() const { return this->bit(N - 1); }
+    static auto fromBits(uint64_t x) -> s<N> {
+        s<N> v;
+        v.inner = x & bits<N>::mask;
 
-    u<N> asUnsigned() const {
+        // check sign bit and sign extend
+        if (v.bit(N-1)) {
+            v.inner |= ((1UL << (bits<N>::backing_size - N)) - 1) << N;
+        }
+
+        return v;
+    }
+
+    auto sign() const -> bool { return this->bit(N - 1); }
+
+    auto asUnsigned() const -> u<N> {
         u<N> v;
         v.inner = this->inner;
         return v;
