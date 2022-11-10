@@ -2,9 +2,15 @@ fmt_dep      = dependency('fmt', required: true)
 doctest_dep  = dependency('doctest', required: true)
 
 morph_inc = include_directories('.')
+morph_src = files('decoder.cpp')
 morph_deps = [fmt_dep]
 
+morph_lib = static_library('libmorph',
+    morph_src,
+    include_directories: morph_inc,
+    dependencies: [morph_deps])
 libmorph_dep = declare_dependency(
+    link_with: [morph_lib],
     include_directories: morph_inc,
     dependencies: [morph_deps])
 

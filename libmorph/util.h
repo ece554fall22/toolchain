@@ -5,6 +5,6 @@ public:
     Unimplemented() : std::logic_error("unimplemented!") { };
 };
 
-void unimplemented() {
+inline void unimplemented() {
     throw Unimplemented();
 }
