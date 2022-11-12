@@ -6,6 +6,43 @@
 
 #include "varint.h"
 
+using addr_t = u<36>;
+
+using reg_idx = u<5>;
+using vreg_idx = u<5>;
+enum class condition_t {
+    nz = 0b000,
+    ez = 0b001,
+    lz = 0b010,
+    gz = 0b011,
+    le = 0b100,
+    ge = 0b101,
+};
+
+inline std::ostream& operator<<(std::ostream& os, const condition_t& v) {
+    switch (v) {
+    case condition_t::nz:
+        os << "nz";
+        break;
+    case condition_t::ez:
+        os << "ez";
+        break;
+    case condition_t::lz:
+        os << "lz";
+        break;
+    case condition_t::gz:
+        os << "gz";
+        break;
+    case condition_t::le:
+        os << "le";
+        break;
+    case condition_t::ge:
+        os << "ge";
+        break;
+    }
+    return os;
+}
+
 struct f32x4 {
     float v[4];
 

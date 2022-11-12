@@ -1,3 +1,5 @@
+// TODO(erin): replace all this manual bit twiddling
+
 #include "decoder.h"
 
 #include <fmt/core.h>
@@ -8,11 +10,11 @@ void isa::decodeInstruction(InstructionVisitor& visit, uint32_t instr) {
     uint32_t opcode = (instr & 0b1111'1110'0000'0000'0000'0000'0000'0000) >> 25;
     // fmt::print("opcode = {:#b}\n", opcode);
     switch (opcode) {
-    case 0b0000'000: // nop
-        visit.nop();
-        return;
-    case 0b0000'001: // halt
+    case 0b0000'000: // halt
         visit.halt();
+        return;
+    case 0b0000'001: // nop
+        visit.nop();
         return;
 
     // J-format
@@ -26,19 +28,19 @@ void isa::decodeInstruction(InstructionVisitor& visit, uint32_t instr) {
     // 0000 10XT TTTT iiii iiii iiii iiii iiii
     case 0b0000'100: // jmpr
     case 0b0000'101: // jalr
-        unimplemented();
+        decodeJR(visit, instr);
         return;
 
     // BI-format: bxxi
     // 0000 110X XXii iiii iiii iiii iiii iiii
     case 0b0000'110:
-        unimplemented();
+        decodeBI(visit, instr);
         return;
 
-    // B-format: bxxr
+    // BR-format: bxxr
     // 0000 111X XXTT TTTi iiii iiii iiii iiii
     case 0b0000'111:
-        unimplemented();
+        decodeBR(visit, instr);
         return;
 
     // LI-format: ldx
@@ -116,13 +118,49 @@ void isa::decodeInstruction(InstructionVisitor& visit, uint32_t instr) {
 }
 
 void isa::decodeJ(InstructionVisitor& visit, uint32_t instr) {
-    uint32_t maskImm = (1 << 25) - 1;
+    uint32_t mask_imm = (1 << 25) - 1;
 
-    auto imm = s<25>::fromBits(instr & maskImm);
+    auto imm = s<25>::fromBits(instr & mask_imm);
 
     bool jal = instr & 0b0000'0010'0000'0000'0000'0000'0000'0000;
     if (jal)
         visit.jal(imm);
     else
         visit.jmp(imm);
+}
+
+void isa::decodeJR(InstructionVisitor& visit, uint32_t instr) {
+    uint32_t mask_rT = ((1 << 5) - 1) << 20;
+    uint32_t mask_imm = (1 << 20) - 1;
+
+    auto rT = u<5>((instr & mask_rT) >> 20);
+    auto imm = s<20>::fromBits(instr & mask_imm);
+
+    bool jalr = instr & 0b0000'0010'0000'0000'0000'0000'0000'0000;
+    if (jalr)
+        visit.jalr(rT, imm);
+    else
+        visit.jmpr(rT, imm);
+}
+
+void isa::decodeBR(InstructionVisitor& visit, uint32_t instr) {
+    uint32_t mask_cond = ((1 << 3) - 1) << 22;
+    uint32_t mask_rT = ((1 << 5) - 1) << 17;
+    uint32_t mask_imm = (1 << 17) - 1;
+
+    auto cond = condition_t((instr & mask_cond) >> 22);
+    auto rT = u<5>((instr & mask_rT) >> 17);
+    auto imm = s<17>(instr & mask_imm);
+
+    visit.branchreg(cond, rT, imm);
+}
+
+void isa::decodeBI(InstructionVisitor& visit, uint32_t instr) {
+    uint32_t mask_cond = ((1 << 3) - 1) << 22;
+    uint32_t mask_imm = (1 << 22) - 1;
+
+    auto cond = condition_t((instr & mask_cond) >> 22);
+    auto imm = s<22>(instr & mask_imm);
+
+    visit.branchimm(cond, imm);
 }

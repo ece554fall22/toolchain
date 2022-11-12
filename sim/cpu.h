@@ -9,11 +9,6 @@
 #include <ty.h>
 #include <varint.h>
 
-using addr_t = u<36>;
-
-using reg_idx = u<5>;
-using vreg_idx = u<5>;
-
 struct MemSystem {
     void write(addr_t addr, u<36> val);
     void write(addr_t addr, u<64> val);
