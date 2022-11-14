@@ -18,9 +18,13 @@ Token Lexer::next() noexcept {
 
         case ' ':
         case '\t':
+            // skip whitespace
+            eat();
+            continue;
         case '\n':
         case '\r':
-            // skip whitespace
+            // omg a newline? 😳
+            lineno++;
             eat();
             continue;
 
