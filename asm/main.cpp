@@ -1,11 +1,14 @@
-#include <argparse/argparse.hpp>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include <argparse/argparse.hpp>
+#include <fmt/core.h>
+
 #include "lexer.h"
+#include "parser.h"
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
@@ -39,9 +42,14 @@ int main(int argc, char* argv[]) {
 
     Lexer lexer(sourcebuf.c_str());
 
+    std::vector<Token> tokens;
     for (auto token = lexer.next(); !token.is(Token::Kind::ENDOFFILE);
          token = lexer.next()) {
-        std::cout << std::setw(16) << token.getKind() << ": '"
-                  << token.getLexeme() << "'\n";
+        // std::cout << token.getKind() << ": `" << token.getLexeme() << "`\n";
+        fmt::print("{:>12}: `{}`\n", token.getKind(), token.getLexeme());
+        tokens.push_back(token);
     }
+
+    Parser parser(tokens);
+    parser.parse();
 }

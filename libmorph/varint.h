@@ -87,7 +87,7 @@ template <size_t N> struct u : public bits<N> {
 // backing-store sized signed integer and operate on that,
 // instead of subsetting just N bits. that does mean that
 // whenever we convert to/from a N-bit pattern, we need to
-// make sure the backing store is signeds
+// make sure the backing store is signed extended
 template <size_t N> struct s : public bits<N> {
     static constexpr typename bits<N>::signed_inner_t max_val =
         (1L << (N - 1)) - 1;

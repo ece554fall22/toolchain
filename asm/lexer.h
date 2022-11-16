@@ -6,6 +6,8 @@
 #include <string>
 #include <string_view>
 
+#include <fmt/ostream.h>
+
 struct SourceLocation {
     SourceLocation(size_t lineno) : lineno{lineno} {}
 
@@ -27,6 +29,9 @@ class Token {
 
     Kind getKind() const noexcept { return kind; }
     bool is(Kind other) const noexcept { return kind == other; }
+    bool isEoF() const noexcept {
+        return is(Kind::ENDOFFILE);
+    }
 
     std::string_view getLexeme() const noexcept { return lexeme; }
     std::optional<SourceLocation> getSrcLoc() const noexcept { return loc; }
@@ -38,6 +43,7 @@ class Token {
 };
 
 std::ostream& operator<<(std::ostream& os, const Token::Kind& kind);
+template <> struct fmt::formatter<Token::Kind> : ostream_formatter {};
 
 class Lexer {
   public:
