@@ -15,6 +15,6 @@ TEST_CASE("smoketest spinloop") {
 
     for (size_t i = 0; i < code.size(); i++) {
         isa::decodeInstruction(v, code[i]);
-        CHECK(false);
+        // CHECK(false);
     }
 }
