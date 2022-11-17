@@ -1,6 +1,6 @@
 #include "cpu.h"
-#include <ty.h>
-#include <varint.h>
+#include <morph/ty.h>
+#include <morph/varint.h>
 
 // stubs because we don't simulate caches yet
 void MemSystem::flushICache() {}

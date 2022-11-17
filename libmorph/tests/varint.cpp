@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include "varint.h"
+#include "morph/varint.h"
 
 TEST_CASE("signed integer extension from bits") {
     auto val = s<4>::fromBits(0b1111);

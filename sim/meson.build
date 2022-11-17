@@ -3,7 +3,7 @@ fmt_dep      = dependency('fmt', required: true)
 doctest_dep  = dependency('doctest', required: true)
 
 sim_inc = include_directories('.')
-sim_deps = [libmorph_dep , fmt_dep]
+sim_deps = [libmorph_dep, fmt_dep]
 
 libsim_sources = files('cpu.cpp')
 libsim = static_library(

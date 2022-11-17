@@ -44,7 +44,6 @@ inline std::ostream& operator<<(std::ostream& os, const condition_t& v) {
 }
 template <> struct fmt::formatter<condition_t> : ostream_formatter {};
 
-
 struct f32x4 {
     float v[4];
 

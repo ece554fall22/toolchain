@@ -1,6 +1,6 @@
 // TODO(erin): replace all this manual bit twiddling
 
-#include "decoder.h"
+#include "morph/decoder.h"
 
 #include <fmt/core.h>
 

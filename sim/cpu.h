@@ -6,8 +6,8 @@
 #include <iostream>
 #include <optional>
 
-#include <ty.h>
-#include <varint.h>
+#include <morph/ty.h>
+#include <morph/varint.h>
 
 struct MemSystem {
     void write(addr_t addr, u<36> val);
