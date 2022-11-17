@@ -1,7 +1,7 @@
-#define CSR_COREID 0x2
+%define CSR_COREID 0x2
 
-#section text
-#org PC_RESET_VECTOR
+%section text
+%org PC_RESET_VECTOR
     ; wipe out previous code if we're restarting
     ; note: never remove this; if we do, icache could get stale.
     flushicache
