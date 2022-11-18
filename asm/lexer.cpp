@@ -22,11 +22,12 @@ Token Lexer::next() noexcept {
             eat();
             continue;
         case '\n':
-        case '\r':
+        case '\r': {
             // omg a newline? 😳
+            auto t = tokAtom(Token::Kind::LINEBREAK);
             lineno++;
-            eat();
-            continue;
+            return t;
+        }
 
         case ';':
             eatComment();

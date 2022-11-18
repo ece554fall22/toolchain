@@ -43,13 +43,18 @@ int main(int argc, char* argv[]) {
     Lexer lexer(sourcebuf.c_str());
 
     std::vector<Token> tokens;
-    for (auto token = lexer.next(); !token.is(Token::Kind::ENDOFFILE);
-         token = lexer.next()) {
-        // std::cout << token.getKind() << ": `" << token.getLexeme() << "`\n";
-        fmt::print("{:>12}: `{}`\n", token.getKind(), token.getLexeme());
+    while (true) {
+        auto token = lexer.next();
         tokens.push_back(token);
+        if (token.isEoF())
+            break;
     }
+
+    dumpTokens(tokens);
 
     Parser parser(tokens);
     parser.parse();
+
+    ASTPrintVisitor debugVisitor(std::cout);
+    parser.visit(debugVisitor);
 }

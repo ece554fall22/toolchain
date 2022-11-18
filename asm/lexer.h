@@ -5,8 +5,11 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <fmt/ostream.h>
+
+#include <morph/util.h>
 
 struct SourceLocation {
     SourceLocation(size_t lineno) : lineno{lineno} {}
@@ -29,9 +32,8 @@ class Token {
 
     Kind getKind() const noexcept { return kind; }
     bool is(Kind other) const noexcept { return kind == other; }
-    bool isEoF() const noexcept {
-        return is(Kind::ENDOFFILE);
-    }
+    bool isNot(Kind other) const noexcept { return !is(other); }
+    bool isEoF() const noexcept { return is(Kind::ENDOFFILE); }
 
     std::string_view getLexeme() const noexcept { return lexeme; }
     std::optional<SourceLocation> getSrcLoc() const noexcept { return loc; }
@@ -76,3 +78,18 @@ class Lexer {
     Token lexNumber(const char* tok_start);
     void eatComment();
 };
+
+inline void dumpTokens(std::vector<Token>& tokens) {
+    for (auto token : tokens) {
+        auto srcLoc = token.getSrcLoc();
+        if (!srcLoc)
+            panic();
+
+        if (token.is(Token::Kind::LINEBREAK) || token.is(Token::Kind::ENDOFFILE)) {
+            fmt::print("{:>5} {:>12}\n", srcLoc->lineno, token.getKind());
+        } else {
+            fmt::print("{:>5} {:>12}: `{}`\n", srcLoc->lineno, token.getKind(),
+                       token.getLexeme());
+        }
+    }
+}

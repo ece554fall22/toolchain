@@ -1,29 +1,53 @@
 # simulator trace format
+```
+rd  ra  rb
+vd  va  vb
+imm
+vecmask
+branchtype
 
-flow
-```
-{PC}: FLOW {opcode:b} |
-```
-
-scalar instructions
-```
-{PC}: SCALAR {opcode:b} | ({regno}={val})+ imm={imm}? | {} <- {} | M[{}] <- {} | {asm}
-```
-
-vector
-```
-{PC}: VECTOR {opcode:b} | {mask} ({regno}={val})+ imm={imm}? | {} <- ({}, {}, {}, {}) | M[{}] <- {} | {asm}
+rD: index of reg
+*rD: value of reg
 ```
 
-as an example:
-code is
+vector values are formatted as `({x},{y},{z},{w})`; ex: `(1.2,3.4,5.6,7.8)`
+
+the trace is formed as a sequence of instructions. each instruction consists of an instruction header
+with its PC and IR, followed by space-indented records, one per line. note that records may be omitted
+if they are not relevant to an instruction.
+each record is formed from a kind, then a colon, and then the contents of that record.
+the order of records should always follow the given trace format, even if some are omitted.
+
+in `inputs` records, only the relevant registers to an instruction's type are included
+the order of the inputs record is always
 ```
-0x0000000:
-addi r1, r2, 0xab
+    rD rA rB vD vA vB  imm
 ```
 
-
-all integers implicitly hex
+trace format:
 ```
-0000: SCALAR 13 | r1=0 r2=1 imm=ab | r1 <- ac | addi r1, r2, 0xab
+*** {PC}: {instruction} ***
+    inputs: rD={rD}={*rD} rA={rA}={*rA} rB={rB}={*rB} vD={vD}={*vD} vA={vA}={*vA} vB={vB}={*vB} imm={imm}
+    vector_mask: {vector_mask:b}
+    branch_condition_code: {conditioncode}
+    control_flow: taken={is_taken} taken_addr={taken_addr} not_taken_addr={not_taken_addr}
+    scalar_writeback: r{writeback_reg} = {writeback_val}
+    vector_writeback: v{writeback_reg} = {writeback_val}
+    scalar_load: {read_addr} = {read_val}
+    scalar_store: {write_addr} = {write_val}
+    vector_load: {read_addr} = {read_val}
+    vector_store: {write_addr} = {write_val}
+    asm: // assembly here
+```
+
+if not specified, all integers are formatted as lowercase hexadecimal.
+
+example for `add r1, r2, r3` at `pc=0x0`, with r1=0, r2=4, r3=7 before instruction execution:
+
+```
+*** 0: <instruction here> ***
+    inputs: rD=1=0 rA=2=4 rB=3=7
+    scalar_writeback: r1 = 11
+    asm: add r1, r2, r3
+
 ```
