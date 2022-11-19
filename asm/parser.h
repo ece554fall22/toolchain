@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+#include <fmt/core.h>
+#include <fmt/color.h>
+
 #include "ast.h"
 #include "lexer.h"
 
@@ -29,13 +32,16 @@ class Parser {
     auto label_decl() -> std::unique_ptr<ast::LabelDecl>;
 
     auto instruction() -> std::unique_ptr<ast::Instruction>;
-    auto instruction_arg() -> std::optional<ast::InstructionArg>;
+    auto operand() -> std::optional<ast::Operand>;
+    auto operand_memory() -> std::optional<ast::OperandMemory>;
 
     // -- error handling
-    auto error(const std::string& err) {
+    void error(const std::string& err) {
         // TODO: this is just a temporary hack
-        std::cerr << "parse error near line " << curr().getSrcLoc()->lineno
-                  << ": " << err << '\n';
+        // std::cerr << "parse error near line " << curr().getSrcLoc()->lineno
+        //           << ": " << err << '\n';
+        fmt::print(fmt::fg(fmt::color::red), "parse error near line {}: {}\n",
+            curr().getSrcLoc()->lineno, err);
         std::exit(1);
     }
 
