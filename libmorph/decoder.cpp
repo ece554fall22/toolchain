@@ -122,7 +122,7 @@ void isa::decodeJ(InstructionVisitor& visit, uint32_t instr) {
 
     auto imm = s<25>::fromBits(instr & mask_imm);
 
-    bool jal = instr & 0b0000'0010'0000'0000'0000'0000'0000'0000;
+    bool jal = instr & (1 << 25);
     if (jal)
         visit.jal(imm);
     else
@@ -136,7 +136,7 @@ void isa::decodeJR(InstructionVisitor& visit, uint32_t instr) {
     auto rT = u<5>((instr & mask_rT) >> 20);
     auto imm = s<20>::fromBits(instr & mask_imm);
 
-    bool jalr = instr & 0b0000'0010'0000'0000'0000'0000'0000'0000;
+    bool jalr = instr & (1 << 25);
     if (jalr)
         visit.jalr(rT, imm);
     else

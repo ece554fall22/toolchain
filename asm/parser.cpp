@@ -192,7 +192,3 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
         return std::nullopt;
     }
 }
-
-// auto Parser::instruction_args() -> std::unique_ptr<ast::Operands> {
-//     return nullptr;
-// }

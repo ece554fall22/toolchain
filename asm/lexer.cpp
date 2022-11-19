@@ -88,18 +88,6 @@ Token Lexer::lexIdentifierOrKeyword(const char* tok_start) {
     return tokFrom(tok_start, Token::Kind::IDENTIFIER);
 }
 
-// std::optional<int64_t> parseSpanToInt(const char* start, const char* end,
-//                                       int radix = 10) {
-//     int64_t val;
-//     auto res = std::from_chars(start, end, val, radix);
-
-//     if (res.ec == std::errc{} && res.ptr == end) {
-//         return val;
-//     } else {
-//         return std::nullopt;
-//     }
-// }
-
 Token Lexer::lexNumber(const char* tok_start) {
     assert(isdigit(peek()));
 
