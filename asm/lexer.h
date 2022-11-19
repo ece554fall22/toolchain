@@ -85,7 +85,8 @@ inline void dumpTokens(std::vector<Token>& tokens) {
         if (!srcLoc)
             panic();
 
-        if (token.is(Token::Kind::LINEBREAK) || token.is(Token::Kind::ENDOFFILE)) {
+        if (token.is(Token::Kind::LINEBREAK) ||
+            token.is(Token::Kind::ENDOFFILE)) {
             fmt::print("{:>5} {:>12}\n", srcLoc->lineno, token.getKind());
         } else {
             fmt::print("{:>5} {:>12}: `{}`\n", srcLoc->lineno, token.getKind(),

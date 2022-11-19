@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include <fmt/core.h>
 #include <fmt/color.h>
+#include <fmt/core.h>
 
 #include "ast.h"
 #include "lexer.h"
@@ -41,7 +41,7 @@ class Parser {
         // std::cerr << "parse error near line " << curr().getSrcLoc()->lineno
         //           << ": " << err << '\n';
         fmt::print(fmt::fg(fmt::color::red), "parse error near line {}: {}\n",
-            curr().getSrcLoc()->lineno, err);
+                   curr().getSrcLoc()->lineno, err);
         std::exit(1);
     }
 

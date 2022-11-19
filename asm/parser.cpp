@@ -102,7 +102,8 @@ auto Parser::instruction() -> std::unique_ptr<ast::Instruction> {
 
     // LINEBREAK
     if (curr().isNot(Token::Kind::LINEBREAK)) {
-        error(fmt::format("expected linebreak after instruction, not {}", curr().getKind()));
+        error(fmt::format("expected linebreak after instruction, not {}",
+                          curr().getKind()));
         return nullptr;
     }
 
@@ -143,27 +144,32 @@ auto Parser::operand() -> std::optional<ast::Operand> {
         ::= L_SQUARE identifier PLUS_EQUALS identifier R_SQUARE
 */
 auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
-    if (curr().isNot(Token::Kind::L_SQUARE)) return std::nullopt;
+    if (curr().isNot(Token::Kind::L_SQUARE))
+        return std::nullopt;
 
     auto base = next();
     if (base.isNot(Token::Kind::IDENTIFIER)) {
-        error("expected an identifier following [ in an operand addressing memory");
+        error("expected an identifier following [ in an operand addressing "
+              "memory");
         return std::nullopt;
     }
 
     next();
     if (curr().is(Token::Kind::R_SQUARE)) { // early ending!
-        next(); // eat ]
+        next();                             // eat ]
         return ast::OperandMemory{base, 0, false};
     } else if (curr().is(Token::Kind::PLUS)) { // offset
         auto offset = next();
         if (offset.isNot(Token::Kind::INTEGER)) {
-            error(fmt::format("offset in memory addressing operand must be an integer, not {}", curr().getKind()));
+            error(fmt::format("offset in memory addressing operand must be an "
+                              "integer, not {}",
+                              curr().getKind()));
             return std::nullopt;
         }
 
         if (next().isNot(Token::Kind::R_SQUARE)) {
-            error(fmt::format("memory operand must end with a ], not {}", curr().getKind()));
+            error(fmt::format("memory operand must end with a ], not {}",
+                              curr().getKind()));
             return std::nullopt;
         }
 
@@ -172,8 +178,11 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
         return ast::OperandMemory{base, 69, false}; // TODO
     } else if (curr().is(Token::Kind::PLUSEQUAL)) { // offset and postincrement
         auto offset = next();
-        if (offset.isNot(Token::Kind::INTEGER) && offset.isNot(Token::Kind::IDENTIFIER)) {
-            error(fmt::format("offset in memory addressing operand must be an integer or register, not {}", curr().getKind()));
+        if (offset.isNot(Token::Kind::INTEGER) &&
+            offset.isNot(Token::Kind::IDENTIFIER)) {
+            error(fmt::format("offset in memory addressing operand must be an "
+                              "integer or register, not {}",
+                              curr().getKind()));
             return std::nullopt;
         }
 

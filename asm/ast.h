@@ -14,8 +14,10 @@ struct OperandMemory {
     int64_t offset;
     bool increment;
 
-    friend std::ostream& operator<<(std::ostream& os, const ast::OperandMemory& op) {
-        os << "Ptr{ base=" << op.base.getLexeme() << ", offset=" << op.offset << ", incr=" << op.increment << " }";
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ast::OperandMemory& op) {
+        os << "Ptr{ base=" << op.base.getLexeme() << ", offset=" << op.offset
+           << ", incr=" << op.increment << " }";
         return os;
     }
 };
@@ -23,7 +25,8 @@ struct OperandMemory {
 struct OperandImmediate {
     int64_t val;
 
-    friend std::ostream& operator<<(std::ostream& os, const ast::OperandImmediate& op) {
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ast::OperandImmediate& op) {
         os << "Immediate(" << op.val << ")";
         return os;
     }
@@ -32,7 +35,8 @@ struct OperandImmediate {
 struct OperandIdentifier {
     Token label;
 
-    friend std::ostream& operator<<(std::ostream& os, const ast::OperandIdentifier& op) {
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ast::OperandIdentifier& op) {
         os << "Ident(" << op.label.getLexeme() << ")";
         return os;
     }
@@ -41,24 +45,20 @@ struct OperandIdentifier {
 struct Operand {
     std::variant<OperandImmediate, OperandIdentifier, OperandMemory> inner;
 
-    template <typename T>
-    Operand(T&& ld) : inner(std::move(ld)) {}
+    template <typename T> Operand(T&& ld) : inner(std::move(ld)) {}
 
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const ast::Operand& op) {
+    friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {
         os << "Arg::";
         // std::visit(overloaded{
         //                [&](int64_t v) { os << "Int(" << v << ")"; },
         //                [&](const Token& v) {
         //                    os << "Label(" << v.getLexeme() << ")";
         //                },
-        //                [&](const AddressingOperand& v) { os << "Addressing()"; }
+        //                [&](const AddressingOperand& v) { os <<
+        //                "Addressing()"; }
         //            },
         //            arg.inner);
-        std::visit(
-            [&](auto&& x) {os << x; },
-            op.inner
-        );
+        std::visit([&](auto&& x) { os << x; }, op.inner);
         return os;
     }
 };
