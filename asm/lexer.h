@@ -7,6 +7,7 @@
 #include <string_view>
 #include <vector>
 
+#include <fmt/color.h>
 #include <fmt/ostream.h>
 
 #include <morph/util.h>
@@ -17,8 +18,7 @@ struct SourceLocation {
     size_t lineno;
 };
 
-class Token {
-  public:
+struct Token {
     enum class Kind {
 #define TOKEN(ident) ident
 #include "tokens.def"
@@ -34,6 +34,9 @@ class Token {
     bool is(Kind other) const noexcept { return kind == other; }
     bool isNot(Kind other) const noexcept { return !is(other); }
     bool isEoF() const noexcept { return is(Kind::ENDOFFILE); }
+    bool isIntegerLiteral() const noexcept {
+        return is(Kind::INTEGER_DEC) || is(Kind::INTEGER_HEX);
+    }
 
     std::string_view getLexeme() const noexcept { return lexeme; }
     std::optional<SourceLocation> getSrcLoc() const noexcept { return loc; }
@@ -44,12 +47,14 @@ class Token {
     std::optional<SourceLocation> loc;
 };
 
+std::optional<int64_t> parseIntegerToken(const Token& tok);
+
 std::ostream& operator<<(std::ostream& os, const Token::Kind& kind);
 template <> struct fmt::formatter<Token::Kind> : ostream_formatter {};
 
 class Lexer {
   public:
-    Lexer(const char* start) : cursor{start}, lineno{0} {}
+    Lexer(const char* start) : cursor{start}, lineno{1} {}
 
     Token next() noexcept;
 
@@ -77,6 +82,12 @@ class Lexer {
     Token lexIdentifierOrKeyword(const char* tok_start);
     Token lexNumber(const char* tok_start);
     void eatComment();
+
+    void error(const std::string& err) {
+        fmt::print(fmt::fg(fmt::color::red), "lex error near line {}: {}\n",
+                   lineno, err);
+        std::exit(1);
+    }
 };
 
 inline void dumpTokens(std::vector<Token>& tokens) {
@@ -88,6 +99,10 @@ inline void dumpTokens(std::vector<Token>& tokens) {
         if (token.is(Token::Kind::LINEBREAK) ||
             token.is(Token::Kind::ENDOFFILE)) {
             fmt::print("{:>5} {:>12}\n", srcLoc->lineno, token.getKind());
+        } else if (token.isIntegerLiteral()) {
+            fmt::print("{:>5} {:>12}: `{}` => {:#x}\n", srcLoc->lineno,
+                       token.getKind(), token.getLexeme(),
+                       *parseIntegerToken(token));
         } else {
             fmt::print("{:>5} {:>12}: `{}`\n", srcLoc->lineno, token.getKind(),
                        token.getLexeme());

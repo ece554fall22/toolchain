@@ -2,7 +2,10 @@
 
 #include <cassert>
 #include <cctype>
+#include <charconv>
 #include <iostream>
+
+#include <fmt/core.h>
 
 Token Lexer::next() noexcept {
     while (true) {
@@ -85,6 +88,18 @@ Token Lexer::lexIdentifierOrKeyword(const char* tok_start) {
     return tokFrom(tok_start, Token::Kind::IDENTIFIER);
 }
 
+// std::optional<int64_t> parseSpanToInt(const char* start, const char* end,
+//                                       int radix = 10) {
+//     int64_t val;
+//     auto res = std::from_chars(start, end, val, radix);
+
+//     if (res.ec == std::errc{} && res.ptr == end) {
+//         return val;
+//     } else {
+//         return std::nullopt;
+//     }
+// }
+
 Token Lexer::lexNumber(const char* tok_start) {
     assert(isdigit(peek()));
 
@@ -92,10 +107,16 @@ Token Lexer::lexNumber(const char* tok_start) {
     if (peek() == '0' && peek(+1) == 'x') {
         cursor += 2;
 
+        if (!isxdigit(peek())) {
+            error(fmt::format("hex literal prefix `0x` on line {} must be "
+                              "followed by hex characters",
+                              lineno));
+        }
+
         while (isxdigit(peek()))
             eat();
 
-        return tokFrom(tok_start, Token::Kind::INTEGER);
+        return tokFrom(tok_start, Token::Kind::INTEGER_HEX);
     }
 
     // normal case: decimals
@@ -104,7 +125,7 @@ Token Lexer::lexNumber(const char* tok_start) {
 
     // TODO: float literals! exponentials!
 
-    return tokFrom(tok_start, Token::Kind::INTEGER);
+    return tokFrom(tok_start, Token::Kind::INTEGER_DEC);
 }
 
 void Lexer::eatComment() {
@@ -113,6 +134,7 @@ void Lexer::eatComment() {
         case '\n':
         case '\r':
             // end of comment!
+            lineno++;
             return;
 
         case '\0':
@@ -123,6 +145,30 @@ void Lexer::eatComment() {
         default:
             break;
         }
+    }
+}
+
+std::optional<int64_t> parseIntegerToken(const Token& tok) {
+    int64_t val;
+    auto span = tok.getLexeme();
+    std::from_chars_result res;
+    if (tok.is(Token::Kind::INTEGER_DEC)) {
+        res = std::from_chars(span.data(), span.data() + span.size(), val, 10);
+    } else if (tok.is(Token::Kind::INTEGER_HEX)) {
+        res = std::from_chars(span.data() + 2, span.data() + span.size(), val,
+                              16);
+    } else {
+        fmt::print(fmt::fg(fmt::color::red),
+                   "tried to parse a non-integer-literal token {} on line {} "
+                   "as an integer literal",
+                   tok.getKind(), tok.getSrcLoc()->lineno);
+        return std::nullopt;
+    }
+
+    if (res.ec == std::errc{} && res.ptr == (span.data() + span.size())) {
+        return val;
+    } else {
+        return std::nullopt;
     }
 }
 

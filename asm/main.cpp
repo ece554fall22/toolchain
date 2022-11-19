@@ -17,6 +17,16 @@ int main(int argc, char* argv[]) {
         .help("output path")
         .default_value(std::string{"out.o"});
 
+    ap.add_argument("--dump-lexemes")
+        .help("dump the output of the lexer")
+        .default_value(false)
+        .implicit_value(true);
+
+    ap.add_argument("--dump-ast")
+        .help("dump the AST immediately after parsing")
+        .default_value(false)
+        .implicit_value(true);
+
     ap.add_argument("sources").nargs(argparse::nargs_pattern::at_least_one);
 
     try {
@@ -50,11 +60,15 @@ int main(int argc, char* argv[]) {
             break;
     }
 
-    dumpTokens(tokens);
+    if (ap["--dump-lexemes"] == true) {
+        dumpTokens(tokens);
+    }
 
     Parser parser(tokens);
     parser.parse();
 
-    ASTPrintVisitor debugVisitor(std::cout);
-    parser.visit(debugVisitor);
+    if (ap["--dump-ast"] == true) {
+        ASTPrintVisitor debugVisitor(std::cout);
+        parser.visit(debugVisitor);
+    }
 }

@@ -123,7 +123,7 @@ auto Parser::operand() -> std::optional<ast::Operand> {
         auto n = ast::Operand{ast::OperandIdentifier{curr()}};
         next();
         return n;
-    } else if (curr().is(Token::Kind::INTEGER)) {
+    } else if (curr().isIntegerLiteral()) {
         auto n = ast::Operand{ast::OperandImmediate{69}}; // TODO FIXME
         next();
         return n;
@@ -160,7 +160,7 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
         return ast::OperandMemory{base, 0, false};
     } else if (curr().is(Token::Kind::PLUS)) { // offset
         auto offset = next();
-        if (offset.isNot(Token::Kind::INTEGER)) {
+        if (!offset.isIntegerLiteral()) {
             error(fmt::format("offset in memory addressing operand must be an "
                               "integer, not {}",
                               curr().getKind()));
@@ -178,7 +178,7 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
         return ast::OperandMemory{base, 69, false}; // TODO
     } else if (curr().is(Token::Kind::PLUSEQUAL)) { // offset and postincrement
         auto offset = next();
-        if (offset.isNot(Token::Kind::INTEGER) &&
+        if (!offset.isIntegerLiteral() &&
             offset.isNot(Token::Kind::IDENTIFIER)) {
             error(fmt::format("offset in memory addressing operand must be an "
                               "integer or register, not {}",
