@@ -7,29 +7,7 @@
 #include "varint.h"
 
 namespace isa {
-enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl };
-
-inline uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
-    switch (op) {
-    case ScalarArithmeticOp::Add:
-        return 0b0010011;
-    case ScalarArithmeticOp::Sub:
-        return 0b0010100;
-    case ScalarArithmeticOp::And:
-        return 0b0010101;
-    case ScalarArithmeticOp::Or:
-        return 0b0010110;
-    case ScalarArithmeticOp::Xor:
-        return 0b0010111;
-    case ScalarArithmeticOp::Shr:
-        return 0b0011000;
-    case ScalarArithmeticOp::Shl:
-        return 0b0011001;
-    default:
-        panic("unsupported scalar arith op for AI format");
-        return 0;
-    }
-}
+enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl, Not };
 }; // namespace isa
 
 class Emitter {
@@ -39,8 +17,10 @@ class Emitter {
     void jumpPCRel(s<25> imm, bool link);
     void jumpRegRel(reg_idx rA, s<20> imm, bool link);
 
-    void arithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD, reg_idx rA,
-                             s<15> imm);
+    void scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
+                                   reg_idx rA, s<15> imm);
+    void scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD, reg_idx rA,
+                          reg_idx rB);
 
     auto getData() -> const auto& { return this->data; }
 

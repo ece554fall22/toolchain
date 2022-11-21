@@ -28,6 +28,19 @@ TEST_CASE("emits correct encodings") {
               0b0000101'11111'00011'111111111001101);
     }
 
+    SUBCASE("subi") {
+        emitter.scalarArithmeticImmediate(isa::ScalarArithmeticOp::Sub, /*r*/ 4,
+                                          /*r*/ 3, -23);
+        CHECK(emitter.getData().back() ==
+              0b0010100'00100'00011'111111111101001);
+    }
+
+    SUBCASE("mult") {
+        emitter.scalarArithmetic(isa::ScalarArithmeticOp::Mult, 3, 4, 1);
+        CHECK(emitter.getData().back() ==
+              0b0011011'00011'00100'00001'000000'0010);
+    }
+
     // should've only emitted one instruction word
     REQUIRE(emitter.getData().size() == 1);
 }
