@@ -166,6 +166,13 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
                               curr().getKind()));
             return std::nullopt;
         }
+        auto offsetVal = parseIntegerToken(offset);
+        if (!offsetVal) {
+            error(fmt::format(
+                "can't parse {} (`{}`) as integer literal in memory offset",
+                offset.getKind(), offset.getLexeme()));
+            return std::nullopt;
+        }
 
         if (next().isNot(Token::Kind::R_SQUARE)) {
             error(fmt::format("memory operand must end with a ], not {}",
@@ -175,7 +182,7 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
 
         next(); // eat ]
 
-        return ast::OperandMemory{base, 69, false}; // TODO
+        return ast::OperandMemory{base, *offsetVal, false};
     } else if (curr().is(Token::Kind::PLUSEQUAL)) { // offset and postincrement
         auto offset = next();
         if (!offset.isIntegerLiteral() &&
@@ -185,8 +192,23 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
                               curr().getKind()));
             return std::nullopt;
         }
+        auto offsetVal = parseIntegerToken(offset);
+        if (!offsetVal) {
+            error(fmt::format(
+                "can't parse {} (`{}`) as integer literal in memory offset",
+                offset.getKind(), offset.getLexeme()));
+            return std::nullopt;
+        }
 
-        return ast::OperandMemory{base, 69, true};
+        if (next().isNot(Token::Kind::R_SQUARE)) {
+            error(fmt::format("memory operand must end with a ], not {}",
+                              curr().getKind()));
+            return std::nullopt;
+        }
+
+        next(); // eat ]
+
+        return ast::OperandMemory{base, *offsetVal, true};
     } else {
         error(fmt::format("unexpected token {}", curr().getKind()));
         return std::nullopt;

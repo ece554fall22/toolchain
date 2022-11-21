@@ -146,10 +146,10 @@ std::optional<int64_t> parseIntegerToken(const Token& tok) {
         res = std::from_chars(span.data() + 2, span.data() + span.size(), val,
                               16);
     } else {
-        fmt::print(fmt::fg(fmt::color::red),
-                   "tried to parse a non-integer-literal token {} on line {} "
-                   "as an integer literal",
-                   tok.getKind(), tok.getSrcLoc()->lineno);
+        // fmt::print(fmt::fg(fmt::color::red),
+        //            "tried to parse a non-integer-literal token {} on line {}
+        //            " "as an integer literal", tok.getKind(),
+        //            tok.getSrcLoc()->lineno);
         return std::nullopt;
     }
 
