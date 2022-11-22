@@ -33,12 +33,14 @@ template <size_t SIZE> struct bits {
     }
 
     // extract bits, verilog-style
-    template<size_t start, size_t end>
-    auto slice() -> bits<start-end+1> {
-        static_assert(start >= end, "`start` of span must be a more significant bit than the `end` of the span");
-        static_assert(start < SIZE && end < SIZE, "exceeded the highest possible bit index (SIZE-1)");
+    template <size_t start, size_t end> auto slice() -> bits<start - end + 1> {
+        static_assert(start >= end,
+                      "`start` of span must be a more significant bit than the "
+                      "`end` of the span");
+        static_assert(start < SIZE && end < SIZE,
+                      "exceeded the highest possible bit index (SIZE-1)");
 
-        constexpr size_t runlength = start-end+1;
+        constexpr size_t runlength = start - end + 1;
         inner_t mask = BITFILL(runlength) << end;
 
         bits<runlength> extracted;
