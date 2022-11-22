@@ -25,6 +25,7 @@ auto Parser::source_file() -> std::unique_ptr<ast::SourceFile> {
         ::= instruction
         ::= macro-invoke
         ::= macro-def
+        ::= directive
 */
 auto Parser::unit() -> std::unique_ptr<ast::Unit> {
     // TODO
@@ -214,3 +215,11 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
         return std::nullopt;
     }
 }
+
+/*
+    directive needs:
+        origin
+        section
+        define
+*/
+// auto Parser::directive() {}
