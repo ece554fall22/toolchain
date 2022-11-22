@@ -4,10 +4,10 @@
 
 #include <fmt/core.h>
 
-void isa::decodeInstruction(InstructionVisitor& visit, uint32_t instr) {
+void isa::decodeInstruction(InstructionVisitor& visit, instr_t instr) {
     // crude decoder. our ISA is not compressed; we can just look
     // at the opcode field to understand what to do.
-    uint32_t opcode = (instr & 0b1111'1110'0000'0000'0000'0000'0000'0000) >> 25;
+    auto opcode = instr.slice<31, 25>().inner;
     // fmt::print("opcode = {:#b}\n", opcode);
     switch (opcode) {
     case 0b0000'000: // halt
@@ -117,50 +117,38 @@ void isa::decodeInstruction(InstructionVisitor& visit, uint32_t instr) {
     }
 }
 
-void isa::decodeJ(InstructionVisitor& visit, uint32_t instr) {
-    uint32_t mask_imm = (1 << 25) - 1;
+void isa::decodeJ(InstructionVisitor& visit, instr_t instr) {
+    auto imm = instr.slice<24, 0>();
 
-    auto imm = s<25>::fromBits(instr & mask_imm);
-
-    bool jal = instr & (1 << 25);
+    bool jal = instr.bit(25);
     if (jal)
         visit.jal(imm);
     else
         visit.jmp(imm);
 }
 
-void isa::decodeJR(InstructionVisitor& visit, uint32_t instr) {
-    uint32_t mask_rT = ((1 << 5) - 1) << 20;
-    uint32_t mask_imm = (1 << 20) - 1;
+void isa::decodeJR(InstructionVisitor& visit, instr_t instr) {
+    auto rA = u<5>(instr.slice<19, 15>());
+    auto imm = s<20>(instr.slice<24, 20>().concat(instr.slice<14, 0>()));
 
-    auto rT = u<5>((instr & mask_rT) >> 20);
-    auto imm = s<20>::fromBits(instr & mask_imm);
-
-    bool jalr = instr & (1 << 25);
+    bool jalr = instr.bit(25);
     if (jalr)
-        visit.jalr(rT, imm);
+        visit.jalr(rA, imm);
     else
-        visit.jmpr(rT, imm);
+        visit.jmpr(rA, imm);
 }
 
-void isa::decodeBR(InstructionVisitor& visit, uint32_t instr) {
-    uint32_t mask_cond = ((1 << 3) - 1) << 22;
-    uint32_t mask_rT = ((1 << 5) - 1) << 17;
-    uint32_t mask_imm = (1 << 17) - 1;
-
-    auto cond = condition_t((instr & mask_cond) >> 22);
-    auto rT = u<5>((instr & mask_rT) >> 17);
-    auto imm = s<17>(instr & mask_imm);
+void isa::decodeBR(InstructionVisitor& visit, instr_t instr) {
+    auto cond = condition_t(instr.slice<24, 22>().inner);
+    auto rT = instr.slice<19, 15>();
+    auto imm = s<17>(instr.slice<21, 20>().concat(instr.slice<14, 0>()));
 
     visit.branchreg(cond, rT, imm);
 }
 
-void isa::decodeBI(InstructionVisitor& visit, uint32_t instr) {
-    uint32_t mask_cond = ((1 << 3) - 1) << 22;
-    uint32_t mask_imm = (1 << 22) - 1;
-
-    auto cond = condition_t((instr & mask_cond) >> 22);
-    auto imm = s<22>(instr & mask_imm);
+void isa::decodeBI(InstructionVisitor& visit, instr_t instr) {
+    auto cond = condition_t(instr.slice<24, 22>().inner);
+    auto imm = s<22>(instr.slice<21, 0>());
 
     visit.branchimm(cond, imm);
 }

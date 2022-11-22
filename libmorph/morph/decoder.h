@@ -7,6 +7,8 @@
 
 namespace isa {
 
+using instr_t = bits<32>;
+
 struct InstructionVisitor {
     virtual ~InstructionVisitor() = default;
 
@@ -18,13 +20,13 @@ struct InstructionVisitor {
     virtual void jmp(s<25> imm) = 0;
     virtual void jal(s<25> imm) = 0;
     // JR
-    virtual void jmpr(reg_idx rT, s<20> imm) = 0;
-    virtual void jalr(reg_idx rT, s<20> imm) = 0;
+    virtual void jmpr(reg_idx rA, s<20> imm) = 0;
+    virtual void jalr(reg_idx rA, s<20> imm) = 0;
 
     // BI
     virtual void branchimm(condition_t cond, s<22> imm) = 0;
     // BR
-    virtual void branchreg(condition_t cond, reg_idx rT, s<17> imm) = 0;
+    virtual void branchreg(condition_t cond, reg_idx rA, s<17> imm) = 0;
 };
 
 struct PrintVisitor : public InstructionVisitor {
@@ -39,11 +41,11 @@ struct PrintVisitor : public InstructionVisitor {
     virtual void jal(s<25> imm) { std::cout << "jal " << imm << "\n"; }
 
     // JR
-    virtual void jmpr(reg_idx rT, s<20> imm) {
-        std::cout << "jal r" << rT << ", " << imm << "\n";
+    virtual void jmpr(reg_idx rA, s<20> imm) {
+        std::cout << "jal r" << rA << ", " << imm << "\n";
     }
-    virtual void jalr(reg_idx rT, s<20> imm) {
-        std::cout << "jal r" << rT << ", " << imm << "\n";
+    virtual void jalr(reg_idx rA, s<20> imm) {
+        std::cout << "jal r" << rA << ", " << imm << "\n";
     }
 
     // BI
@@ -51,15 +53,15 @@ struct PrintVisitor : public InstructionVisitor {
         std::cout << "branch_imm " << cond << ", " << imm << "\n";
     }
     // BR
-    virtual void branchreg(condition_t cond, reg_idx rT, s<17> imm) {
-        std::cout << "branch_reg " << cond << ", " << rT << ", " << imm << "\n";
+    virtual void branchreg(condition_t cond, reg_idx rA, s<17> imm) {
+        std::cout << "branch_reg " << cond << ", " << rA << ", " << imm << "\n";
     }
 };
 
-void decodeJ(InstructionVisitor& visit, uint32_t instr);
-void decodeJR(InstructionVisitor& visit, uint32_t instr);
-void decodeBR(InstructionVisitor& visit, uint32_t instr);
-void decodeBI(InstructionVisitor& visit, uint32_t instr);
-void decodeInstruction(InstructionVisitor& visit, uint32_t instr);
+void decodeJ(InstructionVisitor& visit, instr_t instr);
+void decodeJR(InstructionVisitor& visit, instr_t instr);
+void decodeBR(InstructionVisitor& visit, instr_t instr);
+void decodeBI(InstructionVisitor& visit, instr_t instr);
+void decodeInstruction(InstructionVisitor& visit, instr_t instr);
 
 } // namespace isa
