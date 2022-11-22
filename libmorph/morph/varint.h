@@ -6,6 +6,8 @@
 #include <iostream>
 #include <type_traits>
 
+#define BITFILL(n) ((1 << n) - 1)
+
 template <size_t SIZE> struct bits {
     typedef uint64_t inner_t;
     static constexpr size_t backing_size = 64;
@@ -17,13 +19,32 @@ template <size_t SIZE> struct bits {
                   "size cannot be larger than 64-bit backing storage");
     static_assert(SIZE > 0, "size must be greater than zeros");
 
-    // bits() = default;
+    bits() = default;
+    bits(inner_t x) {
+        assert(x <= mask);
+        inner = x;
+    }
     inner_t inner;
 
     bool bit(size_t i) const {
         assert(i >= 0 && i < SIZE);
 
         return this->inner & (1 << i);
+    }
+
+    // extract bits, verilog-style
+    template<size_t start, size_t end>
+    auto slice() -> bits<start-end+1> {
+        static_assert(start >= end, "`start` of span must be a more significant bit than the `end` of the span");
+        static_assert(start < SIZE && end < SIZE, "exceeded the highest possible bit index (SIZE-1)");
+
+        constexpr size_t runlength = start-end+1;
+        inner_t mask = BITFILL(runlength) << end;
+
+        bits<runlength> extracted;
+        extracted.inner = (this->inner & mask) >> end;
+
+        return extracted;
     }
 
     auto _sgn_inner() const -> signed_inner_t {
@@ -173,3 +194,5 @@ inline std::ostream& operator<<(std::ostream& os, const s<N>& v) {
     os << v._sgn_inner() << "i" << N;
     return os;
 }
+
+#undef BITFILL
