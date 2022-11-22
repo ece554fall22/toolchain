@@ -49,6 +49,18 @@ template <size_t SIZE> struct bits {
         return extracted;
     }
 
+    // concat as {this, other}
+    template <size_t SIZE_OTHER>
+    auto concat(const bits<SIZE_OTHER>& other) -> bits<SIZE + SIZE_OTHER> {
+        static_assert(SIZE + SIZE_OTHER <= backing_size,
+                      "concatenation of two bitstrings must be smaller than "
+                      "the backing storage");
+        bits<SIZE + SIZE_OTHER> result;
+        result.inner = (this->inner << SIZE_OTHER) | (other.inner);
+
+        return result;
+    }
+
     auto _sgn_inner() const -> signed_inner_t {
         return static_cast<signed_inner_t>(this->inner);
     }
@@ -67,6 +79,7 @@ template <size_t N> struct u : public bits<N> {
         assert(v <= max_val);
         this->inner = static_cast<typename bits<N>::inner_t>(v);
     }
+    u(bits<N> b) : bits<N>(b) { assert(b.inner <= max_val); }
 
     /// Interpret as signed integer data.
     auto asSigned() const noexcept -> s<N> {

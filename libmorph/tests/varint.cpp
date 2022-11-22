@@ -30,3 +30,17 @@ TEST_CASE("bits<N> slicing") {
     // identity :)
     CHECK(val.slice<19, 0>().inner == 0b01100011010011101001);
 }
+
+TEST_CASE("bits<N> concatenation") {
+    auto a = bits<5>(0b10111);
+    auto b = bits<7>(0b1110101);
+
+    auto aa = a.concat(a);
+    CHECK(aa.inner == 0b10111'10111);
+    auto ab = a.concat(b);
+    CHECK(ab.inner == 0b10111'1110101);
+    auto ba = b.concat(a);
+    CHECK(ba.inner == 0b1110101'10111);
+    auto bb = b.concat(b);
+    CHECK(bb.inner == 0b1110101'1110101);
+}
