@@ -33,7 +33,8 @@ template <size_t SIZE> struct bits {
     }
 
     // extract bits, verilog-style
-    template <size_t start, size_t end> auto slice() -> bits<start - end + 1> {
+    template <size_t start, size_t end>
+    auto slice() const -> bits<start - end + 1> {
         static_assert(start >= end,
                       "`start` of span must be a more significant bit than the "
                       "`end` of the span");
@@ -51,7 +52,8 @@ template <size_t SIZE> struct bits {
 
     // concat as {this, other}
     template <size_t SIZE_OTHER>
-    auto concat(const bits<SIZE_OTHER>& other) -> bits<SIZE + SIZE_OTHER> {
+    auto concat(const bits<SIZE_OTHER>& other) const
+        -> bits<SIZE + SIZE_OTHER> {
         static_assert(SIZE + SIZE_OTHER <= backing_size,
                       "concatenation of two bitstrings must be smaller than "
                       "the backing storage");
@@ -134,6 +136,14 @@ template <size_t N> struct s : public bits<N> {
     s(int64_t v) {
         assert((min_val <= v) && (v <= max_val));
         this->inner = static_cast<typename bits<N>::inner_t>(v);
+    }
+    s(bits<N> b) : bits<N>(b) {
+        if (this->bit(N - 1)) {
+            this->inner |= ((1UL << (bits<N>::backing_size - N)) - 1) << N;
+        }
+
+        assert((min_val <= this->_sgn_inner()) &&
+               (this->_sgn_inner() <= max_val));
     }
 
     static auto fromBits(uint64_t x) -> s<N> {
