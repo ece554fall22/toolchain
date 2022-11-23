@@ -12,6 +12,12 @@ i wouldn't recommend trying to build directly on windows because you would need 
 ```sh
 python3.9 -m pip install --user --upgrade meson ninja
 ```
+if you're using bash and the CAE default bashrc, you need to add `~/.local/bin` to your path to use things installed via pip. you can do that by adding the line
+```bash
+export PATH="$PATH:$HOME/.local/bin"
+```
+to the end of your `~/.bashrc`.
+
 on MacOS, if you have [homebrew](https://brew.sh) you can do
 ```sh
 brew install meson ninja python@3.10
