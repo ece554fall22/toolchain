@@ -4,20 +4,23 @@
 #include <fmt/core.h>
 #include <iomanip>
 #include <iostream>
-#include <optional>
 
 #include <morph/ty.h>
 #include <morph/varint.h>
 
 struct MemSystem {
-    void write(addr_t addr, u<36> val);
-    void write(addr_t addr, u<64> val);
-    void write(addr_t addr, f32x4 val);
+    void write(uint64_t addr, u<32> val);
+    void write(uint64_t addr, u<36> val);
+    void write(uint64_t addr, u<64> val);
+    void write(uint64_t addr, f32x4 val);
+
+    auto read32(uint64_t addr) -> uint32_t;
+    auto read36(uint64_t addr) -> uint64_t;
 
     void flushICache();
     void flushDCacheDirty();
     void flushDCacheClean();
-    void flushDCacheLine(addr_t at);
+    void flushDCacheLine(uint64_t at);
 };
 
 struct ScalarRegisterFile {
@@ -64,25 +67,28 @@ inline std::ostream& operator<<(std::ostream& os, const ConditionFlags& f) {
 }
 
 struct PC {
-    addr_t current;
-    std::optional<addr_t> redirect_to;
+    PC() : current{0}, next{0} {}
 
-    void redirect(addr_t to) noexcept { redirect_to = to; }
+    void reset() {
+        current = 0;
+        next = 0;
+    }
 
-    /// Return the current PC.
-    addr_t get() const noexcept { return current; }
+    void addToNextPC(int64_t offs) { next += offs; }
 
-    /// Updates the PC to its next value, returning it.
-    /// This is where we decide to either grab PC+4 or the redirect target.
-    addr_t update() noexcept {
-        if (auto next = std::exchange(redirect_to, std::nullopt)) {
-            current = *next;
-        } else {
-            current += 4;
-        }
+    void setNextPC(int64_t pc) { next = pc; }
 
+    auto getNewPC() -> uint64_t {
+        current = next;
+        next = current + 4;
         return current;
     }
+
+    auto getCurrentPC() const -> uint64_t { return current; }
+
+  private:
+    uint64_t current;
+    uint64_t next;
 };
 
 struct CPUState {
@@ -95,7 +101,7 @@ struct CPUState {
     CPUState() {}
 
     void dump() const {
-        std::cout << "pc: " << pc.get() << '\n';
+        std::cout << "pc: " << pc.getCurrentPC() << '\n';
         std::cout << "flags: " << f << "\n\n";
         std::cout << "scalar registers\n"
                   << "----------------\n";

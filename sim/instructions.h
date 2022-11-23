@@ -5,10 +5,24 @@
 // s<bits>
 
 namespace instructions {
-
 /************************************************************************/
 /************************-- scalar alu instruction **********************/
 /************************************************************************/
+
+// -- lmao
+void nop(CPUState& cpu, MemSystem& mem) {}
+void halt(CPUState& cpu, MemSystem& mem) { exit(1); } // TODO
+
+// -- load immediate
+void lil(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
+    auto mask = 0b000000000000000000111111111111111111;
+    cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | imm.inner;
+}
+
+void lih(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
+    auto mask = 0b111111111111111111000000000000000000;
+    cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | (imm.inner << 18);
+}
 
 // ADDI 
 void addi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
@@ -110,45 +124,56 @@ void vmul(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA, vreg_idx vB,
 }
 
 // -- scalar memory instructions
-void st32(CPUState& cpu, MemSystem& mem, reg_idx rS, reg_idx rA, s<15> imm) {
+void ld32(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
-    auto val = cpu.r[rS];
+    auto val = mem.read32(addr.inner);
+    cpu.r[rD].inner = val;
+}
+
+void ld36(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    u<36> addr = cpu.r[rA] + imm;
+    auto val = mem.read36(addr.inner);
+    cpu.r[rD].inner = val;
+}
+
+void st32(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
+    u<36> addr = cpu.r[rA] + imm;
+    auto val = cpu.r[rB].slice<31, 0>();
     mem.write(addr, val);
 }
 
-// -- jumps
-void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.get();         // link
-    cpu.pc.redirect(cpu.r[rT] + imm); // and jump
+void st36(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
+    u<36> addr = cpu.r[rA] + imm;
+    auto val = cpu.r[rB];
+    mem.write(addr, val);
 }
+
 
 /************************************************************************/
 /*******************************-- JUMPS ********************************/
 /************************************************************************/
 
+// JMP
+void jmp(CPUState& cpu, MemSystem& mem, s<25> imm) {
+    cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+}
+
+// JAL
+void jal(CPUState& cpu, MemSystem& mem, s<25> imm) {
+    cpu.r[31] = cpu.pc.getCurrentPC();        // link
+    cpu.pc.addToNextPC(imm._sgn_inner() * 4); // and jump
+}
+
 // JMPR
 void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.pc.redirect(cpu.r[rT] + (imm << 2)); // and jump (imm * 4)
+    cpu.r[31] = cpu.pc.getCurrentPC();                        // link
+    cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
 // JALR
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.get();         // link
-    cpu.pc.redirect(cpu.r[rT] + (imm << 2)); // and jump (imm * 4)
-}
-
-// JMP
-void jmp(CPUState& cpu, MemSystem& mem, reg_idx rT, s<25> imm) {
-    addr_t nxt_pc = cpu.pc.get() + 4; 
-    cpu.pc.redirect(nxt_pc + (imm << 2)); // imm * 4
-}
-
-// JAL
-void jal(CPUState& cpu, MemSystem& mem, reg_idx rT, s<25> imm) {
-    addr_t curr_pc = cpu.pc.get();
-    addr_t nxt_pc = curr_pc + 4; 
-    cpu.r[31] = curr_pc;                // link
-    cpu.pc.redirect(nxt_pc + (imm << 2)); // and jump (imm * 4)
+    cpu.r[31] = cpu.pc.getCurrentPC();                        // link
+    cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
 /************************************************************************/
@@ -158,7 +183,7 @@ void jal(CPUState& cpu, MemSystem& mem, reg_idx rT, s<25> imm) {
 // BNZR
 void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner());
 }
 
 // BEZR
@@ -240,7 +265,7 @@ void flushdirty(CPUState& cpu, MemSystem& mem) { mem.flushDCacheDirty(); }
 void flushclean(CPUState& cpu, MemSystem& mem) { mem.flushDCacheClean(); }
 
 void flushline(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    addr_t addr = cpu.r[rT] + imm;
+    uint64_t addr = cpu.r[rT].inner + imm._sgn_inner();
     mem.flushDCacheLine(addr);
 }
 
