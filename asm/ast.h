@@ -49,15 +49,6 @@ struct Operand {
 
     friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {
         os << "Arg::";
-        // std::visit(overloaded{
-        //                [&](int64_t v) { os << "Int(" << v << ")"; },
-        //                [&](const Token& v) {
-        //                    os << "Label(" << v.getLexeme() << ")";
-        //                },
-        //                [&](const AddressingOperand& v) { os <<
-        //                "Addressing()"; }
-        //            },
-        //            arg.inner);
         std::visit([&](auto&& x) { os << x; }, op.inner);
         return os;
     }
