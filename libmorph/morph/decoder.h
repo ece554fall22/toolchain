@@ -53,6 +53,8 @@ struct InstructionVisitor {
     virtual void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) = 0;
 };
 
+void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
+
 struct PrintVisitor : public InstructionVisitor {
     virtual ~PrintVisitor() = default;
 
@@ -106,18 +108,4 @@ struct PrintVisitor : public InstructionVisitor {
         std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
     }
 };
-
-void decodeJ(InstructionVisitor& visit, bits<32> instr);
-void decodeJR(InstructionVisitor& visit, bits<32> instr);
-void decodeBR(InstructionVisitor& visit, bits<32> instr);
-void decodeBI(InstructionVisitor& visit, bits<32> instr);
-void decodeLI(InstructionVisitor& visit, bits<32> instr);
-void decodeML(InstructionVisitor& visit, bits<32> instr);
-void decodeMS(InstructionVisitor& visit, bits<32> instr);
-void decodeA(InstructionVisitor& visit, bits<32> instr);
-void decodeAI(InstructionVisitor& visit, bits<32> instr);
-void decodeCI(InstructionVisitor& visit, bits<32> instr);
-
-void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
-
 } // namespace isa

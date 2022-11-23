@@ -6,7 +6,7 @@
 
 TEST_CASE("basic arithmetic") {
     CPUState cpuState;
-    MemSystem mem;
+    MemSystem mem(16);
 
     SUBCASE("add and addi") {
         // registers start =0
@@ -25,7 +25,7 @@ TEST_CASE("basic arithmetic") {
 
 TEST_CASE("vector arithmetic") {
     CPUState cpuState;
-    MemSystem mem;
+    MemSystem mem(16);
 
     SUBCASE("vmul") {
         // directly inject our test vectors

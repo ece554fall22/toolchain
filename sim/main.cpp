@@ -79,11 +79,11 @@ int main(int argc, char* argv[]) {
     }
 
     CPUState cpuState;
-    MemSystem mem;
+    MemSystem mem(16);
     CPUInstructionProxy iproxy{cpuState, mem};
 
     // // "run" a little program
     // instructions::addi(cpuState, mem, /*r*/ 0, /*r*/ 0, 1);
 
-    cpuState.dump();
+    // cpuState.dump();
 }
