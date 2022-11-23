@@ -4,20 +4,23 @@
 #include <fmt/core.h>
 #include <iomanip>
 #include <iostream>
-#include <optional>
 
 #include <morph/ty.h>
 #include <morph/varint.h>
 
 struct MemSystem {
-    void write(addr_t addr, u<36> val);
-    void write(addr_t addr, u<64> val);
-    void write(addr_t addr, f32x4 val);
+    void write(uint64_t addr, u<32> val);
+    void write(uint64_t addr, u<36> val);
+    void write(uint64_t addr, u<64> val);
+    void write(uint64_t addr, f32x4 val);
+
+    auto read32(uint64_t addr) -> uint32_t;
+    auto read36(uint64_t addr) -> uint64_t;
 
     void flushICache();
     void flushDCacheDirty();
     void flushDCacheClean();
-    void flushDCacheLine(addr_t at);
+    void flushDCacheLine(uint64_t at);
 };
 
 struct ScalarRegisterFile {
