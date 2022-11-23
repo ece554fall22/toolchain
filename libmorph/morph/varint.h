@@ -6,7 +6,7 @@
 #include <iostream>
 #include <type_traits>
 
-#define BITFILL(n) ((1 << n) - 1)
+#define BITFILL(n) ((1L << n) - 1)
 
 template <size_t SIZE> struct bits {
     typedef uint64_t inner_t;

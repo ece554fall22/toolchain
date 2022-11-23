@@ -97,13 +97,13 @@ struct PrintVisitor : public InstructionVisitor {
         std::cout << " " << rD << ", " << rA << ", " << imm << '\n';
     }
 
-    virtual void st(reg_idx rD, reg_idx rA, s<15> imm, bool b36) {
+    virtual void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) {
         std::cout << "st";
         if (b36)
             std::cout << "36";
         else
             std::cout << "32";
-        std::cout << " " << rD << ", " << rA << ", " << imm << '\n';
+        std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
     }
 };
 

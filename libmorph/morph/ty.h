@@ -6,8 +6,6 @@
 
 #include "varint.h"
 
-using addr_t = u<36>;
-
 using reg_idx = u<5>;
 using vreg_idx = u<5>;
 enum class condition_t {

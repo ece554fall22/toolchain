@@ -2,6 +2,7 @@
 
 #include <string>
 
+/// --- "we have Rust at home"
 class Unimplemented : public std::logic_error {
   public:
     Unimplemented() : std::logic_error("unimplemented!"){};
@@ -24,6 +25,7 @@ class Panic : public std::logic_error {
 inline void panic() { throw Panic(); }
 inline void panic(const std::string& desc) { throw Panic(desc); }
 
+/// --- overload helpers for std::visit
 template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 // explicit deduction
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
