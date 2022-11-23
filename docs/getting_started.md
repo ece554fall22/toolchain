@@ -12,6 +12,10 @@ i wouldn't recommend trying to build directly on windows because you would need 
 ```sh
 python3.9 -m pip install --user --upgrade meson ninja
 ```
+on MacOS, if you have [homebrew](https://brew.sh) you can do
+```sh
+brew install meson ninja python@3.10
+```
 
 once you have everything set up just do the following in the root of the repository:
 ```sh
