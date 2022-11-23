@@ -24,10 +24,6 @@ void MemSystem::write(uint64_t addr, f32x4 val) {
     std::cout << "M[" << addr << "] = " << val << "\n";
 }
 
-auto MemSystem::read32(uint64_t addr) -> uint32_t {
-    return 0x32001337;
-}
+auto MemSystem::read32(uint64_t addr) -> uint32_t { return 0x32001337; }
 
-auto MemSystem::read36(uint64_t addr) -> uint64_t {
-    return 0x36001337;
-}
+auto MemSystem::read36(uint64_t addr) -> uint64_t { return 0x36001337; }

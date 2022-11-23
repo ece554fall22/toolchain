@@ -8,7 +8,7 @@ namespace instructions {
 
 // -- lmao
 void nop(CPUState& cpu, MemSystem& mem) {}
-void halt(CPUState& cpu, MemSystem& mem) {exit(1);} // TODO
+void halt(CPUState& cpu, MemSystem& mem) { exit(1); } // TODO
 
 // -- load immediate
 void lil(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
@@ -69,7 +69,7 @@ void ld36(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
 
 void st32(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
-    auto val = cpu.r[rB].slice<31,0>();
+    auto val = cpu.r[rB].slice<31, 0>();
     mem.write(addr, val);
 }
 
@@ -85,17 +85,17 @@ void jmp(CPUState& cpu, MemSystem& mem, s<25> imm) {
 }
 
 void jal(CPUState& cpu, MemSystem& mem, s<25> imm) {
-    cpu.r[31] = cpu.pc.getCurrentPC(); // link
+    cpu.r[31] = cpu.pc.getCurrentPC();        // link
     cpu.pc.addToNextPC(imm._sgn_inner() * 4); // and jump
 }
 
 void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.getCurrentPC(); // link
+    cpu.r[31] = cpu.pc.getCurrentPC();                        // link
     cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.getCurrentPC(); // link
+    cpu.r[31] = cpu.pc.getCurrentPC();                        // link
     cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 

@@ -7,7 +7,6 @@
 #include <morph/decoder.h>
 #include <morph/util.h>
 
-
 // #define PROXY_INSTR(instr, ...) \
 //     virtual void instr (__VA_ARGS__) { \
 //         instructions:: instr ( this->cpu, this->mem, ## __VA_ARGS__ ); \
@@ -17,7 +16,7 @@ struct CPUInstructionProxy : public isa::InstructionVisitor {
     virtual ~CPUInstructionProxy() = default;
     CPUInstructionProxy(auto& cpu, auto& mem) : cpu{cpu}, mem{mem} {}
 
-// misc
+    // misc
     virtual void nop() { instructions::nop(cpu, mem); }
     virtual void halt() { instructions::halt(cpu, mem); }
 
@@ -63,7 +62,7 @@ struct CPUInstructionProxy : public isa::InstructionVisitor {
             instructions::st32(cpu, mem, rA, rB, imm);
     }
 
-private:
+  private:
     CPUState& cpu;
     MemSystem& mem;
 };

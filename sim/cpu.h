@@ -74,13 +74,9 @@ struct PC {
         next = 0;
     }
 
-    void addToNextPC(int64_t offs) {
-        next += offs;
-    }
+    void addToNextPC(int64_t offs) { next += offs; }
 
-    void setNextPC(int64_t pc) {
-        next = pc;
-    }
+    void setNextPC(int64_t pc) { next = pc; }
 
     auto getNewPC() -> uint64_t {
         current = next;
@@ -88,11 +84,9 @@ struct PC {
         return current;
     }
 
-    auto getCurrentPC() const -> uint64_t {
-        return current;
-    }
+    auto getCurrentPC() const -> uint64_t { return current; }
 
-private:
+  private:
     uint64_t current;
     uint64_t next;
 };
