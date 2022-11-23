@@ -56,7 +56,6 @@ struct VectorRegisterFile {
 
     const Reg& operator[](size_t i) const { return inner[i]; }
     Reg& operator[](size_t i) { return inner[i]; }
-    // const Reg& operator[]()
 };
 
 struct ConditionFlags {

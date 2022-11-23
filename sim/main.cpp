@@ -15,7 +15,7 @@
 struct CPUInstructionProxy : public isa::InstructionVisitor {
     virtual ~CPUInstructionProxy() = default;
     CPUInstructionProxy(auto& cpu, auto& mem) : cpu{cpu}, mem{mem} {}
-
+    CPUInstructionProxy(auto&& cpu, auto&& mem) = delete;
     // misc
     virtual void nop() { instructions::nop(cpu, mem); }
     virtual void halt() { instructions::halt(cpu, mem); }
