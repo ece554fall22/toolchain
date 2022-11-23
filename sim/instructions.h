@@ -48,14 +48,14 @@ void st32(CPUState& cpu, MemSystem& mem, reg_idx rS, reg_idx rA, s<15> imm) {
 
 // -- jumps
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.get();         // link
-    cpu.pc.redirect(cpu.r[rT] + imm); // and jump
+    cpu.r[31] = cpu.pc.getCurrentPC(); // link
+    cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
 // -- conditional branches
 void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<17> imm) {
     if (!cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner());
 }
 
 // -- specials: cache control
@@ -69,7 +69,7 @@ void flushdirty(CPUState& cpu, MemSystem& mem) { mem.flushDCacheDirty(); }
 void flushclean(CPUState& cpu, MemSystem& mem) { mem.flushDCacheClean(); }
 
 void flushline(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    addr_t addr = cpu.r[rT] + imm;
+    uint64_t addr = cpu.r[rT].inner + imm._sgn_inner();
     mem.flushDCacheLine(addr);
 }
 
