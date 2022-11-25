@@ -46,9 +46,10 @@ auto Parser::unit() -> std::unique_ptr<ast::Unit> {
         return std::make_unique<ast::Unit>(std::move(l));
     } else if (auto i = instruction()) {
         return std::make_unique<ast::Unit>(std::move(i));
+    } else {
+        error(fmt::format("unknown construct beginning with {} (`{}`)", curr().getKind(), curr().getLexeme()));
+        return nullptr;
     }
-
-    return nullptr;
 }
 
 /*
