@@ -6,24 +6,6 @@
 #include <cstdint>
 
 namespace isa {
-
-namespace disasm {
-enum class Opcode {
-    halt,
-    nop,
-    jmp,
-    jal,
-    jmpr,
-    jalr,
-};
-struct Instruction {
-    Opcode opcode;
-
-    reg_idx register_accesses[3];
-    int64_t imm;
-};
-} // namespace disasm
-
 struct InstructionVisitor {
     virtual ~InstructionVisitor() = default;
 
@@ -108,4 +90,5 @@ struct PrintVisitor : public InstructionVisitor {
         std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
     }
 };
+
 } // namespace isa
