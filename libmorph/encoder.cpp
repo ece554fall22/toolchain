@@ -2,6 +2,12 @@
 
 using isa::ScalarArithmeticOp;
 
+
+// TODO: halt, nop, bi, br, lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr, not, cmp, vadd,
+// vsub, vmult, vdiv, vdot, vdota, vindx, vreduce, vswizzle, vsplat, vsadd, vsmult, vssub, vsdiv, vsma, writea, writeb, writec,
+// matmul, readc, systolicstep, vmax, vmin, vcompsel, ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean, flushicache,
+// flushline, cmpdec, cmpinc
+
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
     case ScalarArithmeticOp::Add:
@@ -65,6 +71,35 @@ uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
     }
 }
 
+uint32_t floatArithmeticOpToAOpcode(FloatArithmeticOp op) {
+    switch (op) {
+    case FloatArithmeticOp::Fadd:
+    case FloatArithmeticOp::Fsub:
+    case FloatArithmeticOp::Fmult:
+    case FloatArithmeticOp::Fdiv:
+        return 0b0011101;
+    default:
+        panic("unsupported scalar arith op for A format");
+        return 0;
+    }
+}
+
+uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
+    switch (op) {
+    case FloatArithmeticOp::Fadd:
+        return 0b000;
+    case FloatArithmeticOp::Fsub:
+        return 0b001;
+    case FloatArithmeticOp::Fmult:
+        return 0b010;
+    case FloatArithmeticOp::Fdiv:
+        return 0b011;
+    default:
+        panic("unsupported scalar arith op for A format");
+        return 0;
+    }
+}
+
 void Emitter::jumpPCRel(s<25> imm, bool link) {
     //                 opcode  | immediate offset
     //                link ---v
@@ -98,6 +133,7 @@ void Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
     append(instr);
 }
 
+// ALLISON: scalar arith ops include add, sub, or, and, xor, shr, and shl
 void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
                                         reg_idx rA, s<15> imm) {
     uint32_t instr = 0;
@@ -136,6 +172,28 @@ void Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
 
     // arithmetic op
     instr |= scalarArithmeticOpToArithCode(op);
+
+    append(instr);
+}
+
+void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
+                               reg_idx rA, reg_idx rB) {
+    uint32_t instr = 0;
+
+    uint32_t opcode = floatArithmeticOpToAOpcode(op);
+    instr |= (opcode << 25);
+
+    // rD
+    instr |= (rD.inner << 20);
+
+    // rA
+    instr |= (rA.inner << 15);
+
+    // rB
+    instr |= (rB.inner << 10);
+
+    // arithmetic op
+    instr |= floatArithmeticOpToArithCode(op);
 
     append(instr);
 }
