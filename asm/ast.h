@@ -82,9 +82,18 @@ struct OriginDirective {
     void visit(auto& v, size_t depth) { v.enter(*this, depth); }
 };
 
+struct SectionDirective {
+    SectionDirective(Token name) : name{name} {}
+
+    Token name;
+
+    void visit(auto& v, size_t depth) { v.enter(*this, depth); }
+};
+
 struct Unit {
     std::variant<std::unique_ptr<LabelDecl>, std::unique_ptr<Instruction>,
-                 std::unique_ptr<OriginDirective>>
+                 std::unique_ptr<OriginDirective>,
+                 std::unique_ptr<SectionDirective>>
         inner;
 
     template <typename T>
@@ -182,5 +191,11 @@ class ASTPrintVisitor {
         wtr << "OriginDirective {\n";
         indent(depth + 1);
         wtr << "origin = " << d.origin << "\n";
+    }
+
+    void enter(const ast::SectionDirective& d, size_t depth) {
+        wtr << "SectionDirective {\n";
+        indent(depth + 1);
+        wtr << "." << d.name.getLexeme() << "\n";
     }
 };

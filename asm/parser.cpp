@@ -45,6 +45,8 @@ auto Parser::unit() -> std::unique_ptr<ast::Unit> {
         return std::make_unique<ast::Unit>(std::move(i));
     } else if (auto d = directive_origin()) {
         return std::make_unique<ast::Unit>(std::move(d));
+    } else if (auto d = directive_section()) {
+        return std::make_unique<ast::Unit>(std::move(d));
     } else {
         error(fmt::format("unknown construct beginning with {} (`{}`)",
                           curr().getKind(), curr().getLexeme()));
@@ -84,6 +86,32 @@ auto Parser::directive_origin() -> std::unique_ptr<ast::OriginDirective> {
     next(); // eat integer
 
     return std::make_unique<ast::OriginDirective>(*originVal);
+}
+
+/* directive-section
+        ::= % 'org'
+*/
+auto Parser::directive_section() -> std::unique_ptr<ast::SectionDirective> {
+    if (curr().isNot(Token::Kind::PERCENT))
+        return nullptr;
+
+    auto directive = peek();
+    if (directive.isNot(Token::Kind::IDENTIFIER) ||
+        std::string(directive.getLexeme()) != "section") {
+        return nullptr;
+    }
+
+    next(); // eat `section`
+
+    auto name = next();
+    if (name.isNot(Token::Kind::IDENTIFIER)) {
+        error("%section must be followed by a section name");
+        return nullptr;
+    }
+
+    next(); // eat ident
+
+    return std::make_unique<ast::SectionDirective>(name);
 }
 
 /*

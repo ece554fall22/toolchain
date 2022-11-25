@@ -19,3 +19,4 @@ vldi r1, [r2+=16]
 blah [foo]
 
 %org 0x00000
+%section text
