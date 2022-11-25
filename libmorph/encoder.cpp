@@ -65,7 +65,7 @@ uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
     }
 }
 
-void Emitter::jumpPCRel(s<25> imm, bool link) {
+void isa::Emitter::jumpPCRel(s<25> imm, bool link) {
     //                 opcode  | immediate offset
     //                link ---v
     uint32_t instr = 0b0000'010'0'0000'0000'0000'0000'0000'0000;
@@ -78,7 +78,7 @@ void Emitter::jumpPCRel(s<25> imm, bool link) {
     append(instr);
 }
 
-void Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
+void isa::Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
     //                 opcode  | imm | rA  | imm
     //                link ---v
     uint32_t instr = 0b0000'100'00000'00000'000'0000'0000'0000;
@@ -98,8 +98,9 @@ void Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
     append(instr);
 }
 
-void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
-                                        reg_idx rA, s<15> imm) {
+void isa::Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op,
+                                             reg_idx rD, reg_idx rA,
+                                             s<15> imm) {
     uint32_t instr = 0;
     uint32_t opcode = scalarArithmeticOpToAIOpcode(op);
 
@@ -118,8 +119,8 @@ void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-void Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
-                               reg_idx rA, reg_idx rB) {
+void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
+                                    reg_idx rA, reg_idx rB) {
     uint32_t instr = 0;
 
     uint32_t opcode = scalarArithmeticOpToAOpcode(op);
