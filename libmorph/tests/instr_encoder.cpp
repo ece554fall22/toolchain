@@ -4,7 +4,7 @@
 #include "morph/encoder.h"
 
 TEST_CASE("emits correct encodings") {
-    Emitter emitter;
+    isa::Emitter emitter;
 
     SUBCASE("jmp") {
         emitter.jumpPCRel(1337, false);

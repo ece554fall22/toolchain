@@ -8,7 +8,6 @@
 
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl, Not };
-}; // namespace isa
 
 class Emitter {
   public:
@@ -29,3 +28,5 @@ class Emitter {
 
     std::vector<uint32_t> data;
 };
+
+}; // namespace isa
