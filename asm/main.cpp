@@ -7,8 +7,10 @@
 #include <argparse/argparse.hpp>
 #include <fmt/core.h>
 
+#include "emit.h"
 #include "lexer.h"
 #include "parser.h"
+#include "sema.h"
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
@@ -71,4 +73,27 @@ int main(int argc, char* argv[]) {
         ASTPrintVisitor debugVisitor(std::cout);
         parser.visit(debugVisitor);
     }
+
+    SemanticsPass semanticsPass{};
+    parser.visit(semanticsPass);
+    auto& semaErrors = semanticsPass.getErrors();
+    if (!semaErrors.empty()) {
+        fmt::print(fmt::emphasis::bold | fmt::emphasis::underline |
+                       fmt::fg(fmt::color::red),
+                   "errors in semantics pass:\n");
+
+        size_t i = 0;
+        for (auto& err : semaErrors) {
+            i++;
+            fmt::print(fmt::fg(fmt::color::red), "  line {}: {}\n", err.lineno,
+                       err.err);
+        }
+
+        fmt::print(fmt::fg(fmt::color::red),
+                   "\n-- aborting due to errors --\n");
+        exit(1);
+    }
+
+    // EmissionPass emissionPass{};
+    // parser.visit(emissionPass);
 }

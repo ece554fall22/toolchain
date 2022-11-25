@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <variant>
 #include <vector>
@@ -16,7 +17,7 @@ struct OperandMemory {
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const ast::OperandMemory& op) {
-        os << "Ptr{ base=" << op.base.getLexeme() << ", offset=" << op.offset
+        os << "Ptr { base=" << op.base.getLexeme() << ", offset=" << op.offset
            << ", incr=" << op.increment << " }";
         return os;
     }
@@ -133,7 +134,6 @@ class ASTPrintVisitor {
             wtr << "  ";
         }
     }
-    // auto visit()
 
   public:
     ASTPrintVisitor(std::ostream& wtr) : wtr{wtr} {}
