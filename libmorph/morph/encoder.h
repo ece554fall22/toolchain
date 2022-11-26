@@ -9,6 +9,7 @@
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl, Not };
 enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv};
+enum class VectorArithmeticOp {Vadd, Vsub, Vmult, Vdiv, Vdot, Vdota, Vsadd, Vsmult, Vssub, Vsdiv, Vsma};
 }; // namespace isa
 
 class Emitter {
@@ -24,6 +25,9 @@ class Emitter {
                           reg_idx rB);
     void floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
                           reg_idx rB);
+    void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA,
+                                 vreg_idx vB, reg_idx rD, reg_idx rA, u<4> mask)
+                                 
 
     auto getData() -> const auto& { return this->data; }
 

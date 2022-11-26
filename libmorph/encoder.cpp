@@ -1,10 +1,11 @@
 #include "morph/encoder.h"
 
 using isa::ScalarArithmeticOp;
+using isa::FloatArithmeticOp;
 
 
-// TODO: halt, nop, bi, br, lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr, not, cmp, vadd,
-// vsub, vmult, vdiv, vdot, vdota, vindx, vreduce, vswizzle, vsplat, vsadd, vsmult, vssub, vsdiv, vsma, writea, writeb, writec,
+// TODO: halt, nop, bi, br, lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr, not, cmp,
+// vindx, vreduce, vswizzle, vsplat, vsadd, vsmult, vssub, vsdiv, vsma, writea, writeb, writec,
 // matmul, readc, systolicstep, vmax, vmin, vcompsel, ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean, flushicache,
 // flushline, cmpdec, cmpinc
 
@@ -79,7 +80,7 @@ uint32_t floatArithmeticOpToAOpcode(FloatArithmeticOp op) {
     case FloatArithmeticOp::Fdiv:
         return 0b0011101;
     default:
-        panic("unsupported scalar arith op for A format");
+        panic("unsupported float arith op");
         return 0;
     }
 }
@@ -95,7 +96,37 @@ uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
     case FloatArithmeticOp::Fdiv:
         return 0b011;
     default:
-        panic("unsupported scalar arith op for A format");
+        panic("unsupported float arith op");
+        return 0;
+    }
+}
+
+uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
+    switch(op) {
+    case VectorArithmeticOp::Vadd:
+        return 0b0011111;
+    case VectorArithmeticOp::Vsub:
+        return 0b0100000;
+    case VectorArithmeticOp::Vmult:
+        return 0b0100001;
+    case VectorArithmeticOp::Vdiv:
+        return 0b0100010;
+    case VectorArithmeticOp::Vdot:
+        return 0b0100011;
+    case VectorArithmeticOp::Vdota:
+        return 0b0100100;
+    case vectorArithmeticOp::Vsadd:
+        return 0b0101001;
+    case vectorArithmeticOp::Vsmult:
+        return 0b0101010;
+    case vectorArithmeticOp::Vssub:
+        return 0b0101011;
+    case vectorArithmeticOp::Vsdiv:
+        return 0b0101100;
+    case vectorArithmeticOp::Vsma:
+        return 0b0101101;
+    default:
+        panic("unsupported vector arith op");
         return 0;
     }
 }
@@ -197,3 +228,56 @@ void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
 
     append(instr);
 }
+
+// vector instructions: vadd, vsub, vmult, vdiv, vdot, vdota
+void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
+                                vreg_idx vA, vreg_idx vB, reg_idx rD, 
+                                reg_idx rA, u<4> mask) {
+    uint32_t instr = 0;
+
+    uint32_t opcode = vectorArithmeticOpToAOpcode(op);
+    instr |= (opcode << 25);
+
+    switch(op) {
+    case VectorArithmeticOp::Vdot:
+        instr |= (rD << 20);
+        instr |= (vA << 15);
+        instr |= (vB << 10);
+    case VectorArithmeticOp::Vdota:
+        instr |= (rD << 20);
+        instr |= (rA << 15);
+        instr |= (vA << 10);
+        instr |= (vB << 5);
+    case VectorArithmeticOp::Vsma:
+        instr |= (vD << 20);
+        instr |= (rA << 15);
+        instr |= (vA << 10);
+        instr |= (vB << 5);
+        instr |= mask;
+    // scalar+vector ops
+    case vectorArithmeticOp::Vsadd:
+    case vectorArithmeticOp::Vsmult:
+    case vectorArithmeticOp::Vssub:
+    case vectorArithmeticOp::Vsdiv:
+        instr |= (vD << 20);
+        instr |= (rA << 15);
+        instr |= (vA << 10);
+        instr |= mask;
+    // vector ops
+    case vectorArithmeticOp::Vadd:
+    case vectorArithmeticOp::Vsub:
+    case vectorArithmeticOp::Vmult:
+    case vectorArithmeticOp::Vdiv:
+        instr |= (vD << 20);
+        instr |= (vA << 15);
+        instr |= (vB << 10);
+        instr |= mask;
+    default:
+        panic("unsupported vector arith op");
+    }
+
+   append(instr);    
+}
+
+
+
