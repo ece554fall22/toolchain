@@ -118,7 +118,7 @@ Token Lexer::lexNumber(const char* tok_start) {
 
 void Lexer::eatComment() {
     while (true) {
-        switch (eat()) {
+        switch (peek()) {
         case '\n':
         case '\r':
             // end of comment!
@@ -127,10 +127,11 @@ void Lexer::eatComment() {
 
         case '\0':
             // rewind so we can emit the EOF token on \0
-            cursor--;
+            // cursor--;
             return;
 
         default:
+            eat();
             break;
         }
     }
