@@ -2,11 +2,13 @@
 
 using isa::ScalarArithmeticOp;
 using isa::FloatArithmeticOp;
+using isa::VectorArithmeticOp;
+using isa::MatrixMultiplyOp;
+using isa::LoadStoreOp;
 
 
 // TODO: halt, nop, bi, br, lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr, not, cmp,
-// writea, writeb, writec,
-// matmul, readc, systolicstep, ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean, flushicache,
+// ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean, flushicache,
 // flushline, cmpdec, cmpinc
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
@@ -115,29 +117,29 @@ uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
         return 0b0100011;
     case VectorArithmeticOp::Vdota:
         return 0b0100100;
-    case vectorArithmeticOp::Vindx:
+    case VectorArithmeticOp::Vindx:
         return 0b0100101;
-    case vectorArithmeticOp::Vreduce:
+    case VectorArithmeticOp::Vreduce:
         return 0b0100110;
-    case vectorArithmeticOp::Vsplat:
+    case VectorArithmeticOp::Vsplat:
         return 0b0100111;
-    case vectorArithmeticOp::Vswizzle:
+    case VectorArithmeticOp::Vswizzle:
         return 0b0101000;
-    case vectorArithmeticOp::Vsadd:
+    case VectorArithmeticOp::Vsadd:
         return 0b0101001;
-    case vectorArithmeticOp::Vsmult:
+    case VectorArithmeticOp::Vsmult:
         return 0b0101010;
-    case vectorArithmeticOp::Vssub:
+    case VectorArithmeticOp::Vssub:
         return 0b0101011;
-    case vectorArithmeticOp::Vsdiv:
+    case VectorArithmeticOp::Vsdiv:
         return 0b0101100;
-    case vectorArithmeticOp::Vsma:
+    case VectorArithmeticOp::Vsma:
         return 0b0101101;
-    case vectorArithmeticOp::Vmax:
+    case VectorArithmeticOp::Vmax:
         return 0b0110100;
-    case vectorArithmeticOp::Vmin:
+    case VectorArithmeticOp::Vmin:
         return 0b0110101;
-    case vectorArithmeticOp::Vcompsel:
+    case VectorArithmeticOp::Vcompsel:
         return 0b0110110;
     default:
         panic("unsupported vector arith op");
@@ -145,22 +147,50 @@ uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
     }
 }
 
-uint32_t matrixMultipyOpToAOpcode(VectorArithmeticOp op) {
+uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
     switch(op) {
-    case matrixMultiplyOp::writeA:
+    case MatrixMultiplyOp::WriteA:
         return 0b0101110;
-    case matrixMultipyOp::writeB:
+    case MatrixMultiplyOp::WriteB:
         return 0b0101111;
-    case matrixMultiplyOp::writeC:
+    case MatrixMultiplyOp::WriteC:
         return 0b0110000;
-    case matrixMultipyOp::matmul:
+    case MatrixMultiplyOp::Matmul:
         return 0b0110001;
-    case matrixMultipyOp::readC:
+    case MatrixMultiplyOp::ReadC:
         return 0b0110010;
-    case matrixMultipyOp::systolicstep:
+    case MatrixMultiplyOp::Systolicstep:
         return 0b0110011;
     default:
         panic("unsupported matrix multiply op");
+        return 0;
+    }
+}
+
+uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
+    switch(op) {
+    case LoadStoreOp::Lih:
+        return 0b0001000;
+    case LoadStoreOp::Lil:
+        return 0b0001001;
+    case LoadStoreOp::Ld32:
+        return 0b0001010;
+    case LoadStoreOp::Ld36:
+        return 0b0001011;
+    case LoadStoreOp::St32:
+        return 0b0001100;
+    case LoadStoreOp::St36:
+        return 0b0001101;
+    case LoadStoreOp::Vldi:
+        return 0b0001110;
+    case LoadStoreOp::Vsti:
+        return 0b0010000;
+    case LoadStoreOp::Vldr:
+        return 0b0010001;
+    case LoadStoreOp::Vstr:
+        return 0b0010010;
+    default:
+        panic("unsupported load/store op");
         return 0;
     }
 }
@@ -267,7 +297,7 @@ void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
 // vssub, vsdiv, vmax, vmin, vcompsel, vindx, vreduce, vsplat, vswizzle
 void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
                                 vreg_idx vA, vreg_idx vB, reg_idx rD, 
-                                reg_idx rA, u<4> mask, s<8> imm) {
+                                reg_idx rA, reg_idx rB, u<4> mask, s<8> imm) {
     uint32_t instr = 0;
 
     uint32_t opcode = vectorArithmeticOpToAOpcode(op);
@@ -277,7 +307,7 @@ void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
     case VectorArithmeticOp::Vdot:
         instr |= (rD.inner << 20);
         instr |= (vA.inner << 15);
-        instr |= (vB << 10);
+        instr |= (vB.inner << 10);
     case VectorArithmeticOp::Vdota:
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
@@ -288,87 +318,141 @@ void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
         instr |= (rA.inner << 15);
         instr |= (vA.inner << 10);
         instr |= (vB.inner << 5);
-        instr |= mask.inner;
-    case vectorArithmeticOp::Vindx:
+        instr |= (mask.inner & 0b1111);
+    case VectorArithmeticOp::Vindx:
         instr |= (rD.inner << 20);
         instr |= (vA.inner << 15);
-        instr |= (imm.inner << 7); // this immediate is 2 bits, but the extras 
+        instr |= ((imm.inner & 0b11111111) << 7); // this immediate is 2 bits, but the extras 
                                    // will flow into don't care spots so i didn't
                                    // adjust the size at all
-    case vectorArithmeticOp::Vreduce:
+    case VectorArithmeticOp::Vreduce:
         instr |= (rD.inner << 20);
         instr |= (vA.inner << 15);
-        instr |= mask.inner;
-    case vectorArithmeticOp::Vsplat:
+        instr |= (mask.inner & 0b1111);
+    case VectorArithmeticOp::Vsplat:
         instr |= (vD.inner << 20);
         instr |= (vA.inner << 15);
-        instr |= mask.inner;
-    case vectorArithmeticOp::Vswizzle:
+        instr |= (mask.inner & 0b1111);
+    case VectorArithmeticOp::Vswizzle:
         instr |= (vD.inner << 20);
         instr |= (vA.inner << 15);
-        instr |= (imm.inner << 7);
-        instr |= mask.inner;
-    case vectorArithmeticOp::Vcompsel:
+        instr |= ((imm.inner & 0b11111111) << 7);
+        instr |= (mask.inner & 0b1111);
+    case VectorArithmeticOp::Vcompsel:
         instr |= (vD.inner << 20);
         instr |= (rA.inner << 15);
         instr |= (rB.inner << 10);
         instr |= (vB.inner << 5);
-        instr |= mask.inner;
+        instr |= (mask.inner & 0b1111);
     // scalar+vector ops
-    case vectorArithmeticOp::Vsadd:
-    case vectorArithmeticOp::Vsmult:
-    case vectorArithmeticOp::Vssub:
-    case vectorArithmeticOp::Vsdiv:
+    case VectorArithmeticOp::Vsadd:
+    case VectorArithmeticOp::Vsmult:
+    case VectorArithmeticOp::Vssub:
+    case VectorArithmeticOp::Vsdiv:
         instr |= (vD.inner << 20);
         instr |= (rA.inner << 15);
         instr |= (vA.inner << 10);
-        instr |= mask.inner;
+        instr |= (mask.inner & 0b1111);
     // vector ops
-    case vectorArithmeticOp::Vadd:
-    case vectorArithmeticOp::Vsub:
-    case vectorArithmeticOp::Vmult:
-    case vectorArithmeticOp::Vdiv:
-    case vectorArithmeticOp::Vmax:
-    case vectorArithmeticOp::Vmin:
+    case VectorArithmeticOp::Vadd:
+    case VectorArithmeticOp::Vsub:
+    case VectorArithmeticOp::Vmult:
+    case VectorArithmeticOp::Vdiv:
+    case VectorArithmeticOp::Vmax:
+    case VectorArithmeticOp::Vmin:
         instr |= (vD.inner << 20);
         instr |= (vA.inner << 15);
         instr |= (vB.inner << 10);
-        instr |= mask.inner;
+        instr |= (mask.inner & 0b1111);
     default:
         panic("unsupported vector arith op");
+        return;
     }
 
    append(instr);    
 }
 
 // matmul, writea, writeb, writec, readc, systolicstep
-void Emitter::matrixMultiply(isa::matrixMultiplyOp op, vreg_idx vD, vreg_idx vA, vreg_idx vB,
+void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA, vreg_idx vB,
                             u<3> idx, bool high) {
 
     uint32_t instr = 0;
 
-    uint32_t opcode = matrixMultipyOpToAOpcode(op);
+    uint32_t opcode = matrixMultiplyOpToAOpcode(op);
     instr |= (opcode << 25);
 
     switch(op) {
-    case matrixMultipyOp::matmul:
-    case matrixMultipyOp::systolicstep:
+    case MatrixMultiplyOp::Matmul:
+    case MatrixMultiplyOp::Systolicstep:
         break;
-    case matrixMultipyOp::readC:
+    case MatrixMultiplyOp::ReadC:
         instr |= (vD.inner << 20);
-        instr |= (idx.inner << 17);
+        instr |= ((idx.inner & 0b111) << 17);
         if (high)
             instr |= (1<<16);
-    case matrixMultipyOp::writeA:
-    case matrixMultipyOp::writeB:
-    case matrixMultipyOp::writeC:
-        instr |= (idx << 20);
+    case MatrixMultiplyOp::WriteA:
+    case MatrixMultiplyOp::WriteB:
+    case MatrixMultiplyOp::WriteC:
+        instr |= ((idx.inner & 0b111) << 20);
         instr |= (vA.inner << 15);
         instr |= (vB.inner << 10);
     default:
         panic("unsupported vector arith op");
+        return;
     }
 
     append(instr);
+}
+
+// lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr
+void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA, reg_idx rD, reg_idx rA,
+                        reg_idx rB, u<18> imm, u<4> mask) {
+    
+    uint32_t instr = 0;
+    uint32_t opcode = loadStoreOpToAOpcode(op);
+    instr |= (opcode << 25);
+
+    switch(op) {
+    case LoadStoreOp::Lih:
+    case LoadStoreOp::Lil:
+        instr |= (rD.inner << 20);
+        instr |= (imm.inner & 0b111111111111111111);
+    case LoadStoreOp::Ld32:
+    case LoadStoreOp::Ld36:
+        instr |= (rD.inner << 20);
+        instr |= (rA.inner << 15);
+        instr |= (imm.inner & 0b11111111111111);
+    case LoadStoreOp::St32:
+    case LoadStoreOp::St36:
+        instr |= ((imm.inner & 0b111110000000000) << 20);
+        instr |= (rA.inner << 15);
+        instr |= (rB.inner << 10);
+        instr |= (imm.inner & 0b1111111111);
+    case LoadStoreOp::Vldi:
+        instr |= (vD.inner << 20);
+        instr |= (rA.inner << 15);
+        instr |= ((imm.inner & 0b11111111111) << 4);
+        instr |= (mask.inner & 0b1111);
+    case LoadStoreOp::Vsti:
+        instr |= ((imm.inner & 0b11111000000) << 20);
+        instr |= (rA.inner << 15);
+        instr |= (vA.inner << 10);
+        instr |= ((imm.inner & 0b111111) << 4);
+        instr |= (mask.inner & 0b1111);
+    case LoadStoreOp::Vldr:
+        instr |= (vD.inner << 20);
+        instr |= (rA.inner << 15);
+        instr |= (rB.inner << 10);
+        instr |= (mask.inner & 0b1111);
+    case LoadStoreOp::Vstr:
+        instr |= (rA.inner << 15);
+        instr |= (rB.inner << 10);
+        instr |= (vA.inner << 5);
+        instr |= (mask.inner & 0b1111);
+    default:
+        panic("unsupported load/store op");
+        return;
+    }
+    append(instr);                 
 }
 
