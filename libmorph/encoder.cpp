@@ -5,11 +5,14 @@ using isa::FloatArithmeticOp;
 using isa::VectorArithmeticOp;
 using isa::MatrixMultiplyOp;
 using isa::LoadStoreOp;
+using isa::FlushCacheOp;
+using isa::CsrOp;
+using isa::FloatIntConvOp;
+using isa::ConcurrencyOp;
 
 
-// TODO: halt, nop, bi, br, lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr, not, cmp,
-// ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean, flushicache,
-// flushline, cmpdec, cmpinc
+// TODO: halt, nop, bi, br, not, cmp, cmpi
+// cmpdec, cmpinc
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
@@ -191,6 +194,22 @@ uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
         return 0b0010010;
     default:
         panic("unsupported load/store op");
+        return 0;
+    }
+}
+
+uint32_t flushCacheOpToAOpcode(FlushCacheOp op) {
+    switch(op) {
+    case FlushCacheOp::Flushdirty:
+        return 0b0111101;
+    case FlushCacheOp::Flushclean:
+        return 0b0111110;
+    case FlushCacheOp::Flushicache:
+        return 0b0111111;
+    case FlushCacheOp::Flushline:
+        return 0b1000000;
+    default:
+        panic("unsupported cache flush op");
         return 0;
     }
 }
@@ -455,4 +474,89 @@ void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA, reg_idx r
     }
     append(instr);                 
 }
+
+// flushdirty, flushclean, flushicache, flushline
+void Emitter::flushCache(isa::FlushCacheOp op, u<25> imm) {
+
+    uint32_t instr = 0;
+    uint32_t opcode = flushCacheOpToAOpcode(op);
+    instr |= (opcode << 25);
+    if (op == FlushCacheOp::Flushline) {
+        auto immHigh = (imm.inner >> 15) & 0b1111111111;
+        auto immLow = imm.inner & 0b111111111111111;
+        instr |= immLow;
+        instr |= (immHigh << 15);
+    }
+
+    append(instr);     
+}
+
+// wcsr, rcsr
+void Emitter::csr(isa::CsrOp op, u<2> csrNum) {
+
+    uint32_t instr = 0;
+    
+    if (op == CsrOp::Wcsr) {
+        instr |= (0b0111001 << 25);
+    }
+    else if (op == CsrOp::Rcsr) {
+        instr |= (0b0111000 << 25);
+    }
+    else {
+        panic("unsupported csr op");
+        return;
+    }
+    instr |= (csrNum.inner & 0b11) << 23;
+    
+    append(instr);
+}
+
+// ftoi, itof
+void Emitter::floatIntConv(isa::FloatIntConvOp op, reg_idx rD, reg_idx rA) {
+
+    uint32_t instr = 0;
+
+    if (op == FloatIntConvOp::Ftoi) {
+        instr |= (0b0110111 << 25);
+    }
+    else if (op == FloatIntConvOp::Itof) {
+        instr |= (0b0111000);
+    }
+    else {
+        panic("unsupported float int conversion op");
+        return;
+    }
+
+    instr |= (rD.inner << 20);
+    instr |= (rA.inner << 15);
+
+    append(instr);
+}
+
+// fa, cmpx
+void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, 
+                            reg_idx rB, u<15> imm) {
+    
+    uint32_t instr = 0;
+
+    if (op == ConcurrencyOp::Fa) {
+        instr |= (0b0111011 << 25);
+        instr |= (rD.inner << 20);
+        instr |= (rA.inner << 15);
+        instr |= (imm.inner & 0b111111111111111);
+    }
+    else if (op == ConcurrencyOp::Cmpx) {
+        instr |= (0b0111100 << 25);
+        instr |= (rD.inner << 20);
+        instr |= (rA.inner << 15);
+        instr |= (rB.inner << 10);
+    } else {
+        panic("unsupported concurrency op");
+        return;
+    }
+
+    append(instr);
+
+}
+
 
