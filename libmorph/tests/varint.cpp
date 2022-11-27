@@ -44,3 +44,16 @@ TEST_CASE("bits<N> concatenation") {
     auto bb = b.concat(b);
     CHECK(bb.inner == 0b1110101'1110101);
 }
+
+TEST_CASE("bits<N> bitwise manip") {
+    auto a = bits<5>(0b10111);
+    auto b = bits<5>(0b11101);
+
+    CHECK((~a).inner == 0b01000);
+    CHECK((a & b).inner == 0b10101);
+    CHECK((a | b).inner == 0b11111);
+    CHECK((a ^ b).inner == 0b01010);
+
+    CHECK(a.inner == 0b10111); // check nothing mutated
+    CHECK(b.inner == 0b11101); // check nothing mutated
+}

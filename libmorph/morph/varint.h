@@ -66,10 +66,43 @@ template <size_t SIZE> struct bits {
     auto _sgn_inner() const -> signed_inner_t {
         return static_cast<signed_inner_t>(this->inner);
     }
+
+    bits<SIZE>& operator|=(const bits<SIZE>& rhs) {
+        this->inner |= rhs.inner;
+        return *this;
+    }
+
+    bits<SIZE>& operator&=(const bits<SIZE>& rhs) {
+        this->inner &= rhs.inner;
+        return *this;
+    }
+
+    bits<SIZE>& operator^=(const bits<SIZE>& rhs) {
+        this->inner ^= rhs.inner;
+        return *this;
+    }
+
+    friend bits<SIZE> operator&(bits<SIZE> lhs, const bits<SIZE>& rhs) {
+        lhs &= rhs;
+        return lhs;
+    }
+
+    friend bits<SIZE> operator|(bits<SIZE> lhs, const bits<SIZE>& rhs) {
+        lhs |= rhs;
+        return lhs;
+    }
+
+    friend bits<SIZE> operator^(bits<SIZE> lhs, const bits<SIZE>& rhs) {
+        lhs ^= rhs;
+        return lhs;
+    }
+
+    friend bits<SIZE> operator~(bits<SIZE> rhs) {
+        rhs.inner = (~rhs.inner) & mask;
+        return rhs;
+    }
 };
 
-// template<size_t N> using s = varint<true, N>;
-// template<size_t N> using u = varint<false, N>;
 template <size_t N> struct u;
 template <size_t N> struct s;
 
