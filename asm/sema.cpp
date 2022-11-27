@@ -93,7 +93,28 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
 
         size_t i = 0;
         for (const auto& operand : inst.operands) {
-            switch (sema[i]) {}
+            switch (sema[i]) {
+            case OperandType::Register:
+                if (!operand.is<ast::OperandRegister>()) {
+                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected register operand", i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::Immediate:
+                if (!operand.is<ast::OperandImmediate>()) {
+                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected immediate operand", i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::Label:
+                if (!operand.is<ast::OperandLabel>()) {
+                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected label", i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::Memory:
+                if (!operand.is<ast::OperandMemory>()) {
+                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected memory operand", i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            }
 
             i++;
         }
