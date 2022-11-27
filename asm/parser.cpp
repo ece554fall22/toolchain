@@ -1,7 +1,7 @@
 #include "parser.h"
 
-#include <charconv>
 #include <cctype>
+#include <charconv>
 
 void Parser::parse() {
     astRoot = source_file();
@@ -203,7 +203,8 @@ auto Parser::operand() -> std::optional<ast::Operand> {
 }
 
 auto Parser::operand_register() -> std::optional<ast::OperandRegister> {
-    if (!curr().is(Token::Kind::IDENTIFIER)) return std::nullopt;
+    if (!curr().is(Token::Kind::IDENTIFIER))
+        return std::nullopt;
 
     auto ident = curr();
     auto sp = ident.getLexeme();
@@ -226,7 +227,8 @@ auto Parser::operand_register() -> std::optional<ast::OperandRegister> {
 }
 
 auto Parser::operand_label() -> std::optional<ast::OperandLabel> {
-    if (!curr().is(Token::Kind::IDENTIFIER)) return std::nullopt;
+    if (!curr().is(Token::Kind::IDENTIFIER))
+        return std::nullopt;
 
     auto lbl = curr();
     next();
