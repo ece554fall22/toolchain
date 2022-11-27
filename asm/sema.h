@@ -9,8 +9,17 @@ struct SemanticsError {
     std::string err;
 };
 
+enum class OperandType {
+    Register,
+    Immediate,
+    Label,
+    Memory,
+};
+
 class SemanticsPass {
   public:
+    SemanticsPass() : errors{} {}
+
     void enter(const ast::Instruction& inst, size_t depth);
 
     void enter(const auto& x, size_t depth) {}
