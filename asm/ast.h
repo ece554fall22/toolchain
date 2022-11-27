@@ -33,20 +33,37 @@ struct OperandImmediate {
     }
 };
 
-struct OperandIdentifier {
+struct OperandRegister {
+    Token tok;
+    bool vector;
+    uint idx;
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ast::OperandRegister& op) {
+        os << "Register(" << (op.vector ? "v" : "r") << op.idx << ")";
+        return os;
+    }
+};
+
+struct OperandLabel {
     Token label;
 
     friend std::ostream& operator<<(std::ostream& os,
-                                    const ast::OperandIdentifier& op) {
-        os << "Ident(" << op.label.getLexeme() << ")";
+                                    const ast::OperandLabel& op) {
+        os << "Label(" << op.label.getLexeme() << ")";
         return os;
     }
 };
 
 struct Operand {
-    std::variant<OperandImmediate, OperandIdentifier, OperandMemory> inner;
+    std::variant<OperandImmediate, OperandLabel, OperandRegister, OperandMemory> inner;
 
     template <typename T> Operand(T&& ld) : inner(std::move(ld)) {}
+
+    template<class T>
+    bool is() const noexcept {
+        return std::holds_alternative<T>(inner);
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {
         os << "Arg::";
