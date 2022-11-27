@@ -7,12 +7,11 @@ using isa::MatrixMultiplyOp;
 using isa::LoadStoreOp;
 using isa::FlushCacheOp;
 using isa::CsrOp;
-using isa::FloatIntConvOp;
+using isa::FloatIntConversionOp;
 using isa::ConcurrencyOp;
+using isa::BranchCompareOp;
+using isa::HaltNopOp;
 
-
-// TODO: halt, nop, bi, br, not, cmp, cmpi
-// cmpdec, cmpinc
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
@@ -38,6 +37,8 @@ uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
 
 uint32_t scalarArithmeticOpToAOpcode(ScalarArithmeticOp op) {
     switch (op) {
+    case ScalarArithmeticOp::Not:
+        return 0b0011100;
     case ScalarArithmeticOp::Add:
     case ScalarArithmeticOp::Sub:
     case ScalarArithmeticOp::Mult:
@@ -214,6 +215,26 @@ uint32_t flushCacheOpToAOpcode(FlushCacheOp op) {
     }
 }
 
+uint32_t branchCompareOpToAOpcode(BranchCompareOp op) {
+    switch(op) {
+    case BranchCompareOp::Bi:
+        return 0b0000110;
+    case BranchCompareOp::Br:
+        return 0b0000111;
+    case BranchCompareOp::Cmpi:
+        return 0b0011010;
+    case BranchCompareOp::Cmp:
+        return 0b0011110;
+    case BranchCompareOp::Cmpdec:
+        return 0b1000001;
+    case BranchCompareOp::Cmpinc:
+        return 0b1000010;
+    default:
+        panic("unsupported branch/compare op");
+        return 0;
+    }
+}
+
 void Emitter::jumpPCRel(s<25> imm, bool link) {
     //                 opcode  | immediate offset
     //                link ---v
@@ -281,11 +302,13 @@ void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
     // rA
     instr |= (rA.inner << 15);
 
-    // rB
-    instr |= (rB.inner << 10);
+    if (op != ScalarArithmeticOp::Not) {
+        // rB
+        instr |= (rB.inner << 10);
 
-    // arithmetic op
-    instr |= scalarArithmeticOpToArithCode(op);
+        // arithmetic op
+        instr |= scalarArithmeticOpToArithCode(op);
+    }
 
     append(instr);
 }
@@ -512,14 +535,14 @@ void Emitter::csr(isa::CsrOp op, u<2> csrNum) {
 }
 
 // ftoi, itof
-void Emitter::floatIntConv(isa::FloatIntConvOp op, reg_idx rD, reg_idx rA) {
+void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA) {
 
     uint32_t instr = 0;
 
-    if (op == FloatIntConvOp::Ftoi) {
+    if (op == FloatIntConversionOp::Ftoi) {
         instr |= (0b0110111 << 25);
     }
-    else if (op == FloatIntConvOp::Itof) {
+    else if (op == FloatIntConversionOp::Itof) {
         instr |= (0b0111000);
     }
     else {
@@ -557,6 +580,64 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
 
     append(instr);
 
+}
+
+// bi, br, cmpi, cmp, cmpdec, cmpinc
+void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
+                            reg_idx rB, u<22> imm, u<3> btx) {
+
+    uint32_t instr = 0;
+    uint32_t opcode = branchCompareOpToAOpcode(op);
+    instr |= (opcode << 25);
+
+    switch(op) {
+    case BranchCompareOp::Bi:
+        instr |= ((btx.inner & 0b111) << 22);
+        auto immHigh = (imm.inner >> 11) & 0b11111111111;
+        auto immLow = imm.inner & 0b11111111111;
+        instr |= (immHigh << 11);
+        instr |= immLow; 
+    case BranchCompareOp::Br:
+        instr |= ((btx.inner & 0b111) << 22);
+        instr |= ((imm.inner >> 15) & 0b11) << 20;
+        instr |= rA.inner << 15;
+        instr |= (imm.inner & 0b111111111111111);
+    case BranchCompareOp::Cmpi:
+        instr |= ((imm.inner >> 15) & 0b11111) << 20;
+        instr |= rA.inner << 15;
+        instr |= (imm.inner & 0b111111111111111);
+    case BranchCompareOp::Cmp:
+        instr |= rA.inner << 15;
+        instr |= rB.inner << 10;
+    case BranchCompareOp::Cmpdec:
+    case BranchCompareOp::Cmpinc:
+        instr |= rD.inner << 20;
+        instr |= rA.inner << 15;
+        instr |= rB.inner << 10;
+    default:
+        panic("unsupported branch/compare op");
+        return;  
+    }
+
+    append(instr);
+  
+}
+
+// halt, nop
+void Emitter::haltNop(isa::HaltNopOp op) {
+    uint32_t instr = 0;
+    if (op == HaltNopOp::Halt) {
+        instr |= (0b0000000 << 25);
+    }
+    else if (op == HaltNopOp::Nop) {
+        instr |= (0b0000001 << 25);
+    }
+    else {
+        panic("unsupported halt/nop");
+        return;
+    }
+
+    append(instr);
 }
 
 
