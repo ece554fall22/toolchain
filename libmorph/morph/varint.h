@@ -101,6 +101,11 @@ template <size_t SIZE> struct bits {
         rhs.inner = (~rhs.inner) & mask;
         return rhs;
     }
+
+    // we can always check if two bitstrings of same size are identical
+    friend auto operator==(const bits<SIZE>& lhs, const bits<SIZE>& rhs) {
+        return lhs.inner == rhs.inner;
+    }
 };
 
 template <size_t N> struct u;
@@ -217,19 +222,31 @@ template <size_t N> struct s : public bits<N> {
         return *this;
     }
 
+    // signed <- signed + unsigned
     template <size_t M> friend s<N> operator+(s<N> lhs, const u<M>& rhs) {
         lhs += rhs;
         return lhs;
     }
 
+    // signed <- signed + signed
     template <size_t M> friend s<N> operator+(s<N> lhs, const s<M>& rhs) {
         lhs += rhs;
         return lhs;
     }
 
+    // signed <- signed - signed
     template <size_t M> friend s<N> operator-(s<N> lhs, const s<M>& rhs) {
         lhs -= rhs;
         return lhs;
+    }
+
+    // signed <- signed * signed
+    template <size_t M>
+    friend s<N + M> operator*(const s<N>& lhs, const s<M>& rhs) {
+        // todo: assert?
+        s<N + M> v;
+        v.inner = lhs._sgn_inner() * rhs._sgn_inner();
+        return v;
     }
 
     template <size_t M> auto operator<=>(const s<M>& rhs) const {
@@ -237,7 +254,6 @@ template <size_t N> struct s : public bits<N> {
     }
 
     auto operator<=>(int rhs) const { return this->_sgn_inner() <=> rhs; }
-
     bool operator==(int rhs) const { return this->_sgn_inner() == rhs; }
 };
 
