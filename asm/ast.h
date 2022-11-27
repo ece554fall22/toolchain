@@ -56,12 +56,12 @@ struct OperandLabel {
 };
 
 struct Operand {
-    std::variant<OperandImmediate, OperandLabel, OperandRegister, OperandMemory> inner;
+    std::variant<OperandImmediate, OperandLabel, OperandRegister, OperandMemory>
+        inner;
 
     template <typename T> Operand(T&& ld) : inner(std::move(ld)) {}
 
-    template<class T>
-    bool is() const noexcept {
+    template <class T> bool is() const noexcept {
         return std::holds_alternative<T>(inner);
     }
 

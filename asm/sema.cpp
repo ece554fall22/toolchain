@@ -86,9 +86,12 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
         auto sema = it->second;
 
         if (sema.size() != inst.operands.size()) {
-        error(inst.mnemonic.getSrcLoc()->lineno,
-              fmt::format("instruction `{}` invoked with {} operands; we expected {}",
-                          inst.mnemonic.getLexeme(), inst.operands.size(), sema.size()));
+            error(
+                inst.mnemonic.getSrcLoc()->lineno,
+                fmt::format(
+                    "instruction `{}` invoked with {} operands; we expected {}",
+                    inst.mnemonic.getLexeme(), inst.operands.size(),
+                    sema.size()));
         }
 
         size_t i = 0;
@@ -96,22 +99,34 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
             switch (sema[i]) {
             case OperandType::Register:
                 if (!operand.is<ast::OperandRegister>()) {
-                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected register operand", i, inst.mnemonic.getLexeme()));
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format("operand {} to instruction `{}` has "
+                                      "wrong type; expected register operand",
+                                      i, inst.mnemonic.getLexeme()));
                 }
                 break;
             case OperandType::Immediate:
                 if (!operand.is<ast::OperandImmediate>()) {
-                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected immediate operand", i, inst.mnemonic.getLexeme()));
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format("operand {} to instruction `{}` has "
+                                      "wrong type; expected immediate operand",
+                                      i, inst.mnemonic.getLexeme()));
                 }
                 break;
             case OperandType::Label:
                 if (!operand.is<ast::OperandLabel>()) {
-                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected label", i, inst.mnemonic.getLexeme()));
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format("operand {} to instruction `{}` has "
+                                      "wrong type; expected label",
+                                      i, inst.mnemonic.getLexeme()));
                 }
                 break;
             case OperandType::Memory:
                 if (!operand.is<ast::OperandMemory>()) {
-                    error(inst.mnemonic.getSrcLoc()->lineno, fmt::format("operand {} to instruction `{}` has wrong type; expected memory operand", i, inst.mnemonic.getLexeme()));
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format("operand {} to instruction `{}` has "
+                                      "wrong type; expected memory operand",
+                                      i, inst.mnemonic.getLexeme()));
                 }
                 break;
             }
