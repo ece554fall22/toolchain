@@ -593,10 +593,7 @@ void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
     switch(op) {
     case BranchCompareOp::Bi:
         instr |= ((btx.inner & 0b111) << 22);
-        auto immHigh = (imm.inner >> 11) & 0b11111111111;
-        auto immLow = imm.inner & 0b11111111111;
-        instr |= (immHigh << 11);
-        instr |= immLow; 
+        instr |= imm.inner & 0b1111111111111111111111; // TODO: yeah i hate this (should be 22 1s)
     case BranchCompareOp::Br:
         instr |= ((btx.inner & 0b111) << 22);
         instr |= ((imm.inner >> 15) & 0b11) << 20;
