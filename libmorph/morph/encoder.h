@@ -15,8 +15,10 @@ enum class MatrixMultiplyOp { WriteA, WriteB, WriteC, Matmul, ReadC, Systolicste
 enum class LoadStoreOp { Lih, Lil, Ld32, Ld36, St32, St36, Vldi, Vsti, Vldr, Vstr};
 enum class FlushCacheOp { Flushdirty, Flushclean, Flushicache, Flushline};
 enum class CsrOp { Wcsr, Rcsr};
-enum class FloatIntConvOp { Ftoi, Itof};
+enum class FloatIntConversionOp { Ftoi, Itof};
 enum class ConcurrencyOp { Fa, Cmpx};
+enum class BranchCompareOp { Bi, Br, Cmpi, Cmp, Cmpdec, Cmpinc};
+enum class HaltNopOp {Halt, Nop};
 }; // namespace isa
 
 class Emitter {
@@ -40,9 +42,12 @@ class Emitter {
                         reg_idx rB, u<18> imm, u<4> mask);
     void flushCache(isa::FlushCacheOp op, u<25> imm);    
     void csr(isa::CsrOp op, u<2> csrNum);      
-    void floatIntConv(isa::FloatIntConvOp op, reg_idx rD, reg_idx rA);
+    void floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA);
     void concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, 
-                            reg_idx rB, u<15> imm);         
+                        reg_idx rB, u<15> imm);
+    void branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,reg_idx rB,
+                        u<22> imm, u<3> btx);
+    void haltNop(isa::HaltNopOp op);         
 
     auto getData() -> const auto& { return this->data; }
 
