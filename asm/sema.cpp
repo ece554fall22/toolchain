@@ -8,11 +8,11 @@
 
 // clang-format off
 static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANTICS = {
-    {"nop", {}},
+    {"nop",  {}},
     {"halt", {}},
 
-    {"jmp", {OperandType::Label}},
-    {"jal", {OperandType::Label}},
+    {"jmp",  {OperandType::Label}},
+    {"jal",  {OperandType::Label}},
     {"jmpr", {OperandType::Register, OperandType::Immediate}},
     {"jalr", {OperandType::Register, OperandType::Immediate}},
 
@@ -30,8 +30,8 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"bler", {}},
     {"bger", {}},
 
-    {"lih", {OperandType::Register, OperandType::Immediate}},
-    {"lil", {OperandType::Register, OperandType::Immediate}},
+    {"lih",  {OperandType::Register, OperandType::Immediate}},
+    {"lil",  {OperandType::Register, OperandType::Immediate}},
 
     {"ld32", {OperandType::Register, OperandType::Memory}},
     {"ld36", {OperandType::Register, OperandType::Memory}},
@@ -41,7 +41,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"addi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"subi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"andi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"ori", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
+    {"ori",  {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"xori", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"shli", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"shri", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
@@ -51,20 +51,20 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"addi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"subi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"andi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"ori", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
+    {"ori",  {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"xori", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"shli", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
     {"shri", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
 
-    {"add", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"sub", {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"add",  {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"sub",  {OperandType::Register, OperandType::Register, OperandType::Register}},
     {"mult", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"and", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"or", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"xor", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"shr", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"shl", {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"not", {OperandType::Register, OperandType::Register}},
+    {"and",  {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"or",   {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"xor",  {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"shr",  {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"shl",  {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"not",  {OperandType::Register, OperandType::Register}},
 
     {"rcsr", {OperandType::Register, OperandType::Immediate}},
     {"wcsr", {OperandType::Immediate, OperandType::Register}},
@@ -72,7 +72,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"flushicache", {}},
 
     // pseudos
-    {"lda", {OperandType::Register, OperandType::Label}},
+    {"lda",  {OperandType::Register, OperandType::Label}},
 
     // data
     {"dw36", {OperandType::Immediate}},
