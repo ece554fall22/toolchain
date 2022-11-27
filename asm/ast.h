@@ -56,11 +56,11 @@ struct Operand {
 };
 
 struct Instruction {
-    Instruction(Token mnemonic, std::vector<Operand>&& args)
-        : mnemonic{mnemonic}, args(std::move(args)) {}
+    Instruction(Token mnemonic, std::vector<Operand>&& operands)
+        : mnemonic{mnemonic}, operands(std::move(operands)) {}
 
     Token mnemonic;
-    std::vector<Operand> args;
+    std::vector<Operand> operands;
 
     void visit(auto& v, size_t depth) { v.enter(*this, depth); }
 };
@@ -171,11 +171,11 @@ class ASTPrintVisitor {
         wtr << "mnemonic = " << inst.mnemonic.getLexeme() << "\n";
 
         indent(depth + 1);
-        if (inst.args.size() == 0) {
-            wtr << "args = {}\n";
+        if (inst.operands.size() == 0) {
+            wtr << "operands = {}\n";
         } else {
-            wtr << "args = {\n";
-            for (auto arg : inst.args) {
+            wtr << "operands = {\n";
+            for (auto arg : inst.operands) {
                 indent(depth + 2);
                 wtr << arg << "\n";
             }
