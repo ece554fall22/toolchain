@@ -249,6 +249,17 @@ template <size_t N> struct s : public bits<N> {
         return v;
     }
 
+    // signed <- signed * signed
+    // truncating
+    template<size_t MSIZE, size_t RSIZE>
+    auto truncMult(const s<RSIZE>& rhs) -> s<N> {
+        s<MSIZE> v;
+        v.inner = this->_sgn_inner() * rhs._sgn_inner();
+        v.inner &= bits<MSIZE>::mask;
+
+        return v;
+    }
+
     template <size_t M> auto operator<=>(const s<M>& rhs) const {
         return this->_sgn_inner() <=> rhs._sgn_inner();
     }
