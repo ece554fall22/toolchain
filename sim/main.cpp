@@ -1,4 +1,5 @@
 #include <argparse/argparse.hpp>
+#include <filesystem>
 #include <iostream>
 
 #include "cpu.h"
@@ -70,6 +71,8 @@ struct CPUInstructionProxy : public isa::InstructionVisitor {
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
 
+    ap.add_argument("memory");
+
     try {
         ap.parse_args(argc, argv);
     } catch (const std::runtime_error& err) {
@@ -79,12 +82,31 @@ int main(int argc, char* argv[]) {
     }
 
     CPUState cpuState;
-    MemSystem mem(16);
+    MemSystem mem(1024 /* 1k */);
     CPUInstructionProxy iproxy{cpuState, mem};
     isa::PrintVisitor printvis;
 
-    mem.mempool[0] = 0x2000000; // nop
-    mem.mempool[1] = 0x5fffffe; // jmp #-2 ; PC' <- PC + 4 - 2 * 4 = PC - 4
+    {
+        auto path = ap.get<std::string>("memory");
+        if (!std::filesystem::is_regular_file(path)) {
+            fmt::print(stderr, "[!] `{}` is not a file\n", path);
+            exit(1);
+        }
+        std::ifstream fBin(path, std::ios::binary);
+        if (!fBin.is_open()) {
+            fmt::print(stderr, "[!] can't open `{}`\n", path);
+            exit(1);
+        }
+        // load blocks. WARNING WARNING TODO(erin): only works on little-endian
+        // architectures
+        fBin.read(reinterpret_cast<char*>(mem.mempool.data()),
+                  mem.mempool.size() * 4);
+    }
+
+    fmt::print("dumping 0 page:\n");
+    for (size_t i = 0; i < 32; i++) {
+        fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);
+    }
 
     while (true) {
         auto pc = cpuState.pc.getNewPC();
