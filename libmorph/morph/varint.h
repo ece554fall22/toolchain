@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <type_traits>
+#include "bit_cast.h"
 
 #define BITFILL(n) ((1L << n) - 1)
 
@@ -107,6 +108,12 @@ template <size_t SIZE> struct bits {
         return lhs.inner == rhs.inner;
     }
 };
+
+inline auto float2bits(float v) -> bits<32> {
+    bits<32> b;
+    b.inner = bit_cast<uint32_t>(v);
+    return b;
+}
 
 template <size_t N> struct u;
 template <size_t N> struct s;
