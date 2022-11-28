@@ -557,19 +557,18 @@ void Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
 }
 
 // wcsr, rcsr
-void Emitter::csr(isa::CsrOp op, u<2> csrNum) {
-
+void Emitter::csr(isa::CsrOp op, reg_idx rA, u<2> csrNum) {
     uint32_t instr = 0;
-
-    if (op == CsrOp::Wcsr) {
+    switch (op) {
+    case CsrOp::Wcsr:
         instr |= (0b0111001 << 25);
-    } else if (op == CsrOp::Rcsr) {
+        break;
+    case CsrOp::Rcsr:
         instr |= (0b0111000 << 25);
-    } else {
-        panic("unsupported csr op");
-        return;
+        break;
     }
-    instr |= (csrNum.inner & 0b11) << 23;
+    instr |= csrNum.inner << 23;
+    instr |= rA.inner << 15;
 
     append(instr);
 }
