@@ -159,26 +159,6 @@ uint32_t cacheControlOpcode(CacheControlOp op) {
     }
 }
 
-uint32_t branchCompareOpToAOpcode(BranchCompareOp op) {
-    switch (op) {
-    case BranchCompareOp::Bi:
-        return 0b0000110;
-    case BranchCompareOp::Br:
-        return 0b0000111;
-    case BranchCompareOp::Cmpi:
-        return 0b0011010;
-    case BranchCompareOp::Cmp:
-        return 0b0011110;
-    case BranchCompareOp::Cmpdec:
-        return 0b1000001;
-    case BranchCompareOp::Cmpinc:
-        return 0b1000010;
-    default:
-        panic("unsupported branch/compare op");
-        return 0;
-    }
-}
-
 void Emitter::jumpPCRel(s<25> imm, bool link) {
     //                 opcode  | immediate offset
     //                link ---v
@@ -203,11 +183,30 @@ void isa::Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
 
     // immediate upper 5 bits.
     // TODO: better slicing
-    auto immHigh = (imm.inner >> 15) & 0b11111;
-    auto immLow = imm.inner & 0b111111111111111;
+    auto immHigh = (imm.inner >> 15) & BITFILL(5);
+    auto immLow = imm.inner & BITFILL(15);
 
     instr |= immLow;
     instr |= (immHigh << 20);
+
+    append(instr);
+}
+
+void Emitter::branchImm(condition_t bt, s<22> imm) {
+    uint32_t instr = 0b0000110 << 25;
+
+    instr |= static_cast<uint32_t>(bt) << 22;
+    instr |= imm.inner;
+
+    append(instr);
+}
+
+void Emitter::branchReg(condition_t bt, reg_idx rA, s<17> imm) {
+    uint32_t instr = 0b0000111 << 25;
+
+    instr |= static_cast<uint32_t>(bt) << 22;
+    instr |= rA.inner << 15;
+    instr |= imm.inner;
 
     append(instr);
 }
@@ -255,6 +254,45 @@ void Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
     // operand registers
     instr |= (rD.inner << 20);
     instr |= (rA.inner << 15);
+
+    append(instr);
+}
+
+// comparisons
+void Emitter::compareImm(reg_idx rA, s<20> imm) {
+    uint32_t instr = 0b0011010 << 25;
+
+    auto immHi = (imm.inner >> 15) & BITFILL(5);
+    auto immLo = imm.inner & BITFILL(15);
+    instr |= immHi << 20;
+    instr |= rA.inner << 15;
+    instr |= immLo;
+
+    append(instr);
+}
+
+void Emitter::compareReg(reg_idx rA, reg_idx rB) {
+    uint32_t instr = 0b0011110 << 25;
+
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+
+    append(instr);
+}
+
+void Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD, reg_idx rA) {
+    uint32_t instr = 0b1000000 << 25;
+    switch (dir) {
+    case CmpMutateDirection::Increment:
+        instr |= 0b01 << 25;
+        break;
+    case CmpMutateDirection::Decrement:
+        instr |= 0b10 << 25;
+        break;
+    }
+
+    instr |= rD.inner << 20;
+    instr |= rA.inner << 15;
 
     append(instr);
 }
@@ -434,7 +472,6 @@ void Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
         instr |= 0b0001101 << 25;
     else
         instr |= 0b0001100 << 25;
-    ;
 
     // regs
     instr |= rA.inner << 15;
@@ -576,43 +613,6 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
         instr |= (rB.inner << 10);
     } else {
         panic("unsupported concurrency op");
-        return;
-    }
-
-    append(instr);
-}
-
-// bi, br, cmpi, cmp, cmpdec, cmpinc
-void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
-                            reg_idx rB, u<22> imm, u<3> btx) {
-
-    uint32_t instr = 0;
-    uint32_t opcode = branchCompareOpToAOpcode(op);
-    instr |= (opcode << 25);
-
-    switch (op) {
-    case BranchCompareOp::Bi:
-        instr |= ((btx.inner & 0b111) << 22);
-        instr |= imm.inner & BITFILL(22);
-    case BranchCompareOp::Br:
-        instr |= ((btx.inner & 0b111) << 22);
-        instr |= ((imm.inner >> 15) & 0b11) << 20;
-        instr |= rA.inner << 15;
-        instr |= imm.inner & BITFILL(15);
-    case BranchCompareOp::Cmpi:
-        instr |= ((imm.inner >> 15) & 0b11111) << 20;
-        instr |= rA.inner << 15;
-        instr |= imm.inner & BITFILL(15);
-    case BranchCompareOp::Cmp:
-        instr |= rA.inner << 15;
-        instr |= rB.inner << 10;
-    case BranchCompareOp::Cmpdec:
-    case BranchCompareOp::Cmpinc:
-        instr |= rD.inner << 20;
-        instr |= rA.inner << 15;
-        instr |= rB.inner << 10;
-    default:
-        panic("unsupported branch/compare op");
         return;
     }
 
