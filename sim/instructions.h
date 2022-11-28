@@ -116,6 +116,10 @@ void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
                      (!valA.sign() && !valB.sign() && res.sign());
 }
 
+void not_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA) {
+    cpu.r[rD] = ~cpu.r[rD];
+}
+
 // -- scalar float instructions
 #define SCALAR_FLOAT_BINOP(mnemonic, infixop)                                  \
     void mnemonic(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA,       \
