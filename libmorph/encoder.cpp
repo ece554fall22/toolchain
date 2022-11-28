@@ -162,39 +162,15 @@ uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
     }
 }
 
-uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
+uint32_t cacheControlOpcode(CacheControlOp op) {
     switch (op) {
-    case LoadStoreOp::Ld32:
-        return 0b0001010;
-    case LoadStoreOp::Ld36:
-        return 0b0001011;
-    case LoadStoreOp::St32:
-        return 0b0001100;
-    case LoadStoreOp::St36:
-        return 0b0001101;
-    case LoadStoreOp::Vldi:
-        return 0b0001110;
-    case LoadStoreOp::Vsti:
-        return 0b0010000;
-    case LoadStoreOp::Vldr:
-        return 0b0010001;
-    case LoadStoreOp::Vstr:
-        return 0b0010010;
-    default:
-        panic("unsupported load/store op");
-        return 0;
-    }
-}
-
-uint32_t flushCacheOpToAOpcode(FlushCacheOp op) {
-    switch (op) {
-    case FlushCacheOp::Flushdirty:
+    case CacheControlOp::Flushdirty:
         return 0b0111101;
-    case FlushCacheOp::Flushclean:
+    case CacheControlOp::Flushclean:
         return 0b0111110;
-    case FlushCacheOp::Flushicache:
+    case CacheControlOp::Flushicache:
         return 0b0111111;
-    case FlushCacheOp::Flushline:
+    case CacheControlOp::Flushline:
         return 0b1000000;
     default:
         panic("unsupported cache flush op");
@@ -448,62 +424,109 @@ void Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
     append(instr);
 }
 
-// ld32, ld36, st32, st36, vldi, vsti, vldr, vstr
-void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA,
-                        reg_idx rD, reg_idx rA, reg_idx rB, u<18> imm,
-                        u<4> mask) {
-
+// ld32, ld36
+void Emitter::loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm) {
     uint32_t instr = 0;
-    uint32_t opcode = loadStoreOpToAOpcode(op);
-    instr |= (opcode << 25);
+    // opcode
+    if (b36)
+        instr |= 0b0001011 << 25;
+    else
+        instr |= 0b0001010 << 25;
 
-    switch (op) {
-    case LoadStoreOp::Ld32:
-    case LoadStoreOp::Ld36:
-        instr |= (rD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= imm.inner & BITFILL(14);
-    case LoadStoreOp::St32:
-    case LoadStoreOp::St36:
-        instr |= ((imm.inner & 0b111110000000000) << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= imm.inner & BITFILL(10);
-    case LoadStoreOp::Vldi:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= ((imm.inner & 0b11111111111) << 4);
-        instr |= (mask.inner & 0b1111);
-    case LoadStoreOp::Vsti:
-        instr |= ((imm.inner & 0b11111000000) << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= ((imm.inner & 0b111111) << 4);
-        instr |= (mask.inner & 0b1111);
-    case LoadStoreOp::Vldr:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (mask.inner & 0b1111);
-    case LoadStoreOp::Vstr:
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (vA.inner << 5);
-        instr |= (mask.inner & 0b1111);
-    default:
-        panic("unsupported load/store op");
-        return;
-    }
+    // regs
+    instr |= rD.inner << 20;
+    instr |= rA.inner << 15;
+
+    // immediate
+    instr |= imm.inner;
+
+    append(instr);
+}
+
+// st32, st36
+void Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
+    uint32_t instr = 0;
+    // opcode
+    if (b36)
+        instr |= 0b0001101 << 25;
+    else
+        instr |= 0b0001100 << 25;
+    ;
+
+    // regs
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+
+    // immediate
+    auto immHi = (imm.inner >> 10) & BITFILL(5);
+    auto immLo = imm.inner & BITFILL(10);
+    instr |= immHi << 20;
+    instr |= immLo;
+
+    append(instr);
+}
+
+void Emitter::loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm,
+                                  vmask_t mask) {
+    uint32_t instr = 0b0001110 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= imm.inner << 4;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm,
+                                   vmask_t mask) {
+    uint32_t instr = 0b0010000 << 25;
+
+    instr |= rA.inner << 15;
+    instr |= vB.inner << 10;
+
+    // immediate
+    auto immHi = (imm.inner >> 6) & BITFILL(5);
+    auto immLo = imm.inner & BITFILL(6);
+    instr |= immHi << 20;
+    instr |= immLo << 4;
+
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::loadVectorRegStride(vreg_idx vD, reg_idx rA, reg_idx rB,
+                                  vmask_t mask) {
+    uint32_t instr = 0b0010001 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
+                                   vmask_t mask) {
+    uint32_t instr = 0b0010010 << 25;
+
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+    instr |= vA.inner << 5;
+    instr |= mask.inner;
+
     append(instr);
 }
 
 // flushdirty, flushclean, flushicache, flushline
-void Emitter::flushCache(isa::FlushCacheOp op, u<25> imm) {
+void Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
 
     uint32_t instr = 0;
-    uint32_t opcode = flushCacheOpToAOpcode(op);
+    uint32_t opcode = cacheControlOpcode(op);
     instr |= (opcode << 25);
-    if (op == FlushCacheOp::Flushline) {
+    if (op == CacheControlOp::Flushline) {
         auto immHigh = (imm.inner >> 15) & BITFILL(10);
         auto immLow = imm.inner & BITFILL(15);
         instr |= immLow;
@@ -613,17 +636,15 @@ void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
     append(instr);
 }
 
-// halt, nop
-void Emitter::haltNop(isa::HaltNopOp op) {
-    uint32_t instr = 0;
-    if (op == HaltNopOp::Halt) {
-        instr |= (0b0000000 << 25);
-    } else if (op == HaltNopOp::Nop) {
-        instr |= (0b0000001 << 25);
-    } else {
-        panic("unsupported halt/nop");
-        return;
-    }
+// misc
+void Emitter::halt() {
+    uint32_t instr = 0b0000000 << 25;
+
+    append(instr);
+}
+
+void Emitter::nop() {
+    uint32_t instr = 0b0000001 << 25;
 
     append(instr);
 }

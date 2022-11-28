@@ -136,10 +136,6 @@ SCALAR_FLOAT_BINOP(fmul, *);
 SCALAR_FLOAT_BINOP(fdiv, /);
 
 // -- vector instructions
-constexpr size_t N_LANES = 4;
-using vmask_t = bits<4>;
-using velem_idx_t = bits<2>;
-
 template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
     for (size_t lane = 0; lane < N_LANES; lane++) {
         if (mask.bit(lane))
