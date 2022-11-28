@@ -228,6 +228,15 @@ void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA,
     });
 }
 
+void vcomp(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
+           vreg_idx vA, vmask_t mask) {
+    float a = bits2float(cpu.r[rA].slice<31, 0>());
+    float b = bits2float(cpu.r[rB].slice<31, 0>());
+
+    _lane_apply(mask,
+                [&](auto i) { cpu.v[vD][i] = (cpu.v[vA][i] > 0.f) ? a : b; });
+}
+
 // -- scalar memory instructions
 void ld32(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
