@@ -37,18 +37,7 @@ enum class MatrixMultiplyOp {
     ReadC,
     Systolicstep
 };
-enum class LoadStoreOp {
-    Lih,
-    Lil,
-    Ld32,
-    Ld36,
-    St32,
-    St36,
-    Vldi,
-    Vsti,
-    Vldr,
-    Vstr
-};
+enum class LoadStoreOp { Ld32, Ld36, St32, St36, Vldi, Vsti, Vldr, Vstr };
 enum class FlushCacheOp { Flushdirty, Flushclean, Flushicache, Flushline };
 enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
@@ -75,8 +64,10 @@ class Emitter {
                           u<4> mask, s<8> imm);
     void matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
                         vreg_idx vB, u<3> idx, bool high);
-    void loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA, reg_idx rD,
-                   reg_idx rA, reg_idx rB, u<18> imm, u<4> mask);
+
+    void loadImmediate(bool high, reg_idx rD, u<18> imm);
+    void loadScalar(bool op, vreg_idx vD, vreg_idx vA, reg_idx rD, reg_idx rA,
+                    reg_idx rB, u<18> imm, u<4> mask);
     void flushCache(isa::FlushCacheOp op, u<25> imm);
     void csr(isa::CsrOp op, u<2> csrNum);
     void floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA);
