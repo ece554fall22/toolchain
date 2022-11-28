@@ -99,3 +99,12 @@ TEST_CASE("signed multiplication") {
     CHECK(bc == cb);
     CHECK(ca == ac);
 }
+
+TEST_CASE("float2bits and bits2float") {
+    float f = 0.45;
+
+    auto bits = float2bits(f);
+    float f_roundtrip = bits2float(bits);
+
+    REQUIRE(f == f_roundtrip); // needs to be exact!
+}
