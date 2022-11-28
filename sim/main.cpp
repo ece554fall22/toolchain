@@ -63,6 +63,20 @@ struct CPUInstructionProxy : public isa::InstructionVisitor {
             instructions::st32(cpu, mem, rA, rB, imm);
     }
 
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB, isa::ScalarArithmeticOp op) {
+        switch (op) {
+        case isa::ScalarArithmeticOp::Add: instructions::add(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::Sub: instructions::sub(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::Mul: instructions::mul(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::And: instructions::and_(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::Or:  instructions::or_(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::Xor: instructions::xor_(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::Shr: instructions::shr(cpu, mem, rD, rA, rB); return;
+        case isa::ScalarArithmeticOp::Shl: instructions::shl(cpu, mem, rD, rA, rB); return;
+        }
+    }
+
+
   private:
     CPUState& cpu;
     MemSystem& mem;

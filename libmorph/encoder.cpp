@@ -41,7 +41,7 @@ uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
         return 0b0000;
     case ScalarArithmeticOp::Sub:
         return 0b0001;
-    case ScalarArithmeticOp::Mult:
+    case ScalarArithmeticOp::Mul:
         return 0b0010;
     case ScalarArithmeticOp::And:
         return 0b0011;

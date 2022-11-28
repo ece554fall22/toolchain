@@ -1,9 +1,14 @@
 #pragma once
 
+#include <cstdint>
+
+#include <fmt/core.h>
+#include <fmt/ostream.h>
+
 #include "ty.h"
 #include "util.h"
 #include "varint.h"
-#include <cstdint>
+#include "isa.h"
 
 namespace isa {
 struct InstructionVisitor {
@@ -33,9 +38,18 @@ struct InstructionVisitor {
     virtual void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) = 0;
     // MS
     virtual void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) = 0;
+
+    // A
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB, isa::ScalarArithmeticOp op) = 0;
 };
 
 void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
+
+// #define PRINT_RRR(fn, mnemonic)                                                \
+//     virtual void fn(reg_idx rD, reg_idx rA, reg_idx rB) {                      \
+//         fmt::print(#mnemonic " r{}, r{}, r{}", rD.inner, rA.inner, rB.inner);  \
+//     }
+
 
 struct PrintVisitor : public InstructionVisitor {
     virtual ~PrintVisitor() = default;
@@ -89,6 +103,12 @@ struct PrintVisitor : public InstructionVisitor {
             std::cout << "32";
         std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
     }
+
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB, isa::ScalarArithmeticOp op) {
+        std::cout << op << " r" << rD.inner << ", r" << rA.inner << ", r" << rB.inner << "\n";
+    }
 };
+
+// #undef PRINT_RRR
 
 } // namespace isa
