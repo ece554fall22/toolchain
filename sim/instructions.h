@@ -72,7 +72,8 @@ void sub(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 
 // MULT
 void mult(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = cpu.r[rA].asSigned().truncMult<36>(cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD] =
+        cpu.r[rA].asSigned().truncMult<36>(cpu.r[rB].asSigned()).asUnsigned();
 }
 
 // AND
@@ -92,12 +93,14 @@ void xor_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 
 // SHL
 void shl(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD].inner = (cpu.r[rA].inner << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
+    cpu.r[rD].inner =
+        (cpu.r[rA].inner << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 // SHR
 void shr(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD].inner = (cpu.r[rA].inner >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
+    cpu.r[rD].inner =
+        (cpu.r[rA].inner >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
