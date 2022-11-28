@@ -149,15 +149,11 @@ void st36(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
     mem.write(addr, val);
 }
 
-<<<<<<< HEAD
-// -- jumps
-=======
 /************************************************************************/
 /*******************************-- JUMPS ********************************/
 /************************************************************************/
 
 // JMP
->>>>>>> bc3136c (instr impls: misc cleanups to get them to build)
 void jmp(CPUState& cpu, MemSystem& mem, s<25> imm) {
     cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
@@ -175,35 +171,6 @@ void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
     cpu.r[31] = cpu.pc.getCurrentPC();                        // link
     cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
-}
-
-/************************************************************************/
-/*******************************-- JUMPS ********************************/
-/************************************************************************/
-
-// JMPR
-void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.pc.redirect(cpu.r[rT] + (imm << 2)); // and jump (imm * 4)
-}
-
-// JALR
-void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.get();         // link
-    cpu.pc.redirect(cpu.r[rT] + (imm << 2)); // and jump (imm * 4)
-}
-
-// JMP
-void jmp(CPUState& cpu, MemSystem& mem, reg_idx rT, s<25> imm) {
-    addr_t nxt_pc = cpu.pc.get() + 4;
-    cpu.pc.redirect(nxt_pc + (imm << 2)); // imm * 4
-}
-
-// JAL
-void jal(CPUState& cpu, MemSystem& mem, reg_idx rT, s<25> imm) {
-    addr_t curr_pc = cpu.pc.get();
-    addr_t nxt_pc = curr_pc + 4;
-    cpu.r[31] = curr_pc;                // link
-    cpu.pc.redirect(nxt_pc + (imm << 2)); // and jump (imm * 4)
 }
 
 /************************************************************************/
@@ -255,7 +222,7 @@ void bnzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
 }
 
 // BEZI
-void bezo(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bezi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.zero)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
