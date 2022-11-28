@@ -13,7 +13,7 @@ constexpr size_t N_LANES = 4;
 using vmask_t = bits<4>;
 using velem_idx_t = bits<2>;
 
-enum class condition_t {
+enum class condition_t : uint32_t {
     nz = 0b000,
     ez = 0b001,
     lz = 0b010,

@@ -41,7 +41,7 @@ enum class CacheControlOp { Flushdirty, Flushclean, Flushicache, Flushline };
 enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
 enum class ConcurrencyOp { Fa, Cmpx };
-enum class BranchCompareOp { Bi, Br, Cmpi, Cmp, Cmpdec, Cmpinc };
+enum class CmpMutateDirection { Increment, Decrement };
 }; // namespace isa
 
 class Emitter {
@@ -54,8 +54,8 @@ class Emitter {
     void jumpPCRel(s<25> imm, bool link);
     void jumpRegRel(reg_idx rA, s<20> imm, bool link);
 
-    void branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
-                       reg_idx rB, u<22> imm, u<3> btx);
+    void branchImm(condition_t bt, s<22> imm);
+    void branchReg(condition_t bt, reg_idx rA, s<17> imm);
 
     // scalar arithmetic
     void scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
@@ -64,6 +64,10 @@ class Emitter {
                           reg_idx rB);
     void scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
                              reg_idx rA);
+
+    void compareImm(reg_idx rA, s<20> imm);
+    void compareReg(reg_idx rA, reg_idx rB);
+    void compareAndMutate(isa::CmpMutateDirection dir, reg_idx rD, reg_idx rA);
 
     // scalar float arithmetic
     void floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
