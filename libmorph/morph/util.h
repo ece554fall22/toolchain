@@ -22,8 +22,8 @@ class Panic : public std::logic_error {
 };
 
 #define panic(...) throw Panic(__FILE__, __LINE__, ##__VA_ARGS__)
-#define todo(...) throw Panic(__FILE__, __LINE__, ##__VA_ARGS__)
-#define unimplemented(...) throw Panic(__FILE__, __LINE__, ##__VA_ARGS__)
+#define todo(...) throw Todo(__FILE__, __LINE__, ##__VA_ARGS__)
+#define unimplemented(...) throw Unimplemented(__FILE__, __LINE__, ##__VA_ARGS__)
 
 /// --- overload helpers for std::visit
 template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
