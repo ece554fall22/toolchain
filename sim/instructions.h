@@ -144,6 +144,14 @@ template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
                     [&](auto i) { cpu.v[vD][i] = cpu.v[vB][i] infixop val; }); \
     }
 
+#define VEC_EXTREMA(mnemonic, chooser)                                         \
+    void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,     \
+                  vreg_idx vB, vmask_t mask) {                                 \
+        _lane_apply(mask, [&](auto i) {                                        \
+            cpu.v[vD][i] = chooser(cpu.v[vA][i], cpu.v[vB][i]);                \
+        });                                                                    \
+    }
+
 VEC_BINOP(vadd, +);
 VEC_BINOP(vsub, -);
 VEC_BINOP(vmul, *);
@@ -153,6 +161,9 @@ VEC_VS_BINOP(vsadd, +);
 VEC_VS_BINOP(vssub, -);
 VEC_VS_BINOP(vsmul, *);
 VEC_VS_BINOP(vsdiv, /);
+
+VEC_EXTREMA(vmax, std::max);
+VEC_EXTREMA(vmin, std::min);
 
 void vdot(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA, vreg_idx vB,
           vmask_t mask) {
@@ -208,7 +219,8 @@ void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
     _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
 }
 
-void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB, vmask_t mask) {
+void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA,
+          vreg_idx vB, vmask_t mask) {
     float factor = bits2float(cpu.r[rA].slice<31, 0>());
 
     _lane_apply(mask, [&](auto i) {
