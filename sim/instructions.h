@@ -119,6 +119,7 @@ void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 // -- vector instructions
 constexpr size_t N_LANES = 4;
 using vmask_t = bits<4>;
+using velem_idx_t = bits<2>;
 
 template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
     for (size_t lane = 0; lane < N_LANES; lane++) {
@@ -179,6 +180,32 @@ void vdota(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, vreg_idx vA,
     cpu.r[rD].inner =
         float2bits(acc)
             .inner; // okay because float2bits . :: -> bits<32> ⊂ bits<36>
+}
+
+void vidx(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA,
+          velem_idx_t idx) {
+    cpu.r[rD].inner = float2bits(cpu.v[vA][idx.inner]).inner; // reasoning ibid
+}
+
+void vreduce(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA,
+             vmask_t mask) {
+    float acc = 0.f;
+
+    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i]; });
+
+    cpu.r[rD].inner = float2bits(acc).inner; // reasoning ibid
+}
+
+void vsplat(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA,
+            vmask_t mask) {
+    float val = bits2float(cpu.r[rA].slice<31, 0>());
+
+    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = val; });
+}
+
+void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
+              velem_idx_t idxs[4], vmask_t mask) {
+    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
 }
 
 // -- scalar memory instructions
