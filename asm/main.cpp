@@ -98,7 +98,15 @@ int main(int argc, char* argv[]) {
     parser.visit(emissionPass);
 
     auto output = emissionPass.getData();
-    for (size_t i = 0; i < output.size(); i++) {
-        fmt::print("{:#x}: {:#x}\n", i, output[i]);
+    {
+        std::ofstream fOut(ap.get<std::string>("--output"), std::ios::binary);
+        for (uint32_t word : output) {
+            char v[4];
+            v[0] = (word >> 0) & 0xff;
+            v[1] = (word >> 8) & 0xff;
+            v[2] = (word >> 16) & 0xff;
+            v[3] = (word >> 24) & 0xff;
+            fOut.write(v, sizeof(v));
+        }
     }
 }
