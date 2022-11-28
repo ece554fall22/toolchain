@@ -140,6 +140,34 @@ VEC_BINOP(vsub, -);
 VEC_BINOP(vmul, *);
 VEC_BINOP(vdiv, /);
 
+void vdot(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA, vreg_idx vB,
+          vmask_t mask) {
+
+    // compute dot
+    float acc = 0.f;
+    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
+
+    // dump to rD
+    cpu.r[rD].inner =
+        float2bits(acc)
+            .inner; // okay because float2bits . :: -> bits<32> ⊂ bits<36>
+}
+
+void vdota(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, vreg_idx vA,
+           vreg_idx vB, vmask_t mask) {
+
+    // load rA to accumulator
+    float acc = bits2float(cpu.r[rA].slice<31, 0>());
+
+    // compute dot
+    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
+
+    // dump to rD
+    cpu.r[rD].inner =
+        float2bits(acc)
+            .inner; // okay because float2bits . :: -> bits<32> ⊂ bits<36>
+}
+
 // -- scalar memory instructions
 void ld32(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
