@@ -116,6 +116,21 @@ void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
                      (!valA.sign() && !valB.sign() && res.sign());
 }
 
+// -- scalar float instructions
+#define SCALAR_FLOAT_BINOP(mnemonic, infixop)                                  \
+    void mnemonic(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA,       \
+                  reg_idx rB) {                                                \
+        float a = bits2float(cpu.r[rA].slice<31, 0>());                        \
+        float b = bits2float(cpu.r[rB].slice<31, 0>());                        \
+        float d = a infixop b;                                                 \
+        cpu.r[rD].inner = float2bits(d).inner;                                 \
+    }
+
+SCALAR_FLOAT_BINOP(fadd, +);
+SCALAR_FLOAT_BINOP(fsub, -);
+SCALAR_FLOAT_BINOP(fmul, *);
+SCALAR_FLOAT_BINOP(fdiv, /);
+
 // -- vector instructions
 constexpr size_t N_LANES = 4;
 using vmask_t = bits<4>;
