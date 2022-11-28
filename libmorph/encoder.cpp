@@ -1,16 +1,8 @@
 #include "morph/encoder.h"
 
-using isa::BranchCompareOp;
-using isa::ConcurrencyOp;
-using isa::CsrOp;
-using isa::FloatArithmeticOp;
-using isa::FloatIntConversionOp;
-using isa::FlushCacheOp;
-using isa::HaltNopOp;
-using isa::LoadStoreOp;
-using isa::MatrixMultiplyOp;
-using isa::ScalarArithmeticOp;
-using isa::VectorArithmeticOp;
+using namespace isa;
+
+#define BITFILL(n) ((1L << n) - 1)
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
@@ -172,10 +164,6 @@ uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
 
 uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
     switch (op) {
-    case LoadStoreOp::Lih:
-        return 0b0001000;
-    case LoadStoreOp::Lil:
-        return 0b0001001;
     case LoadStoreOp::Ld32:
         return 0b0001010;
     case LoadStoreOp::Ld36:
@@ -283,7 +271,7 @@ void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
     instr |= (rA.inner << 15);
 
     // imm
-    instr |= (imm.inner & 0b111111111111111);
+    instr |= imm.inner & BITFILL(15);
 
     append(instr);
 }
@@ -446,7 +434,21 @@ void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
     append(instr);
 }
 
-// lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr
+// lih, lil
+void Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
+    uint32_t instr = 0;
+    if (hi)
+        instr |= 0b0001000 << 25;
+    else
+        instr |= 0b0001001 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= imm.inner;
+
+    append(instr);
+}
+
+// ld32, ld36, st32, st36, vldi, vsti, vldr, vstr
 void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA,
                         reg_idx rD, reg_idx rA, reg_idx rB, u<18> imm,
                         u<4> mask) {
@@ -456,21 +458,17 @@ void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA,
     instr |= (opcode << 25);
 
     switch (op) {
-    case LoadStoreOp::Lih:
-    case LoadStoreOp::Lil:
-        instr |= (rD.inner << 20);
-        instr |= (imm.inner & 0b111111111111111111);
     case LoadStoreOp::Ld32:
     case LoadStoreOp::Ld36:
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
-        instr |= (imm.inner & 0b11111111111111);
+        instr |= imm.inner & BITFILL(14);
     case LoadStoreOp::St32:
     case LoadStoreOp::St36:
         instr |= ((imm.inner & 0b111110000000000) << 20);
         instr |= (rA.inner << 15);
         instr |= (rB.inner << 10);
-        instr |= (imm.inner & 0b1111111111);
+        instr |= imm.inner & BITFILL(10);
     case LoadStoreOp::Vldi:
         instr |= (vD.inner << 20);
         instr |= (rA.inner << 15);
@@ -506,8 +504,8 @@ void Emitter::flushCache(isa::FlushCacheOp op, u<25> imm) {
     uint32_t opcode = flushCacheOpToAOpcode(op);
     instr |= (opcode << 25);
     if (op == FlushCacheOp::Flushline) {
-        auto immHigh = (imm.inner >> 15) & 0b1111111111;
-        auto immLow = imm.inner & 0b111111111111111;
+        auto immHigh = (imm.inner >> 15) & BITFILL(10);
+        auto immLow = imm.inner & BITFILL(15);
         instr |= immLow;
         instr |= (immHigh << 15);
     }
@@ -564,7 +562,7 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
         instr |= (0b0111011 << 25);
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
-        instr |= (imm.inner & 0b111111111111111);
+        instr |= imm.inner & BITFILL(15);
     } else if (op == ConcurrencyOp::Cmpx) {
         instr |= (0b0111100 << 25);
         instr |= (rD.inner << 20);
@@ -589,17 +587,16 @@ void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
     switch (op) {
     case BranchCompareOp::Bi:
         instr |= ((btx.inner & 0b111) << 22);
-        instr |= imm.inner & 0b1111111111111111111111; // TODO: yeah i hate this
-                                                       // (should be 22 1s)
+        instr |= imm.inner & BITFILL(22);
     case BranchCompareOp::Br:
         instr |= ((btx.inner & 0b111) << 22);
         instr |= ((imm.inner >> 15) & 0b11) << 20;
         instr |= rA.inner << 15;
-        instr |= (imm.inner & 0b111111111111111);
+        instr |= imm.inner & BITFILL(15);
     case BranchCompareOp::Cmpi:
         instr |= ((imm.inner >> 15) & 0b11111) << 20;
         instr |= rA.inner << 15;
-        instr |= (imm.inner & 0b111111111111111);
+        instr |= imm.inner & BITFILL(15);
     case BranchCompareOp::Cmp:
         instr |= rA.inner << 15;
         instr |= rB.inner << 10;
