@@ -174,16 +174,33 @@ struct DisasmVisitor : public InstructionVisitor {
         instr.imm = imm._sgn_inner();
     }
 
-    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB, isa::ScalarArithmeticOp op) {
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                                  isa::ScalarArithmeticOp op) {
         switch (op) {
-        case isa::ScalarArithmeticOp::Add: instr.opcode = Opcode::Add; break;
-        case isa::ScalarArithmeticOp::Sub: instr.opcode = Opcode::Sub; break;
-        case isa::ScalarArithmeticOp::Mul: instr.opcode = Opcode::Mul; break;
-        case isa::ScalarArithmeticOp::And: instr.opcode = Opcode::And; break;
-        case isa::ScalarArithmeticOp::Or:  instr.opcode = Opcode::Or; break;
-        case isa::ScalarArithmeticOp::Xor: instr.opcode = Opcode::Xor; break;
-        case isa::ScalarArithmeticOp::Shr: instr.opcode = Opcode::Shr; break;
-        case isa::ScalarArithmeticOp::Shl: instr.opcode = Opcode::Shl; break;
+        case isa::ScalarArithmeticOp::Add:
+            instr.opcode = Opcode::Add;
+            break;
+        case isa::ScalarArithmeticOp::Sub:
+            instr.opcode = Opcode::Sub;
+            break;
+        case isa::ScalarArithmeticOp::Mul:
+            instr.opcode = Opcode::Mul;
+            break;
+        case isa::ScalarArithmeticOp::And:
+            instr.opcode = Opcode::And;
+            break;
+        case isa::ScalarArithmeticOp::Or:
+            instr.opcode = Opcode::Or;
+            break;
+        case isa::ScalarArithmeticOp::Xor:
+            instr.opcode = Opcode::Xor;
+            break;
+        case isa::ScalarArithmeticOp::Shr:
+            instr.opcode = Opcode::Shr;
+            break;
+        case isa::ScalarArithmeticOp::Shl:
+            instr.opcode = Opcode::Shl;
+            break;
         }
 
         instr.oper_regs[0] = rD;

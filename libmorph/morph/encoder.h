@@ -2,10 +2,10 @@
 
 #include <vector>
 
+#include "isa.h"
 #include "ty.h"
 #include "util.h"
 #include "varint.h"
-#include "isa.h"
 
 namespace isa {
 enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
