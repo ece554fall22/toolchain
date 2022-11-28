@@ -1,17 +1,16 @@
 #include "morph/encoder.h"
 
-using isa::ScalarArithmeticOp;
-using isa::FloatArithmeticOp;
-using isa::VectorArithmeticOp;
-using isa::MatrixMultiplyOp;
-using isa::LoadStoreOp;
-using isa::FlushCacheOp;
-using isa::CsrOp;
-using isa::FloatIntConversionOp;
-using isa::ConcurrencyOp;
 using isa::BranchCompareOp;
+using isa::ConcurrencyOp;
+using isa::CsrOp;
+using isa::FloatArithmeticOp;
+using isa::FloatIntConversionOp;
+using isa::FlushCacheOp;
 using isa::HaltNopOp;
-
+using isa::LoadStoreOp;
+using isa::MatrixMultiplyOp;
+using isa::ScalarArithmeticOp;
+using isa::VectorArithmeticOp;
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
@@ -108,7 +107,7 @@ uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
 }
 
 uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
-    switch(op) {
+    switch (op) {
     case VectorArithmeticOp::Vadd:
         return 0b0011111;
     case VectorArithmeticOp::Vsub:
@@ -152,7 +151,7 @@ uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
 }
 
 uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
-    switch(op) {
+    switch (op) {
     case MatrixMultiplyOp::WriteA:
         return 0b0101110;
     case MatrixMultiplyOp::WriteB:
@@ -172,7 +171,7 @@ uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
 }
 
 uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
-    switch(op) {
+    switch (op) {
     case LoadStoreOp::Lih:
         return 0b0001000;
     case LoadStoreOp::Lil:
@@ -200,7 +199,7 @@ uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
 }
 
 uint32_t flushCacheOpToAOpcode(FlushCacheOp op) {
-    switch(op) {
+    switch (op) {
     case FlushCacheOp::Flushdirty:
         return 0b0111101;
     case FlushCacheOp::Flushclean:
@@ -216,7 +215,7 @@ uint32_t flushCacheOpToAOpcode(FlushCacheOp op) {
 }
 
 uint32_t branchCompareOpToAOpcode(BranchCompareOp op) {
-    switch(op) {
+    switch (op) {
     case BranchCompareOp::Bi:
         return 0b0000110;
     case BranchCompareOp::Br:
@@ -313,8 +312,8 @@ void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
-                               reg_idx rA, reg_idx rB) {
+void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
+                              reg_idx rB) {
     uint32_t instr = 0;
 
     uint32_t opcode = floatArithmeticOpToAOpcode(op);
@@ -338,14 +337,14 @@ void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
 // vector instructions: vadd, vsub, vmult, vdiv, vdot, vdota, vsadd, vsmult,
 // vssub, vsdiv, vmax, vmin, vcompsel, vindx, vreduce, vsplat, vswizzle
 void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
-                                vreg_idx vA, vreg_idx vB, reg_idx rD, 
-                                reg_idx rA, reg_idx rB, u<4> mask, s<8> imm) {
+                               vreg_idx vA, vreg_idx vB, reg_idx rD, reg_idx rA,
+                               reg_idx rB, u<4> mask, s<8> imm) {
     uint32_t instr = 0;
 
     uint32_t opcode = vectorArithmeticOpToAOpcode(op);
     instr |= (opcode << 25);
 
-    switch(op) {
+    switch (op) {
     case VectorArithmeticOp::Vdot:
         instr |= (rD.inner << 20);
         instr |= (vA.inner << 15);
@@ -364,9 +363,10 @@ void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
     case VectorArithmeticOp::Vindx:
         instr |= (rD.inner << 20);
         instr |= (vA.inner << 15);
-        instr |= ((imm.inner & 0b11111111) << 7); // this immediate is 2 bits, but the extras 
-                                   // will flow into don't care spots so i didn't
-                                   // adjust the size at all
+        instr |= ((imm.inner & 0b11111111)
+                  << 7); // this immediate is 2 bits, but the extras
+                         // will flow into don't care spots so i didn't
+                         // adjust the size at all
     case VectorArithmeticOp::Vreduce:
         instr |= (rD.inner << 20);
         instr |= (vA.inner << 15);
@@ -411,19 +411,19 @@ void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
         return;
     }
 
-   append(instr);    
+    append(instr);
 }
 
 // matmul, writea, writeb, writec, readc, systolicstep
-void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA, vreg_idx vB,
-                            u<3> idx, bool high) {
+void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
+                             vreg_idx vB, u<3> idx, bool high) {
 
     uint32_t instr = 0;
 
     uint32_t opcode = matrixMultiplyOpToAOpcode(op);
     instr |= (opcode << 25);
 
-    switch(op) {
+    switch (op) {
     case MatrixMultiplyOp::Matmul:
     case MatrixMultiplyOp::Systolicstep:
         break;
@@ -431,7 +431,7 @@ void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
         instr |= (vD.inner << 20);
         instr |= ((idx.inner & 0b111) << 17);
         if (high)
-            instr |= (1<<16);
+            instr |= (1 << 16);
     case MatrixMultiplyOp::WriteA:
     case MatrixMultiplyOp::WriteB:
     case MatrixMultiplyOp::WriteC:
@@ -447,14 +447,15 @@ void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
 }
 
 // lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr
-void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA, reg_idx rD, reg_idx rA,
-                        reg_idx rB, u<18> imm, u<4> mask) {
-    
+void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA,
+                        reg_idx rD, reg_idx rA, reg_idx rB, u<18> imm,
+                        u<4> mask) {
+
     uint32_t instr = 0;
     uint32_t opcode = loadStoreOpToAOpcode(op);
     instr |= (opcode << 25);
 
-    switch(op) {
+    switch (op) {
     case LoadStoreOp::Lih:
     case LoadStoreOp::Lil:
         instr |= (rD.inner << 20);
@@ -495,7 +496,7 @@ void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA, reg_idx r
         panic("unsupported load/store op");
         return;
     }
-    append(instr);                 
+    append(instr);
 }
 
 // flushdirty, flushclean, flushicache, flushline
@@ -511,41 +512,38 @@ void Emitter::flushCache(isa::FlushCacheOp op, u<25> imm) {
         instr |= (immHigh << 15);
     }
 
-    append(instr);     
+    append(instr);
 }
 
 // wcsr, rcsr
 void Emitter::csr(isa::CsrOp op, u<2> csrNum) {
 
     uint32_t instr = 0;
-    
+
     if (op == CsrOp::Wcsr) {
         instr |= (0b0111001 << 25);
-    }
-    else if (op == CsrOp::Rcsr) {
+    } else if (op == CsrOp::Rcsr) {
         instr |= (0b0111000 << 25);
-    }
-    else {
+    } else {
         panic("unsupported csr op");
         return;
     }
     instr |= (csrNum.inner & 0b11) << 23;
-    
+
     append(instr);
 }
 
 // ftoi, itof
-void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA) {
+void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD,
+                           reg_idx rA) {
 
     uint32_t instr = 0;
 
     if (op == FloatIntConversionOp::Ftoi) {
         instr |= (0b0110111 << 25);
-    }
-    else if (op == FloatIntConversionOp::Itof) {
+    } else if (op == FloatIntConversionOp::Itof) {
         instr |= (0b0111000);
-    }
-    else {
+    } else {
         panic("unsupported float int conversion op");
         return;
     }
@@ -557,9 +555,9 @@ void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA)
 }
 
 // fa, cmpx
-void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, 
-                            reg_idx rB, u<15> imm) {
-    
+void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
+                          reg_idx rB, u<15> imm) {
+
     uint32_t instr = 0;
 
     if (op == ConcurrencyOp::Fa) {
@@ -567,8 +565,7 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
         instr |= (imm.inner & 0b111111111111111);
-    }
-    else if (op == ConcurrencyOp::Cmpx) {
+    } else if (op == ConcurrencyOp::Cmpx) {
         instr |= (0b0111100 << 25);
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
@@ -579,7 +576,6 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
     }
 
     append(instr);
-
 }
 
 // bi, br, cmpi, cmp, cmpdec, cmpinc
@@ -590,10 +586,11 @@ void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
     uint32_t opcode = branchCompareOpToAOpcode(op);
     instr |= (opcode << 25);
 
-    switch(op) {
+    switch (op) {
     case BranchCompareOp::Bi:
         instr |= ((btx.inner & 0b111) << 22);
-        instr |= imm.inner & 0b1111111111111111111111; // TODO: yeah i hate this (should be 22 1s)
+        instr |= imm.inner & 0b1111111111111111111111; // TODO: yeah i hate this
+                                                       // (should be 22 1s)
     case BranchCompareOp::Br:
         instr |= ((btx.inner & 0b111) << 22);
         instr |= ((imm.inner >> 15) & 0b11) << 20;
@@ -613,11 +610,10 @@ void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
         instr |= rB.inner << 10;
     default:
         panic("unsupported branch/compare op");
-        return;  
+        return;
     }
 
     append(instr);
-  
 }
 
 // halt, nop
@@ -625,16 +621,12 @@ void Emitter::haltNop(isa::HaltNopOp op) {
     uint32_t instr = 0;
     if (op == HaltNopOp::Halt) {
         instr |= (0b0000000 << 25);
-    }
-    else if (op == HaltNopOp::Nop) {
+    } else if (op == HaltNopOp::Nop) {
         instr |= (0b0000001 << 25);
-    }
-    else {
+    } else {
         panic("unsupported halt/nop");
         return;
     }
 
     append(instr);
 }
-
-
