@@ -2,8 +2,6 @@
 
 #include "morph/decoder.h"
 
-#include <fmt/core.h>
-
 using isa::InstructionVisitor;
 
 void decodeJ(InstructionVisitor& visit, bits<32> instr);
@@ -80,8 +78,8 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
 
     // A-format: register arithmetic
     case 0b0011'011: // all of them
-        unimplemented();
-        return;
+        return decodeA(visit, instr);
+
     // AN-format: not
     case 0b0011'100: // not
         unimplemented();
@@ -180,4 +178,14 @@ void decodeMS(InstructionVisitor& visit, bits<32> instr) {
     auto imm = s<15>(instr.slice<24, 20>().concat(instr.slice<9, 0>()));
 
     visit.st(rA, rB, imm, b36);
+}
+
+void decodeA(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24, 20>();
+    auto rA = instr.slice<19, 15>();
+    auto rB = instr.slice<14, 10>();
+
+    auto op = instr.slice<3, 0>();
+
+    visit.scalarArithmetic(rD, rA, rB, isa::scalarArithmeticOpFromArithCode(op));
 }

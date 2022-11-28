@@ -17,9 +17,9 @@ TEST_CASE("spinloop") {
     isa::disasm::DisasmVisitor dv;
 
     isa::decodeInstruction(dv, code[0]);
-    CHECK(dv.getInstr().opcode == Opcode::nop);
+    CHECK(dv.getInstr().opcode == Opcode::Nop);
 
     isa::decodeInstruction(dv, code[1]);
-    CHECK(dv.getInstr().opcode == Opcode::jmp);
+    CHECK(dv.getInstr().opcode == Opcode::Jmp);
     CHECK(dv.getInstr().imm == -2);
 }

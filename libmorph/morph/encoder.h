@@ -5,9 +5,9 @@
 #include "ty.h"
 #include "util.h"
 #include "varint.h"
+#include "isa.h"
 
 namespace isa {
-enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl };
 enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
 enum class LanewiseVectorOp { Add, Sub, Mul, Div, Min, Max };
 enum class VectorScalarOp {
