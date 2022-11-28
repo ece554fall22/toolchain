@@ -37,19 +37,20 @@ enum class MatrixMultiplyOp {
     ReadC,
     Systolicstep
 };
-enum class LoadStoreOp { Ld32, Ld36, St32, St36, Vldi, Vsti, Vldr, Vstr };
-enum class FlushCacheOp { Flushdirty, Flushclean, Flushicache, Flushline };
+enum class CacheControlOp { Flushdirty, Flushclean, Flushicache, Flushline };
 enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
 enum class ConcurrencyOp { Fa, Cmpx };
 enum class BranchCompareOp { Bi, Br, Cmpi, Cmp, Cmpdec, Cmpinc };
-enum class HaltNopOp { Halt, Nop };
 }; // namespace isa
 
 class Emitter {
   public:
     Emitter() : data{} {}
 
+    // flow control
+    void halt();
+    void nop();
     void jumpPCRel(s<25> imm, bool link);
     void jumpRegRel(reg_idx rA, s<20> imm, bool link);
 
@@ -65,17 +66,24 @@ class Emitter {
     void matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
                         vreg_idx vB, u<3> idx, bool high);
 
+    // memory transfer
     void loadImmediate(bool high, reg_idx rD, u<18> imm);
-    void loadScalar(bool op, vreg_idx vD, vreg_idx vA, reg_idx rD, reg_idx rA,
-                    reg_idx rB, u<18> imm, u<4> mask);
-    void flushCache(isa::FlushCacheOp op, u<25> imm);
+    void loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm);
+    void storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm);
+
+    void loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm, vmask_t mask);
+    void storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm, vmask_t mask);
+    void loadVectorRegStride(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask);
+    void storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
+                              vmask_t mask);
+
+    void flushCache(isa::CacheControlOp op, u<25> imm);
     void csr(isa::CsrOp op, u<2> csrNum);
     void floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA);
     void concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, reg_idx rB,
                      u<15> imm);
     void branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
                        reg_idx rB, u<22> imm, u<3> btx);
-    void haltNop(isa::HaltNopOp op);
 
     auto getData() -> const auto& { return this->data; }
 
