@@ -26,25 +26,6 @@ uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     }
 }
 
-uint32_t scalarArithmeticOpToAOpcode(ScalarArithmeticOp op) {
-    switch (op) {
-    case ScalarArithmeticOp::Not:
-        return 0b0011100;
-    case ScalarArithmeticOp::Add:
-    case ScalarArithmeticOp::Sub:
-    case ScalarArithmeticOp::Mult:
-    case ScalarArithmeticOp::And:
-    case ScalarArithmeticOp::Or:
-    case ScalarArithmeticOp::Xor:
-    case ScalarArithmeticOp::Shr:
-    case ScalarArithmeticOp::Shl:
-        return 0b0011011;
-    default:
-        panic("unsupported scalar arith op for A format");
-        return 0;
-    }
-}
-
 uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
     switch (op) {
     case ScalarArithmeticOp::Add:
@@ -252,26 +233,28 @@ void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
-                                    reg_idx rA, reg_idx rB) {
-    uint32_t instr = 0;
+void Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
+                               reg_idx rA, reg_idx rB) {
+    uint32_t instr = 0b0011011 << 25;
 
-    uint32_t opcode = scalarArithmeticOpToAOpcode(op);
-    instr |= (opcode << 25);
-
-    // rD
+    // operand registers
     instr |= (rD.inner << 20);
-
-    // rA
     instr |= (rA.inner << 15);
+    instr |= (rB.inner << 10);
 
-    if (op != ScalarArithmeticOp::Not) {
-        // rB
-        instr |= (rB.inner << 10);
+    // arithmetic op
+    instr |= scalarArithmeticOpToArithCode(op);
 
-        // arithmetic op
-        instr |= scalarArithmeticOpToArithCode(op);
-    }
+    append(instr);
+}
+
+void Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
+                                  reg_idx rA) {
+    uint32_t instr = 0b0011100 << 25;
+
+    // operand registers
+    instr |= (rD.inner << 20);
+    instr |= (rA.inner << 15);
 
     append(instr);
 }
