@@ -26,38 +26,38 @@ void lih(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
 /************************************************************************/
 
 // ADDI
-void addi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() + imm).asUnsigned();
+void addi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA].asSigned() + imm).asUnsigned();
 }
 
 // SUBI
-void subi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() - imm).asUnsigned();
+void subi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA].asSigned() - imm).asUnsigned();
 }
 
 // ANDI
-void andi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() & imm).asUnsigned();
+void andi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA] & imm.asUnsigned());
 }
 
 // ORI
-void ori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() | imm).asUnsigned();
+void ori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA] | imm.asUnsigned());
 }
 
 // XORI
-void xori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() ^ imm).asUnsigned();
+void xori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA] ^ imm.asUnsigned());
 }
 
 // SHLI
-void shli(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() >> imm).asUnsigned();
+void shli(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD].inner = (cpu.r[rA].inner << imm._sgn_inner()) & bits<36>::mask;
 }
 
 // SHRI
-void shri(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() << imm).asUnsigned();
+void shri(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD].inner = (cpu.r[rA].inner >> imm._sgn_inner()) & bits<36>::mask;
 }
 
 // ADD
@@ -72,32 +72,32 @@ void sub(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 
 // MULT
 void mult(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() * cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD] = cpu.r[rA].asSigned().truncMult<36>(cpu.r[rB].asSigned()).asUnsigned();
 }
 
 // AND
-void and(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() & cpu.r[rB].asSigned()).asUnsigned();
+void and_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cpu.r[rD] = (cpu.r[rA] & cpu.r[rB]);
 }
 
 // OR
-void or(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() | cpu.r[rB].asSigned()).asUnsigned();
+void or_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cpu.r[rD] = (cpu.r[rA] | cpu.r[rB]);
 }
 
 // XOR
-void xor(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() ^ cpu.r[rB].asSigned()).asUnsigned();
+void xor_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cpu.r[rD] = (cpu.r[rA] ^ cpu.r[rB]);
 }
 
 // SHL
 void shl(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() >> cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD].inner = (cpu.r[rA].inner << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 // SHR
 void shr(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() << cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD].inner = (cpu.r[rA].inner >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
@@ -149,7 +149,15 @@ void st36(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
     mem.write(addr, val);
 }
 
+<<<<<<< HEAD
 // -- jumps
+=======
+/************************************************************************/
+/*******************************-- JUMPS ********************************/
+/************************************************************************/
+
+// JMP
+>>>>>>> bc3136c (instr impls: misc cleanups to get them to build)
 void jmp(CPUState& cpu, MemSystem& mem, s<25> imm) {
     cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
@@ -211,31 +219,31 @@ void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
 // BEZR
 void bezr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BLZR
 void blzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.sign)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BGZR
 void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.sign)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BLER
 void bler(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BGER
 void bger(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 /** Relative to current PC */
@@ -243,37 +251,37 @@ void bger(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
 // BNZI
 void bnzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BEZI
-void bezr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bezo(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BLZI
-void blzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void blzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.sign)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BGZI
-void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bgzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.sign)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BLEI
-void bler(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
-    if (cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+void blei(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+    if (cpu.f.sign || cpu.f.zero)
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BGEI
 void bgei(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
-    if (!cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+    if (!cpu.f.sign || cpu.f.zero)
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // -- specials: cache control
