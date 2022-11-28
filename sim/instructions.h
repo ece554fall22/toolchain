@@ -208,6 +208,14 @@ void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
     _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
 }
 
+void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB, vmask_t mask) {
+    float factor = bits2float(cpu.r[rA].slice<31, 0>());
+
+    _lane_apply(mask, [&](auto i) {
+        cpu.v[vD][i] = cpu.v[vA][i] * factor + cpu.v[vB][i];
+    });
+}
+
 // -- scalar memory instructions
 void ld32(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
