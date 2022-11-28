@@ -115,6 +115,11 @@ inline auto float2bits(float v) -> bits<32> {
     return b;
 }
 
+inline auto bits2float(bits<32> b) -> float {
+    auto bmasked = static_cast<uint32_t>(b.inner & b.mask);
+    return bit_cast<float>(bmasked);
+}
+
 template <size_t N> struct u;
 template <size_t N> struct s;
 
