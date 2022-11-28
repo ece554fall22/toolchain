@@ -187,5 +187,6 @@ void decodeA(InstructionVisitor& visit, bits<32> instr) {
 
     auto op = instr.slice<3, 0>();
 
-    visit.scalarArithmetic(rD, rA, rB, isa::scalarArithmeticOpFromArithCode(op));
+    visit.scalarArithmetic(rD, rA, rB,
+                           isa::scalarArithmeticOpFromArithCode(op));
 }

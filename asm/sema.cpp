@@ -58,7 +58,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
 
     {"add",  {OperandType::Register, OperandType::Register, OperandType::Register}},
     {"sub",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"mult", {OperandType::Register, OperandType::Register, OperandType::Register}},
+    {"mul",  {OperandType::Register, OperandType::Register, OperandType::Register}},
     {"and",  {OperandType::Register, OperandType::Register, OperandType::Register}},
     {"or",   {OperandType::Register, OperandType::Register, OperandType::Register}},
     {"xor",  {OperandType::Register, OperandType::Register, OperandType::Register}},

@@ -5,10 +5,10 @@
 #include <fmt/core.h>
 #include <fmt/ostream.h>
 
+#include "isa.h"
 #include "ty.h"
 #include "util.h"
 #include "varint.h"
-#include "isa.h"
 
 namespace isa {
 struct InstructionVisitor {
@@ -40,7 +40,8 @@ struct InstructionVisitor {
     virtual void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) = 0;
 
     // A
-    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB, isa::ScalarArithmeticOp op) = 0;
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                                  isa::ScalarArithmeticOp op) = 0;
 };
 
 void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
@@ -49,7 +50,6 @@ void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
 //     virtual void fn(reg_idx rD, reg_idx rA, reg_idx rB) {                      \
 //         fmt::print(#mnemonic " r{}, r{}, r{}", rD.inner, rA.inner, rB.inner);  \
 //     }
-
 
 struct PrintVisitor : public InstructionVisitor {
     virtual ~PrintVisitor() = default;
@@ -104,8 +104,10 @@ struct PrintVisitor : public InstructionVisitor {
         std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
     }
 
-    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB, isa::ScalarArithmeticOp op) {
-        std::cout << op << " r" << rD.inner << ", r" << rA.inner << ", r" << rB.inner << "\n";
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                                  isa::ScalarArithmeticOp op) {
+        std::cout << op << " r" << rD.inner << ", r" << rA.inner << ", r"
+                  << rB.inner << "\n";
     }
 };
 
