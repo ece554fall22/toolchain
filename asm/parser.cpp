@@ -192,9 +192,16 @@ auto Parser::operand() -> std::optional<ast::Operand> {
     } else if (auto lbl = operand_label()) {
         return ast::Operand{*lbl};
     } else if (curr().isIntegerLiteral()) {
-        auto n = ast::Operand{ast::OperandImmediate{69}}; // TODO FIXME
+        auto val = parseIntegerToken(curr());
+        if (!val) {
+            error(fmt::format(
+                "can't parse {} (`{}`) as integer literal in operand",
+                curr().getKind(), curr().getLexeme()));
+            return std::nullopt;
+        }
+
         next();
-        return n;
+        return ast::Operand{ast::OperandImmediate{*val}};
     } else if (auto a = operand_memory()) {
         return ast::Operand{*a};
     } else {

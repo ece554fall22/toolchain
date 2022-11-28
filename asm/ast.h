@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "lexer.h"
+#include <morph/ty.h>
 #include <morph/util.h>
 
 namespace ast {
@@ -63,6 +64,12 @@ struct Operand {
 
     template <class T> bool is() const noexcept {
         return std::holds_alternative<T>(inner);
+    }
+
+    template <class T> const T& get() const { return std::get<T>(inner); }
+
+    auto asRegIdx() const -> reg_idx {
+        return reg_idx(this->template get<ast::OperandRegister>().idx);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {
@@ -199,9 +206,6 @@ class ASTPrintVisitor {
             indent(depth + 1);
             wtr << "}\n";
         }
-
-        // indent(depth);
-        // wtr << "} Instruction\n";
     }
 
     void enter(const ast::OriginDirective& d, size_t depth) {

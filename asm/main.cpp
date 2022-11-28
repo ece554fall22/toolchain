@@ -94,6 +94,11 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    // EmissionPass emissionPass{};
-    // parser.visit(emissionPass);
+    EmissionPass emissionPass{};
+    parser.visit(emissionPass);
+
+    auto output = emissionPass.getData();
+    for (size_t i = 0; i < output.size(); i++) {
+        fmt::print("{:#x}: {:#x}\n", i, output[i]);
+    }
 }

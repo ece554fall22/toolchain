@@ -16,12 +16,12 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"jmpr", {OperandType::Register, OperandType::Immediate}},
     {"jalr", {OperandType::Register, OperandType::Immediate}},
 
-    {"bnzi", {}},
-    {"bezi", {}},
-    {"blzi", {}},
-    {"bgzi", {}},
-    {"blei", {}},
-    {"bgei", {}},
+    {"bnzi", {OperandType::Label}},
+    {"bezi", {OperandType::Label}},
+    {"blzi", {OperandType::Label}},
+    {"bgzi", {OperandType::Label}},
+    {"blei", {OperandType::Label}},
+    {"bgei", {OperandType::Label}},
 
     {"bnzr", {}},
     {"bezr", {}},

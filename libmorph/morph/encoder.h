@@ -24,7 +24,7 @@ enum class MatrixMultiplyOp {
     ReadC,
     Systolicstep
 };
-enum class CacheControlOp { Flushdirty, Flushclean, Flushicache, Flushline };
+enum class CacheControlOp { Flushdirty, Flushclean, Flushicache };
 enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
 enum class ConcurrencyOp { Fa, Cmpx };
@@ -93,6 +93,7 @@ class Emitter {
 
     // specials
     void flushCache(isa::CacheControlOp op, u<25> imm);
+    void flushline(u<25> imm);
     void csr(isa::CsrOp op, reg_idx rA, u<2> csrNum);
     void concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, reg_idx rB,
                      u<15> imm);

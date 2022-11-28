@@ -103,8 +103,6 @@ uint32_t cacheControlOpcode(CacheControlOp op) {
         return 0b0111110;
     case CacheControlOp::Flushicache:
         return 0b0111111;
-    case CacheControlOp::Flushline:
-        return 0b1000000;
     default:
         panic("unsupported cache flush op");
         return 0;
@@ -566,17 +564,19 @@ void isa::Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
 }
 
 // flushdirty, flushclean, flushicache, flushline
+// TODO: split up
 void isa::Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
+    uint32_t instr = cacheControlOpcode(op) << 25;
+    append(instr);
+}
 
-    uint32_t instr = 0;
-    uint32_t opcode = cacheControlOpcode(op);
-    instr |= (opcode << 25);
-    if (op == CacheControlOp::Flushline) {
-        auto immHigh = (imm.inner >> 15) & BITFILL(10);
-        auto immLow = imm.inner & BITFILL(15);
-        instr |= immLow;
-        instr |= (immHigh << 15);
-    }
+void isa::Emitter::flushline(u<25> imm) {
+    uint32_t instr = 0b1000000 << 25;
+
+    auto immHigh = (imm.inner >> 15) & BITFILL(10);
+    auto immLow = imm.inner & BITFILL(15);
+    instr |= immLow;
+    instr |= (immHigh << 15);
 
     append(instr);
 }
