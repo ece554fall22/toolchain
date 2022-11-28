@@ -1,5 +1,10 @@
 #pragma once
 
+#include <iostream>
+
+#include "util.h"
+#include "varint.h"
+
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mul, And, Or, Xor, Shr, Shl };
 
