@@ -118,14 +118,27 @@ void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 
 // -- vector instructions
 constexpr size_t N_LANES = 4;
+using vmask_t = bits<4>;
 
-void vmul(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA, vreg_idx vB,
-          u<4> mask) {
+template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
     for (size_t lane = 0; lane < N_LANES; lane++) {
         if (mask.bit(lane))
-            cpu.v[vD][lane] = cpu.v[vA][lane] * cpu.v[vB][lane];
+            fn(lane);
     }
 }
+
+#define VEC_BINOP(mnemonic, infixop)                                           \
+    void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,     \
+                  vreg_idx vB, vmask_t mask) {                                 \
+        _lane_apply(mask, [&](auto i) {                                        \
+            cpu.v[vD][i] = cpu.v[vA][i] * cpu.v[vB][i];                        \
+        });                                                                    \
+    }
+
+VEC_BINOP(vadd, +);
+VEC_BINOP(vsub, -);
+VEC_BINOP(vmul, *);
+VEC_BINOP(vdiv, /);
 
 // -- scalar memory instructions
 void ld32(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {

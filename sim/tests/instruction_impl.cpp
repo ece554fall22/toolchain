@@ -32,7 +32,6 @@ TEST_CASE("vector arithmetic") {
         cpuState.v[1] = {0.3, 0.4, 0.5, 0.6};
         cpuState.v[2] = {0.7, 0.8, 0.9, 1.0};
 
-        // first, test unmasked
         // vmul v3, v2, v1
         instructions::vmul(cpuState, mem, /*v*/ 3, /*v*/ 2, /*v*/ 1, 0b1111);
 
@@ -47,7 +46,6 @@ TEST_CASE("vector arithmetic") {
         cpuState.v[1] = {0.3, 0.4, 0.5, 0.6};
         cpuState.v[2] = {0.7, 0.8, 0.9, 1.0};
 
-        // first, test unmasked
         // vmul {v3.0, v3.2}, v2, v1
         instructions::vmul(cpuState, mem, /*v*/ 3, /*v*/ 2, /*v*/ 1, 0b0101);
 
