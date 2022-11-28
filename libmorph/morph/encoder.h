@@ -9,26 +9,6 @@
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl };
 enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
-// enum class VectorArithmeticOp {
-//     Vadd,
-//     Vsub,
-//     Vmult,
-//     Vdiv,
-//     Vdot,
-//     Vdota,
-//     Vindx,
-//     Vreduce,
-//     Vsplat,
-//     Vswizzle,
-//     Vsadd,
-//     Vsmult,
-//     Vssub,
-//     Vsdiv,
-//     Vsma,
-//     Vmax,
-//     Vmin,
-//     Vcompsel
-// };
 enum class LanewiseVectorOp { Add, Sub, Mul, Div, Min, Max };
 enum class VectorScalarOp {
     Add,
@@ -49,7 +29,6 @@ enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
 enum class ConcurrencyOp { Fa, Cmpx };
 enum class CmpMutateDirection { Increment, Decrement };
-}; // namespace isa
 
 class Emitter {
   public:
@@ -125,5 +104,4 @@ class Emitter {
 
     std::vector<uint32_t> data;
 };
-}
-; // namespace isa
+}; // namespace isa

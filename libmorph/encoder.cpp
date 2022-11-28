@@ -111,7 +111,7 @@ uint32_t cacheControlOpcode(CacheControlOp op) {
     }
 }
 
-void Emitter::jumpPCRel(s<25> imm, bool link) {
+void isa::Emitter::jumpPCRel(s<25> imm, bool link) {
     //                 opcode  | immediate offset
     //                link ---v
     uint32_t instr = 0b0000'010'0'0000'0000'0000'0000'0000'0000;
@@ -144,7 +144,7 @@ void isa::Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
     append(instr);
 }
 
-void Emitter::branchImm(condition_t bt, s<22> imm) {
+void isa::Emitter::branchImm(condition_t bt, s<22> imm) {
     uint32_t instr = 0b0000110 << 25;
 
     instr |= static_cast<uint32_t>(bt) << 22;
@@ -153,7 +153,7 @@ void Emitter::branchImm(condition_t bt, s<22> imm) {
     append(instr);
 }
 
-void Emitter::branchReg(condition_t bt, reg_idx rA, s<17> imm) {
+void isa::Emitter::branchReg(condition_t bt, reg_idx rA, s<17> imm) {
     uint32_t instr = 0b0000111 << 25;
 
     instr |= static_cast<uint32_t>(bt) << 22;
@@ -164,8 +164,9 @@ void Emitter::branchReg(condition_t bt, reg_idx rA, s<17> imm) {
 }
 
 // ALLISON: scalar arith ops include add, sub, or, and, xor, shr, and shl
-void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
-                                        reg_idx rA, s<15> imm) {
+void isa::Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op,
+                                             reg_idx rD, reg_idx rA,
+                                             s<15> imm) {
     uint32_t instr = 0;
     uint32_t opcode = scalarArithmeticOpToAIOpcode(op);
 
@@ -184,8 +185,8 @@ void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-void Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
-                               reg_idx rA, reg_idx rB) {
+void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
+                                    reg_idx rA, reg_idx rB) {
     uint32_t instr = 0b0011011 << 25;
 
     // operand registers
@@ -199,8 +200,8 @@ void Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-void Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
-                                  reg_idx rA) {
+void isa::Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
+                                       reg_idx rA) {
     uint32_t instr = 0b0011100 << 25;
 
     // operand registers
@@ -211,7 +212,7 @@ void Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
 }
 
 // comparisons
-void Emitter::compareImm(reg_idx rA, s<20> imm) {
+void isa::Emitter::compareImm(reg_idx rA, s<20> imm) {
     uint32_t instr = 0b0011010 << 25;
 
     auto immHi = (imm.inner >> 15) & BITFILL(5);
@@ -223,7 +224,7 @@ void Emitter::compareImm(reg_idx rA, s<20> imm) {
     append(instr);
 }
 
-void Emitter::compareReg(reg_idx rA, reg_idx rB) {
+void isa::Emitter::compareReg(reg_idx rA, reg_idx rB) {
     uint32_t instr = 0b0011110 << 25;
 
     instr |= rA.inner << 15;
@@ -232,7 +233,8 @@ void Emitter::compareReg(reg_idx rA, reg_idx rB) {
     append(instr);
 }
 
-void Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD, reg_idx rA) {
+void isa::Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD,
+                                    reg_idx rA) {
     uint32_t instr = 0b1000000 << 25;
     switch (dir) {
     case CmpMutateDirection::Increment:
@@ -249,8 +251,8 @@ void Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD, reg_idx rA) {
     append(instr);
 }
 
-void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
-                              reg_idx rB) {
+void isa::Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
+                                   reg_idx rA, reg_idx rB) {
     uint32_t instr = 0b0011101 << 25;
 
     // rD
@@ -269,8 +271,8 @@ void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
 }
 
 // vadd, vsub, vmul, vdiv, vmax, vmin
-void Emitter::vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
-                               vreg_idx vA, vreg_idx vB, vmask_t mask) {
+void isa::Emitter::vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
+                                    vreg_idx vA, vreg_idx vB, vmask_t mask) {
     uint32_t instr = 0;
     switch (op) {
     case LanewiseVectorOp::Add:
@@ -302,8 +304,8 @@ void Emitter::vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
 }
 
 // vsadd, vsmul, vssub, vsdiv
-void Emitter::vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
-                                vreg_idx vB, vmask_t mask) {
+void isa::Emitter::vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD,
+                                     reg_idx rA, vreg_idx vB, vmask_t mask) {
     uint32_t instr = 0;
     switch (op) {
     case VectorScalarOp::Add:
@@ -328,7 +330,7 @@ void Emitter::vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
     append(instr);
 }
 
-void Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask) {
+void isa::Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask) {
     uint32_t instr = 0b0100011 << 25;
 
     instr |= rD.inner << 20;
@@ -339,8 +341,8 @@ void Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask) {
     append(instr);
 }
 
-void Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB,
-                    vmask_t mask) {
+void isa::Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB,
+                         vmask_t mask) {
     uint32_t instr = 0b0100100 << 25;
 
     instr |= rD.inner << 20;
@@ -352,7 +354,7 @@ void Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB,
     append(instr);
 }
 
-void Emitter::vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx) {
+void isa::Emitter::vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx) {
     uint32_t instr = 0b0100101 << 25;
 
     instr |= rD.inner << 20;
@@ -362,7 +364,7 @@ void Emitter::vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx) {
     append(instr);
 }
 
-void Emitter::vreduce(reg_idx rD, vreg_idx vA) {
+void isa::Emitter::vreduce(reg_idx rD, vreg_idx vA) {
     uint32_t instr = 0b0100110 << 25;
 
     instr |= rD.inner << 20;
@@ -371,7 +373,7 @@ void Emitter::vreduce(reg_idx rD, vreg_idx vA) {
     append(instr);
 }
 
-void Emitter::vsplat(vreg_idx vD, reg_idx rA) {
+void isa::Emitter::vsplat(vreg_idx vD, reg_idx rA) {
     uint32_t instr = 0b0100111 << 25;
 
     instr |= vD.inner << 20;
@@ -380,8 +382,8 @@ void Emitter::vsplat(vreg_idx vD, reg_idx rA) {
     append(instr);
 }
 
-void Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
-                       vmask_t mask) {
+void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
+                            vmask_t mask) {
     uint32_t instr = 0b0101000 << 25;
 
     instr |= vD.inner << 20;
@@ -395,8 +397,8 @@ void Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
     append(instr);
 }
 
-void Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB,
-                   vmask_t mask) {
+void isa::Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB,
+                        vmask_t mask) {
     uint32_t instr = 0b0101101 << 25;
 
     instr |= vD.inner << 20;
@@ -408,8 +410,8 @@ void Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB,
     append(instr);
 }
 
-void Emitter::vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
-                    vmask_t mask) {
+void isa::Emitter::vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
+                         vmask_t mask) {
     uint32_t instr = 0b0110110 << 25;
 
     instr |= vD.inner << 20;
@@ -422,8 +424,9 @@ void Emitter::vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
 }
 
 // matmul, writea, writeb, writec, readc, systolicstep
-void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
-                             vreg_idx vB, u<3> idx, bool high) {
+void isa::Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD,
+                                  vreg_idx vA, vreg_idx vB, u<3> idx,
+                                  bool high) {
 
     uint32_t instr = 0;
 
@@ -454,7 +457,7 @@ void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
 }
 
 // lih, lil
-void Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
+void isa::Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
     uint32_t instr = 0;
     if (hi)
         instr |= 0b0001000 << 25;
@@ -468,7 +471,7 @@ void Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
 }
 
 // ld32, ld36
-void Emitter::loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm) {
+void isa::Emitter::loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm) {
     uint32_t instr = 0;
     // opcode
     if (b36)
@@ -487,7 +490,7 @@ void Emitter::loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm) {
 }
 
 // st32, st36
-void Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
+void isa::Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
     uint32_t instr = 0;
     // opcode
     if (b36)
@@ -508,8 +511,8 @@ void Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
     append(instr);
 }
 
-void Emitter::loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm,
-                                  vmask_t mask) {
+void isa::Emitter::loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm,
+                                       vmask_t mask) {
     uint32_t instr = 0b0001110 << 25;
 
     instr |= vD.inner << 20;
@@ -520,8 +523,8 @@ void Emitter::loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm,
     append(instr);
 }
 
-void Emitter::storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm,
-                                   vmask_t mask) {
+void isa::Emitter::storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm,
+                                        vmask_t mask) {
     uint32_t instr = 0b0010000 << 25;
 
     instr |= rA.inner << 15;
@@ -538,8 +541,8 @@ void Emitter::storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm,
     append(instr);
 }
 
-void Emitter::loadVectorRegStride(vreg_idx vD, reg_idx rA, reg_idx rB,
-                                  vmask_t mask) {
+void isa::Emitter::loadVectorRegStride(vreg_idx vD, reg_idx rA, reg_idx rB,
+                                       vmask_t mask) {
     uint32_t instr = 0b0010001 << 25;
 
     instr |= vD.inner << 20;
@@ -550,8 +553,8 @@ void Emitter::loadVectorRegStride(vreg_idx vD, reg_idx rA, reg_idx rB,
     append(instr);
 }
 
-void Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
-                                   vmask_t mask) {
+void isa::Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
+                                        vmask_t mask) {
     uint32_t instr = 0b0010010 << 25;
 
     instr |= rA.inner << 15;
@@ -563,7 +566,7 @@ void Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
 }
 
 // flushdirty, flushclean, flushicache, flushline
-void Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
+void isa::Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
 
     uint32_t instr = 0;
     uint32_t opcode = cacheControlOpcode(op);
@@ -579,7 +582,7 @@ void Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
 }
 
 // wcsr, rcsr
-void Emitter::csr(isa::CsrOp op, reg_idx rA, u<2> csrNum) {
+void isa::Emitter::csr(isa::CsrOp op, reg_idx rA, u<2> csrNum) {
     uint32_t instr = 0;
     switch (op) {
     case CsrOp::Wcsr:
@@ -596,8 +599,8 @@ void Emitter::csr(isa::CsrOp op, reg_idx rA, u<2> csrNum) {
 }
 
 // ftoi, itof
-void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD,
-                           reg_idx rA) {
+void isa::Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD,
+                                reg_idx rA) {
 
     uint32_t instr = 0;
 
@@ -617,8 +620,8 @@ void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD,
 }
 
 // fa, cmpx
-void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
-                          reg_idx rB, u<15> imm) {
+void isa::Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
+                               reg_idx rB, u<15> imm) {
 
     uint32_t instr = 0;
 
@@ -641,13 +644,13 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
 }
 
 // misc
-void Emitter::halt() {
+void isa::Emitter::halt() {
     uint32_t instr = 0b0000000 << 25;
 
     append(instr);
 }
 
-void Emitter::nop() {
+void isa::Emitter::nop() {
     uint32_t instr = 0b0000001 << 25;
 
     append(instr);
