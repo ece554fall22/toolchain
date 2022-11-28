@@ -1,11 +1,11 @@
 #pragma once
 
+#include "bit_cast.h"
 #include <cassert>
 #include <compare>
 #include <cstdint>
 #include <iostream>
 #include <type_traits>
-#include "bit_cast.h"
 
 #define BITFILL(n) ((1L << n) - 1)
 
