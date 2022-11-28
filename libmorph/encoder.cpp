@@ -1,8 +1,17 @@
 #include "morph/encoder.h"
 
+#include "morph/ty.h"
+
 using namespace isa;
 
 #define BITFILL(n) ((1L << n) - 1)
+
+// defensive against any changes in ty.h; we need these assumptions for
+// following bitmanip code in the instruction emitter
+static_assert(reg_idx::size == 5, "scalar register indices should be 5 bits");
+static_assert(vreg_idx::size == 5, "vector register indices should be 5 bits");
+static_assert(vmask_t::size == 4, "vector masks should be 4 bits");
+static_assert(vlaneidx_t::size == 2, "vector lane indices should be 2 bits");
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
@@ -50,19 +59,6 @@ uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
     }
 }
 
-uint32_t floatArithmeticOpToAOpcode(FloatArithmeticOp op) {
-    switch (op) {
-    case FloatArithmeticOp::Fadd:
-    case FloatArithmeticOp::Fsub:
-    case FloatArithmeticOp::Fmult:
-    case FloatArithmeticOp::Fdiv:
-        return 0b0011101;
-    default:
-        panic("unsupported float arith op");
-        return 0;
-    }
-}
-
 uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
     switch (op) {
     case FloatArithmeticOp::Fadd:
@@ -75,50 +71,6 @@ uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
         return 0b011;
     default:
         panic("unsupported float arith op");
-        return 0;
-    }
-}
-
-uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
-    switch (op) {
-    case VectorArithmeticOp::Vadd:
-        return 0b0011111;
-    case VectorArithmeticOp::Vsub:
-        return 0b0100000;
-    case VectorArithmeticOp::Vmult:
-        return 0b0100001;
-    case VectorArithmeticOp::Vdiv:
-        return 0b0100010;
-    case VectorArithmeticOp::Vdot:
-        return 0b0100011;
-    case VectorArithmeticOp::Vdota:
-        return 0b0100100;
-    case VectorArithmeticOp::Vindx:
-        return 0b0100101;
-    case VectorArithmeticOp::Vreduce:
-        return 0b0100110;
-    case VectorArithmeticOp::Vsplat:
-        return 0b0100111;
-    case VectorArithmeticOp::Vswizzle:
-        return 0b0101000;
-    case VectorArithmeticOp::Vsadd:
-        return 0b0101001;
-    case VectorArithmeticOp::Vsmult:
-        return 0b0101010;
-    case VectorArithmeticOp::Vssub:
-        return 0b0101011;
-    case VectorArithmeticOp::Vsdiv:
-        return 0b0101100;
-    case VectorArithmeticOp::Vsma:
-        return 0b0101101;
-    case VectorArithmeticOp::Vmax:
-        return 0b0110100;
-    case VectorArithmeticOp::Vmin:
-        return 0b0110101;
-    case VectorArithmeticOp::Vcompsel:
-        return 0b0110110;
-    default:
-        panic("unsupported vector arith op");
         return 0;
     }
 }
@@ -299,10 +251,7 @@ void Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD, reg_idx rA) {
 
 void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
                               reg_idx rB) {
-    uint32_t instr = 0;
-
-    uint32_t opcode = floatArithmeticOpToAOpcode(op);
-    instr |= (opcode << 25);
+    uint32_t instr = 0b0011101 << 25;
 
     // rD
     instr |= (rD.inner << 20);
@@ -319,82 +268,155 @@ void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,
     append(instr);
 }
 
-// vector instructions: vadd, vsub, vmult, vdiv, vdot, vdota, vsadd, vsmult,
-// vssub, vsdiv, vmax, vmin, vcompsel, vindx, vreduce, vsplat, vswizzle
-void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
-                               vreg_idx vA, vreg_idx vB, reg_idx rD, reg_idx rA,
-                               reg_idx rB, u<4> mask, s<8> imm) {
+// vadd, vsub, vmul, vdiv, vmax, vmin
+void Emitter::vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
+                               vreg_idx vA, vreg_idx vB, vmask_t mask) {
     uint32_t instr = 0;
-
-    uint32_t opcode = vectorArithmeticOpToAOpcode(op);
-    instr |= (opcode << 25);
-
     switch (op) {
-    case VectorArithmeticOp::Vdot:
-        instr |= (rD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (vB.inner << 10);
-    case VectorArithmeticOp::Vdota:
-        instr |= (rD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= (vB.inner << 5);
-    case VectorArithmeticOp::Vsma:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= (vB.inner << 5);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vindx:
-        instr |= (rD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= ((imm.inner & 0b11111111)
-                  << 7); // this immediate is 2 bits, but the extras
-                         // will flow into don't care spots so i didn't
-                         // adjust the size at all
-    case VectorArithmeticOp::Vreduce:
-        instr |= (rD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vsplat:
-        instr |= (vD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vswizzle:
-        instr |= (vD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= ((imm.inner & 0b11111111) << 7);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vcompsel:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (vB.inner << 5);
-        instr |= (mask.inner & 0b1111);
-    // scalar+vector ops
-    case VectorArithmeticOp::Vsadd:
-    case VectorArithmeticOp::Vsmult:
-    case VectorArithmeticOp::Vssub:
-    case VectorArithmeticOp::Vsdiv:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= (mask.inner & 0b1111);
-    // vector ops
-    case VectorArithmeticOp::Vadd:
-    case VectorArithmeticOp::Vsub:
-    case VectorArithmeticOp::Vmult:
-    case VectorArithmeticOp::Vdiv:
-    case VectorArithmeticOp::Vmax:
-    case VectorArithmeticOp::Vmin:
-        instr |= (vD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (vB.inner << 10);
-        instr |= (mask.inner & 0b1111);
-    default:
-        panic("unsupported vector arith op");
-        return;
+    case LanewiseVectorOp::Add:
+        instr = 0b0011111 << 25;
+        break;
+    case LanewiseVectorOp::Sub:
+        instr = 0b0100000 << 25;
+        break;
+    case LanewiseVectorOp::Mul:
+        instr = 0b0100001 << 25;
+        break;
+    case LanewiseVectorOp::Div:
+        instr = 0b0100010 << 25;
+        break;
+    case LanewiseVectorOp::Max:
+        instr = 0b0110100 << 25;
+        break;
+    case LanewiseVectorOp::Min:
+        instr = 0b0110101 << 25;
+        break;
     }
+
+    instr |= vD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+// vsadd, vsmul, vssub, vsdiv
+void Emitter::vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
+                                vreg_idx vB, vmask_t mask) {
+    uint32_t instr = 0;
+    switch (op) {
+    case VectorScalarOp::Add:
+        instr = 0b0101001 << 25;
+        break;
+    case VectorScalarOp::Mul:
+        instr = 0b0101010 << 25;
+        break;
+    case VectorScalarOp::Sub:
+        instr = 0b0101011 << 25;
+        break;
+    case VectorScalarOp::Div:
+        instr = 0b0101100 << 25;
+        break;
+    }
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask) {
+    uint32_t instr = 0b0100011 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB,
+                    vmask_t mask) {
+    uint32_t instr = 0b0100100 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= vA.inner << 10;
+    instr |= vB.inner << 5;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx) {
+    uint32_t instr = 0b0100101 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= idx.inner << 7;
+
+    append(instr);
+}
+
+void Emitter::vreduce(reg_idx rD, vreg_idx vA) {
+    uint32_t instr = 0b0100110 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= vA.inner << 15;
+
+    append(instr);
+}
+
+void Emitter::vsplat(vreg_idx vD, reg_idx rA) {
+    uint32_t instr = 0b0100111 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+
+    append(instr);
+}
+
+void Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
+                       vmask_t mask) {
+    uint32_t instr = 0b0101000 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= idxs[3].inner << 13;
+    instr |= idxs[2].inner << 11;
+    instr |= idxs[1].inner << 9;
+    instr |= idxs[0].inner << 7;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB,
+                   vmask_t mask) {
+    uint32_t instr = 0b0101101 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= vA.inner << 10;
+    instr |= vB.inner << 5;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void Emitter::vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
+                    vmask_t mask) {
+    uint32_t instr = 0b0110110 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+    instr |= vB.inner << 5;
+    instr |= mask.inner;
 
     append(instr);
 }

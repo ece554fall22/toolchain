@@ -9,25 +9,32 @@
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mult, And, Or, Xor, Shr, Shl };
 enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
-enum class VectorArithmeticOp {
-    Vadd,
-    Vsub,
-    Vmult,
-    Vdiv,
-    Vdot,
-    Vdota,
-    Vindx,
-    Vreduce,
-    Vsplat,
-    Vswizzle,
-    Vsadd,
-    Vsmult,
-    Vssub,
-    Vsdiv,
-    Vsma,
-    Vmax,
-    Vmin,
-    Vcompsel
+// enum class VectorArithmeticOp {
+//     Vadd,
+//     Vsub,
+//     Vmult,
+//     Vdiv,
+//     Vdot,
+//     Vdota,
+//     Vindx,
+//     Vreduce,
+//     Vsplat,
+//     Vswizzle,
+//     Vsadd,
+//     Vsmult,
+//     Vssub,
+//     Vsdiv,
+//     Vsma,
+//     Vmax,
+//     Vmin,
+//     Vcompsel
+// };
+enum class LanewiseVectorOp { Add, Sub, Mul, Div, Min, Max };
+enum class VectorScalarOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
 };
 enum class MatrixMultiplyOp {
     WriteA,
@@ -74,9 +81,18 @@ class Emitter {
                          reg_idx rB);
 
     // vector arithmetic
-    void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA,
-                          vreg_idx vB, reg_idx rD, reg_idx rA, reg_idx rB,
-                          u<4> mask, s<8> imm);
+    void vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD, vreg_idx vA,
+                          vreg_idx vB, vmask_t mask);
+    void vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
+                           vreg_idx vB, vmask_t mask);
+    void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask);
+    void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB, vmask_t mask);
+    void vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx);
+    void vreduce(reg_idx rD, vreg_idx vA);
+    void vsplat(vreg_idx vD, reg_idx rA);
+    void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4], vmask_t mask);
+    void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB, vmask_t mask);
+    void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB, vmask_t mask);
 
     // matrix extensions
     void matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
@@ -109,5 +125,5 @@ class Emitter {
 
     std::vector<uint32_t> data;
 };
-
-}; // namespace isa
+}
+; // namespace isa

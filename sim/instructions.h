@@ -209,7 +209,7 @@ void vdota(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, vreg_idx vA,
 }
 
 void vidx(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA,
-          velem_idx_t idx) {
+          vlaneidx_t idx) {
     cpu.r[rD].inner = float2bits(cpu.v[vA][idx.inner]).inner; // reasoning ibid
 }
 
@@ -230,7 +230,7 @@ void vsplat(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA,
 }
 
 void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
-              velem_idx_t idxs[4], vmask_t mask) {
+              vlaneidx_t idxs[4], vmask_t mask) {
     _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
 }
 
