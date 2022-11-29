@@ -395,14 +395,14 @@ void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
     append(instr);
 }
 
-void isa::Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB,
+void isa::Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vB, vreg_idx vC,
                         vmask_t mask) {
     uint32_t instr = 0b0101101 << 25;
 
     instr |= vD.inner << 20;
     instr |= rA.inner << 15;
-    instr |= vA.inner << 10;
-    instr |= vB.inner << 5;
+    instr |= vB.inner << 10;
+    instr |= vC.inner << 5;
     instr |= mask.inner;
 
     append(instr);
