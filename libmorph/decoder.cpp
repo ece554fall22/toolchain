@@ -57,8 +57,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // MS-format: stxx
     case 0b0001'100: // st32
     case 0b0001'101: // st36
-        unimplemented();
-        return;
+        return decodeMS(visit, instr);
 
     // AI-format: immediate arithmetic
     case 0b0010'011: // addi
