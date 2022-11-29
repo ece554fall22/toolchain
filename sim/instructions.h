@@ -8,7 +8,7 @@ namespace instructions {
 
 // -- lmao
 void nop(CPUState& cpu, MemSystem& mem) {}
-void halt(CPUState& cpu, MemSystem& mem) { exit(1); } // TODO
+void halt(CPUState& cpu, MemSystem& mem) { cpu.halt(); }
 
 // -- load immediate
 void lil(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {

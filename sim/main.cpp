@@ -167,11 +167,12 @@ int main(int argc, char* argv[]) {
         fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);
     }
 
-    while (true) {
+    while (!cpuState.isHalted()) {
         auto pc = cpuState.pc.getNewPC();
         auto ir = mem.readInstruction(pc);
 
         fmt::print("pc={:#x} ir={:#x}\n", pc, ir);
+        std::cout << "] ";
         isa::decodeInstruction(printvis, bits<32>(ir));
         isa::decodeInstruction(iproxy, bits<32>(ir));
     }
@@ -179,5 +180,5 @@ int main(int argc, char* argv[]) {
     // // "run" a little program
     // instructions::addi(cpuState, mem, /*r*/ 0, /*r*/ 0, 1);
 
-    // cpuState.dump();
+    cpuState.dump();
 }
