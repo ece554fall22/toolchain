@@ -47,8 +47,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // LI-format: ldx
     case 0b0001'000: // lil
     case 0b0001'001: // lih
-        unimplemented();
-        return;
+        return decodeLI(visit, instr);
 
     // ML-format: ldxx
     case 0b0001'010: // ld32
@@ -68,8 +67,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     case 0b0010'111: // xori
     case 0b0011'000: // shli
     case 0b0011'001: // shri
-        unimplemented();
-        return;
+        return decodeAI(visit, instr);
 
     // CI-format: imm compare
     case 0b0011'010: // compi
@@ -189,4 +187,14 @@ void decodeA(InstructionVisitor& visit, bits<32> instr) {
 
     visit.scalarArithmetic(rD, rA, rB,
                            isa::scalarArithmeticOpFromArithCode(op));
+}
+
+void decodeAI(InstructionVisitor& visit, bits<32> instr) {
+    auto op = isa::scalarArithmeticOpFromAIOpcode(instr.slice<31, 25>());
+
+    auto rD = instr.slice<24, 20>();
+    auto rA = instr.slice<19, 15>();
+    auto imm = instr.slice<14, 0>();
+
+    visit.scalarArithmeticImmediate(rD, rA, imm, op);
 }

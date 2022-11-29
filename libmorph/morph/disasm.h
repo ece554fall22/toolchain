@@ -35,6 +35,14 @@ enum class Opcode {
     St32,
     St36,
 
+    Addi,
+    Subi,
+    Andi,
+    Ori,
+    Xori,
+    Shri,
+    Shli,
+
     Add,
     Sub,
     Mul,
@@ -206,6 +214,39 @@ struct DisasmVisitor : public InstructionVisitor {
         instr.oper_regs[0] = rD;
         instr.oper_regs[1] = rA;
         instr.oper_regs[2] = rB;
+    }
+
+    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                           isa::ScalarArithmeticOp op) {
+        switch (op) {
+        case isa::ScalarArithmeticOp::Add:
+            instr.opcode = Opcode::Addi;
+            break;
+        case isa::ScalarArithmeticOp::Sub:
+            instr.opcode = Opcode::Subi;
+            break;
+        case isa::ScalarArithmeticOp::And:
+            instr.opcode = Opcode::Andi;
+            break;
+        case isa::ScalarArithmeticOp::Or:
+            instr.opcode = Opcode::Ori;
+            break;
+        case isa::ScalarArithmeticOp::Xor:
+            instr.opcode = Opcode::Xori;
+            break;
+        case isa::ScalarArithmeticOp::Shr:
+            instr.opcode = Opcode::Shri;
+            break;
+        case isa::ScalarArithmeticOp::Shl:
+            instr.opcode = Opcode::Shli;
+            break;
+        default:
+            panic("invalid opcode for AI");
+        }
+
+        instr.oper_regs[0] = rD;
+        instr.oper_regs[1] = rA;
+        instr.imm = imm._sgn_inner();
     }
 };
 

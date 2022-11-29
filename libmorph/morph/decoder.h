@@ -42,6 +42,10 @@ struct InstructionVisitor {
     // A
     virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
                                   isa::ScalarArithmeticOp op) = 0;
+
+    // AI
+    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                           isa::ScalarArithmeticOp op) = 0;
 };
 
 void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
@@ -108,6 +112,12 @@ struct PrintVisitor : public InstructionVisitor {
                                   isa::ScalarArithmeticOp op) {
         std::cout << op << " r" << rD.inner << ", r" << rA.inner << ", r"
                   << rB.inner << "\n";
+    }
+
+    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                           isa::ScalarArithmeticOp op) {
+        std::cout << op << "i r" << rD.inner << ", r" << rA.inner << ", "
+                  << imm._sgn_inner() << "\n";
     }
 };
 

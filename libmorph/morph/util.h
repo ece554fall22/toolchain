@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <fmt/core.h>
+#include <string>
 
 /// --- "we have Rust at home"
 class Unimplemented : public std::logic_error {

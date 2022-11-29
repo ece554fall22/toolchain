@@ -93,6 +93,35 @@ struct CPUInstructionProxy : public isa::InstructionVisitor {
         }
     }
 
+    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                           isa::ScalarArithmeticOp op) {
+        switch (op) {
+        case isa::ScalarArithmeticOp::Add:
+            instructions::addi(cpu, mem, rD, rA, imm);
+            return;
+        case isa::ScalarArithmeticOp::Sub:
+            instructions::subi(cpu, mem, rD, rA, imm);
+            return;
+        case isa::ScalarArithmeticOp::And:
+            instructions::andi(cpu, mem, rD, rA, imm);
+            return;
+        case isa::ScalarArithmeticOp::Or:
+            instructions::ori(cpu, mem, rD, rA, imm);
+            return;
+        case isa::ScalarArithmeticOp::Xor:
+            instructions::xori(cpu, mem, rD, rA, imm);
+            return;
+        case isa::ScalarArithmeticOp::Shr:
+            instructions::shri(cpu, mem, rD, rA, imm);
+            return;
+        case isa::ScalarArithmeticOp::Shl:
+            instructions::shli(cpu, mem, rD, rA, imm);
+            return;
+        default:
+            panic("invalid op for immedate");
+        }
+    }
+
   private:
     CPUState& cpu;
     MemSystem& mem;
