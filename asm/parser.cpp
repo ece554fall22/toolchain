@@ -28,17 +28,14 @@ auto Parser::source_file() -> std::unique_ptr<ast::SourceFile> {
         ::= directive
 */
 auto Parser::unit() -> std::unique_ptr<ast::Unit> {
-    // TODO
-    // auto n = std::make_unique<ast::Unit>();
-    // return n;
-    // return nullptr;
-    // if (auto ld = label_decl()) {
-
-    // } else if ()
-
     // eat up any linebreaks
     while (curr().is(Token::Kind::LINEBREAK)) {
         next();
+    }
+
+    // check if we're done
+    if (curr().isEoF()) {
+        return nullptr;
     }
 
     // std::cout << "  we are at " << curr().getKind() << "\n";
@@ -46,9 +43,75 @@ auto Parser::unit() -> std::unique_ptr<ast::Unit> {
         return std::make_unique<ast::Unit>(std::move(l));
     } else if (auto i = instruction()) {
         return std::make_unique<ast::Unit>(std::move(i));
+    } else if (auto d = directive_origin()) {
+        return std::make_unique<ast::Unit>(std::move(d));
+    } else if (auto d = directive_section()) {
+        return std::make_unique<ast::Unit>(std::move(d));
+    } else {
+        error(fmt::format("unknown construct beginning with {} (`{}`)",
+                          curr().getKind(), curr().getLexeme()));
+        return nullptr;
+    }
+}
+
+/* directive-origin
+        ::= % 'org'
+*/
+auto Parser::directive_origin() -> std::unique_ptr<ast::OriginDirective> {
+    if (curr().isNot(Token::Kind::PERCENT))
+        return nullptr;
+
+    auto directive = peek();
+    if (directive.isNot(Token::Kind::IDENTIFIER) ||
+        std::string(directive.getLexeme()) != "org") {
+        return nullptr;
     }
 
-    return nullptr;
+    next(); // eat `org`
+
+    auto origin = next();
+    if (!origin.isIntegerLiteral()) {
+        error("%org must be followed by an integer literal");
+        return nullptr;
+    }
+
+    auto originVal = parseIntegerToken(origin);
+    if (!originVal) {
+        error(fmt::format(
+            "can't parse {} (`{}`) as integer literal in %org directive",
+            origin.getKind(), origin.getLexeme()));
+        return nullptr;
+    }
+
+    next(); // eat integer
+
+    return std::make_unique<ast::OriginDirective>(*originVal);
+}
+
+/* directive-section
+        ::= % 'org'
+*/
+auto Parser::directive_section() -> std::unique_ptr<ast::SectionDirective> {
+    if (curr().isNot(Token::Kind::PERCENT))
+        return nullptr;
+
+    auto directive = peek();
+    if (directive.isNot(Token::Kind::IDENTIFIER) ||
+        std::string(directive.getLexeme()) != "section") {
+        return nullptr;
+    }
+
+    next(); // eat `section`
+
+    auto name = next();
+    if (name.isNot(Token::Kind::IDENTIFIER)) {
+        error("%section must be followed by a section name");
+        return nullptr;
+    }
+
+    next(); // eat ident
+
+    return std::make_unique<ast::SectionDirective>(name);
 }
 
 /*

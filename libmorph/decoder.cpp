@@ -4,6 +4,19 @@
 
 #include <fmt/core.h>
 
+using isa::InstructionVisitor;
+
+void decodeJ(InstructionVisitor& visit, bits<32> instr);
+void decodeJR(InstructionVisitor& visit, bits<32> instr);
+void decodeBR(InstructionVisitor& visit, bits<32> instr);
+void decodeBI(InstructionVisitor& visit, bits<32> instr);
+void decodeLI(InstructionVisitor& visit, bits<32> instr);
+void decodeML(InstructionVisitor& visit, bits<32> instr);
+void decodeMS(InstructionVisitor& visit, bits<32> instr);
+void decodeA(InstructionVisitor& visit, bits<32> instr);
+void decodeAI(InstructionVisitor& visit, bits<32> instr);
+void decodeCI(InstructionVisitor& visit, bits<32> instr);
+
 void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // crude decoder. our ISA is not compressed; we can just look
     // at the opcode field to understand what to do.
@@ -101,7 +114,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     }
 }
 
-void isa::decodeJ(InstructionVisitor& visit, bits<32> instr) {
+void decodeJ(InstructionVisitor& visit, bits<32> instr) {
     auto imm = instr.slice<24, 0>();
 
     bool jal = instr.bit(25);
@@ -111,7 +124,7 @@ void isa::decodeJ(InstructionVisitor& visit, bits<32> instr) {
         visit.jmp(imm);
 }
 
-void isa::decodeJR(InstructionVisitor& visit, bits<32> instr) {
+void decodeJR(InstructionVisitor& visit, bits<32> instr) {
     auto rA = u<5>(instr.slice<19, 15>());
     auto imm = s<20>(instr.slice<24, 20>().concat(instr.slice<14, 0>()));
 
@@ -122,7 +135,7 @@ void isa::decodeJR(InstructionVisitor& visit, bits<32> instr) {
         visit.jmpr(rA, imm);
 }
 
-void isa::decodeBR(InstructionVisitor& visit, bits<32> instr) {
+void decodeBR(InstructionVisitor& visit, bits<32> instr) {
     auto cond = condition_t(instr.slice<24, 22>().inner);
     auto rT = instr.slice<19, 15>();
     auto imm = s<17>(instr.slice<21, 20>().concat(instr.slice<14, 0>()));
@@ -130,14 +143,14 @@ void isa::decodeBR(InstructionVisitor& visit, bits<32> instr) {
     visit.branchreg(cond, rT, imm);
 }
 
-void isa::decodeBI(InstructionVisitor& visit, bits<32> instr) {
+void decodeBI(InstructionVisitor& visit, bits<32> instr) {
     auto cond = condition_t(instr.slice<24, 22>().inner);
     auto imm = s<22>(instr.slice<21, 0>());
 
     visit.branchimm(cond, imm);
 }
 
-void isa::decodeLI(InstructionVisitor& visit, bits<32> instr) {
+void decodeLI(InstructionVisitor& visit, bits<32> instr) {
     bool lo = instr.bit(25);
 
     auto rD = instr.slice<24, 20>();
@@ -149,7 +162,7 @@ void isa::decodeLI(InstructionVisitor& visit, bits<32> instr) {
         visit.lih(rD, imm);
 }
 
-void isa::decodeML(InstructionVisitor& visit, bits<32> instr) {
+void decodeML(InstructionVisitor& visit, bits<32> instr) {
     bool b36 = instr.bit(25);
 
     auto rD = instr.slice<24, 20>();
@@ -159,7 +172,7 @@ void isa::decodeML(InstructionVisitor& visit, bits<32> instr) {
     visit.ld(rD, rA, imm, b36);
 }
 
-void isa::decodeMS(InstructionVisitor& visit, bits<32> instr) {
+void decodeMS(InstructionVisitor& visit, bits<32> instr) {
     bool b36 = instr.bit(25);
 
     auto rA = instr.slice<19, 15>();

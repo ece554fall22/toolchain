@@ -24,39 +24,43 @@ void lih(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
     cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | (imm.inner << 18);
 }
 
-// ADDI 
-void addi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() + imm).asUnsigned();
+/************************************************************************/
+/************************-- scalar alu instruction **********************/
+/************************************************************************/
+
+// ADDI
+void addi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA].asSigned() + imm).asUnsigned();
 }
 
 // SUBI
-void subi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() - imm).asUnsigned();
+void subi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA].asSigned() - imm).asUnsigned();
 }
 
 // ANDI
-void andi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() & imm).asUnsigned();
+void andi(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA] & imm.asUnsigned());
 }
 
 // ORI
-void ori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() | imm).asUnsigned();
+void ori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA] | imm.asUnsigned());
 }
 
 // XORI
-void xori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() ^ imm).asUnsigned();
+void xori(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD] = (cpu.r[rA] ^ imm.asUnsigned());
 }
 
 // SHLI
-void shli(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() >> imm).asUnsigned();
+void shli(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD].inner = (cpu.r[rA].inner << imm._sgn_inner()) & bits<36>::mask;
 }
 
 // SHRI
-void shri(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rS, s<15> imm) {
-    cpu.r[rD] = (cpu.r[rS].asSigned() << imm).asUnsigned();
+void shri(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
+    cpu.r[rD].inner = (cpu.r[rA].inner >> imm._sgn_inner()) & bits<36>::mask;
 }
 
 // ADD
@@ -71,32 +75,35 @@ void sub(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 
 // MULT
 void mult(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() * cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD] =
+        cpu.r[rA].asSigned().truncMult<36>(cpu.r[rB].asSigned()).asUnsigned();
 }
 
 // AND
-void and(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() & cpu.r[rB].asSigned()).asUnsigned();
+void and_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cpu.r[rD] = (cpu.r[rA] & cpu.r[rB]);
 }
 
 // OR
-void or(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() | cpu.r[rB].asSigned()).asUnsigned();
+void or_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cpu.r[rD] = (cpu.r[rA] | cpu.r[rB]);
 }
 
 // XOR
-void xor(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() ^ cpu.r[rB].asSigned()).asUnsigned();
+void xor_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cpu.r[rD] = (cpu.r[rA] ^ cpu.r[rB]);
 }
 
 // SHL
 void shl(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() >> cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD].inner =
+        (cpu.r[rA].inner << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 // SHR
 void shr(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() << cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD].inner =
+        (cpu.r[rA].inner >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
@@ -112,15 +119,144 @@ void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
                      (!valA.sign() && !valB.sign() && res.sign());
 }
 
+void not_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA) {
+    cpu.r[rD] = ~cpu.r[rD];
+}
+
+// -- scalar float instructions
+#define SCALAR_FLOAT_BINOP(mnemonic, infixop)                                  \
+    void mnemonic(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA,       \
+                  reg_idx rB) {                                                \
+        float a = bits2float(cpu.r[rA].slice<31, 0>());                        \
+        float b = bits2float(cpu.r[rB].slice<31, 0>());                        \
+        float d = a infixop b;                                                 \
+        cpu.r[rD].inner = float2bits(d).inner;                                 \
+    }
+
+SCALAR_FLOAT_BINOP(fadd, +);
+SCALAR_FLOAT_BINOP(fsub, -);
+SCALAR_FLOAT_BINOP(fmul, *);
+SCALAR_FLOAT_BINOP(fdiv, /);
+
 // -- vector instructions
 constexpr size_t N_LANES = 4;
+using vmask_t = bits<4>;
+using velem_idx_t = bits<2>;
 
-void vmul(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA, vreg_idx vB,
-          u<4> mask) {
+template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
     for (size_t lane = 0; lane < N_LANES; lane++) {
         if (mask.bit(lane))
-            cpu.v[vD][lane] = cpu.v[vA][lane] * cpu.v[vB][lane];
+            fn(lane);
     }
+}
+
+#define VEC_BINOP(mnemonic, infixop)                                           \
+    void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,     \
+                  vreg_idx vB, vmask_t mask) {                                 \
+        _lane_apply(mask, [&](auto i) {                                        \
+            cpu.v[vD][i] = cpu.v[vA][i] infixop cpu.v[vB][i];                  \
+        });                                                                    \
+    }
+
+#define VEC_VS_BINOP(mnemonic, infixop)                                        \
+    void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA,      \
+                  vreg_idx vB, vmask_t mask) {                                 \
+        auto val = bits2float(cpu.r[rA].slice<31, 0>());                       \
+        _lane_apply(mask,                                                      \
+                    [&](auto i) { cpu.v[vD][i] = cpu.v[vB][i] infixop val; }); \
+    }
+
+#define VEC_EXTREMA(mnemonic, chooser)                                         \
+    void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,     \
+                  vreg_idx vB, vmask_t mask) {                                 \
+        _lane_apply(mask, [&](auto i) {                                        \
+            cpu.v[vD][i] = chooser(cpu.v[vA][i], cpu.v[vB][i]);                \
+        });                                                                    \
+    }
+
+VEC_BINOP(vadd, +);
+VEC_BINOP(vsub, -);
+VEC_BINOP(vmul, *);
+VEC_BINOP(vdiv, /);
+
+VEC_VS_BINOP(vsadd, +);
+VEC_VS_BINOP(vssub, -);
+VEC_VS_BINOP(vsmul, *);
+VEC_VS_BINOP(vsdiv, /);
+
+VEC_EXTREMA(vmax, std::max);
+VEC_EXTREMA(vmin, std::min);
+
+void vdot(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA, vreg_idx vB,
+          vmask_t mask) {
+
+    // compute dot
+    float acc = 0.f;
+    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
+
+    // dump to rD
+    cpu.r[rD].inner =
+        float2bits(acc)
+            .inner; // okay because float2bits . :: -> bits<32> ⊂ bits<36>
+}
+
+void vdota(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, vreg_idx vA,
+           vreg_idx vB, vmask_t mask) {
+
+    // load rA to accumulator
+    float acc = bits2float(cpu.r[rA].slice<31, 0>());
+
+    // compute dot
+    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
+
+    // dump to rD
+    cpu.r[rD].inner =
+        float2bits(acc)
+            .inner; // okay because float2bits . :: -> bits<32> ⊂ bits<36>
+}
+
+void vidx(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA,
+          velem_idx_t idx) {
+    cpu.r[rD].inner = float2bits(cpu.v[vA][idx.inner]).inner; // reasoning ibid
+}
+
+void vreduce(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA,
+             vmask_t mask) {
+    float acc = 0.f;
+
+    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i]; });
+
+    cpu.r[rD].inner = float2bits(acc).inner; // reasoning ibid
+}
+
+void vsplat(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA,
+            vmask_t mask) {
+    float val = bits2float(cpu.r[rA].slice<31, 0>());
+
+    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = val; });
+}
+
+void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
+              velem_idx_t idxs[4], vmask_t mask) {
+    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
+}
+
+void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA,
+          vreg_idx vB, vmask_t mask) {
+    float factor = bits2float(cpu.r[rA].slice<31, 0>());
+
+    _lane_apply(mask, [&](auto i) {
+        cpu.v[vD][i] = cpu.v[vA][i] * factor + cpu.v[vB][i];
+    });
+}
+
+void vcomp(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
+           vreg_idx vA, vmask_t mask) {
+    float a = bits2float(cpu.r[rA].slice<31, 0>());
+    float b = bits2float(cpu.r[rB].slice<31, 0>());
+
+    _lane_apply(mask,
+                [&](auto i) { cpu.v[vD][i] = (cpu.v[vA][i] > 0.f) ? a : b; });
 }
 
 // -- scalar memory instructions
@@ -147,7 +283,6 @@ void st36(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
     auto val = cpu.r[rB];
     mem.write(addr, val);
 }
-
 
 /************************************************************************/
 /*******************************-- JUMPS ********************************/
@@ -189,31 +324,31 @@ void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
 // BEZR
 void bezr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BLZR
 void blzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.sign)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BGZR
 void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.sign)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BLER
 void bler(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 // BGER
 void bger(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rT] + imm);
 }
 
 /** Relative to current PC */
@@ -221,37 +356,37 @@ void bger(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
 // BNZI
 void bnzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BEZI
-void bezr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bezi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BLZI
-void blzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void blzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (cpu.f.sign)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BGZI
-void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bgzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
     if (!cpu.f.sign)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BLEI
-void bler(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
-    if (cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+void blei(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+    if (cpu.f.sign || cpu.f.zero)
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BGEI
 void bgei(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
-    if (!cpu.f.sign | cpu.f.zero)
-        cpu.pc.redirect(cpu.pc.get() + imm);
+    if (!cpu.f.sign || cpu.f.zero)
+        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // -- specials: cache control

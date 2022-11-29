@@ -15,7 +15,7 @@
 struct CPUInstructionProxy : public isa::InstructionVisitor {
     virtual ~CPUInstructionProxy() = default;
     CPUInstructionProxy(auto& cpu, auto& mem) : cpu{cpu}, mem{mem} {}
-
+    CPUInstructionProxy(auto&& cpu, auto&& mem) = delete;
     // misc
     virtual void nop() { instructions::nop(cpu, mem); }
     virtual void halt() { instructions::halt(cpu, mem); }
@@ -79,11 +79,24 @@ int main(int argc, char* argv[]) {
     }
 
     CPUState cpuState;
-    MemSystem mem;
+    MemSystem mem(16);
     CPUInstructionProxy iproxy{cpuState, mem};
+    isa::PrintVisitor printvis;
+
+    mem.mempool[0] = 0x2000000; // nop
+    mem.mempool[1] = 0x5fffffe; // jmp #-2 ; PC' <- PC + 4 - 2 * 4 = PC - 4
+
+    while (true) {
+        auto pc = cpuState.pc.getNewPC();
+        auto ir = mem.readInstruction(pc);
+
+        fmt::print("pc={:#x} ir={:#x}\n", pc, ir);
+        isa::decodeInstruction(printvis, bits<32>(ir));
+        isa::decodeInstruction(iproxy, bits<32>(ir));
+    }
 
     // // "run" a little program
     // instructions::addi(cpuState, mem, /*r*/ 0, /*r*/ 0, 1);
 
-    cpuState.dump();
+    // cpuState.dump();
 }

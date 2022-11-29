@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bit_cast.h"
 #include <cassert>
 #include <compare>
 #include <cstdint>
@@ -66,10 +67,59 @@ template <size_t SIZE> struct bits {
     auto _sgn_inner() const -> signed_inner_t {
         return static_cast<signed_inner_t>(this->inner);
     }
+
+    bits<SIZE>& operator|=(const bits<SIZE>& rhs) {
+        this->inner |= rhs.inner;
+        return *this;
+    }
+
+    bits<SIZE>& operator&=(const bits<SIZE>& rhs) {
+        this->inner &= rhs.inner;
+        return *this;
+    }
+
+    bits<SIZE>& operator^=(const bits<SIZE>& rhs) {
+        this->inner ^= rhs.inner;
+        return *this;
+    }
+
+    friend bits<SIZE> operator&(bits<SIZE> lhs, const bits<SIZE>& rhs) {
+        lhs &= rhs;
+        return lhs;
+    }
+
+    friend bits<SIZE> operator|(bits<SIZE> lhs, const bits<SIZE>& rhs) {
+        lhs |= rhs;
+        return lhs;
+    }
+
+    friend bits<SIZE> operator^(bits<SIZE> lhs, const bits<SIZE>& rhs) {
+        lhs ^= rhs;
+        return lhs;
+    }
+
+    friend bits<SIZE> operator~(bits<SIZE> rhs) {
+        rhs.inner = (~rhs.inner) & mask;
+        return rhs;
+    }
+
+    // we can always check if two bitstrings of same size are identical
+    friend auto operator==(const bits<SIZE>& lhs, const bits<SIZE>& rhs) {
+        return lhs.inner == rhs.inner;
+    }
 };
 
-// template<size_t N> using s = varint<true, N>;
-// template<size_t N> using u = varint<false, N>;
+inline auto float2bits(float v) -> bits<32> {
+    bits<32> b;
+    b.inner = bit_cast<uint32_t>(v);
+    return b;
+}
+
+inline auto bits2float(bits<32> b) -> float {
+    auto bmasked = static_cast<uint32_t>(b.inner & b.mask);
+    return bit_cast<float>(bmasked);
+}
+
 template <size_t N> struct u;
 template <size_t N> struct s;
 
@@ -184,19 +234,42 @@ template <size_t N> struct s : public bits<N> {
         return *this;
     }
 
+    // signed <- signed + unsigned
     template <size_t M> friend s<N> operator+(s<N> lhs, const u<M>& rhs) {
         lhs += rhs;
         return lhs;
     }
 
+    // signed <- signed + signed
     template <size_t M> friend s<N> operator+(s<N> lhs, const s<M>& rhs) {
         lhs += rhs;
         return lhs;
     }
 
+    // signed <- signed - signed
     template <size_t M> friend s<N> operator-(s<N> lhs, const s<M>& rhs) {
         lhs -= rhs;
         return lhs;
+    }
+
+    // signed <- signed * signed
+    template <size_t M>
+    friend s<N + M> operator*(const s<N>& lhs, const s<M>& rhs) {
+        // todo: assert?
+        s<N + M> v;
+        v.inner = lhs._sgn_inner() * rhs._sgn_inner();
+        return v;
+    }
+
+    // signed <- signed * signed
+    // truncating
+    template <size_t MSIZE, size_t RSIZE>
+    auto truncMult(const s<RSIZE>& rhs) -> s<N> {
+        s<MSIZE> v;
+        v.inner = this->_sgn_inner() * rhs._sgn_inner();
+        v.inner &= bits<MSIZE>::mask;
+
+        return v;
     }
 
     template <size_t M> auto operator<=>(const s<M>& rhs) const {
@@ -204,7 +277,6 @@ template <size_t N> struct s : public bits<N> {
     }
 
     auto operator<=>(int rhs) const { return this->_sgn_inner() <=> rhs; }
-
     bool operator==(int rhs) const { return this->_sgn_inner() == rhs; }
 };
 

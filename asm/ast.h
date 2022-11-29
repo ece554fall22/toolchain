@@ -49,15 +49,6 @@ struct Operand {
 
     friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {
         os << "Arg::";
-        // std::visit(overloaded{
-        //                [&](int64_t v) { os << "Int(" << v << ")"; },
-        //                [&](const Token& v) {
-        //                    os << "Label(" << v.getLexeme() << ")";
-        //                },
-        //                [&](const AddressingOperand& v) { os <<
-        //                "Addressing()"; }
-        //            },
-        //            arg.inner);
         std::visit([&](auto&& x) { os << x; }, op.inner);
         return os;
     }
@@ -81,10 +72,28 @@ struct LabelDecl {
     void visit(auto& v, size_t depth) { v.enter(*this, depth); }
 };
 
-struct Label {};
+// struct Label {};
+
+struct OriginDirective {
+    OriginDirective(uint64_t origin) : origin{origin} {}
+
+    uint64_t origin;
+
+    void visit(auto& v, size_t depth) { v.enter(*this, depth); }
+};
+
+struct SectionDirective {
+    SectionDirective(Token name) : name{name} {}
+
+    Token name;
+
+    void visit(auto& v, size_t depth) { v.enter(*this, depth); }
+};
 
 struct Unit {
-    std::variant<std::unique_ptr<LabelDecl>, std::unique_ptr<Instruction>>
+    std::variant<std::unique_ptr<LabelDecl>, std::unique_ptr<Instruction>,
+                 std::unique_ptr<OriginDirective>,
+                 std::unique_ptr<SectionDirective>>
         inner;
 
     template <typename T>
@@ -176,5 +185,17 @@ class ASTPrintVisitor {
 
         // indent(depth);
         // wtr << "} Instruction\n";
+    }
+
+    void enter(const ast::OriginDirective& d, size_t depth) {
+        wtr << "OriginDirective {\n";
+        indent(depth + 1);
+        wtr << "origin = " << d.origin << "\n";
+    }
+
+    void enter(const ast::SectionDirective& d, size_t depth) {
+        wtr << "SectionDirective {\n";
+        indent(depth + 1);
+        wtr << "." << d.name.getLexeme() << "\n";
     }
 };

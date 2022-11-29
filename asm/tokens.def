@@ -8,6 +8,7 @@ TOKEN(COMMA),      // ,
 TOKEN(PERCENT),    // %
 TOKEN(HASH),       // #
 TOKEN(PLUS),       // +
+TOKEN(MINUS),      // -
 TOKEN(L_SQUARE),   // [
 TOKEN(L_BRACE),    // {
 TOKEN(R_SQUARE),   // ]

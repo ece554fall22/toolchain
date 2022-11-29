@@ -36,6 +36,9 @@ class Parser {
     auto operand() -> std::optional<ast::Operand>;
     auto operand_memory() -> std::optional<ast::OperandMemory>;
 
+    auto directive_origin() -> std::unique_ptr<ast::OriginDirective>;
+    auto directive_section() -> std::unique_ptr<ast::SectionDirective>;
+
     // -- error handling
     void error(const std::string& err) {
         // TODO: this is just a temporary hack
