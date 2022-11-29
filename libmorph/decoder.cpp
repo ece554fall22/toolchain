@@ -14,6 +14,7 @@ void decodeMS(InstructionVisitor& visit, bits<32> instr);
 void decodeA(InstructionVisitor& visit, bits<32> instr);
 void decodeAI(InstructionVisitor& visit, bits<32> instr);
 void decodeCI(InstructionVisitor& visit, bits<32> instr);
+void decodeBkpt(InstructionVisitor& visit, bits<32> instr);
 
 void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // crude decoder. our ISA is not compressed; we can just look
@@ -102,6 +103,9 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
 
         unimplemented();
         return;
+
+    case 0b1010'101: // bkpt
+        return decodeBkpt(visit, instr);
 
     default:
         // TODO: proper except or something
@@ -197,4 +201,9 @@ void decodeAI(InstructionVisitor& visit, bits<32> instr) {
     auto imm = instr.slice<14, 0>();
 
     visit.scalarArithmeticImmediate(rD, rA, imm, op);
+}
+
+void decodeBkpt(InstructionVisitor& visit, bits<32> instr) {
+    auto imm = instr.slice<24, 0>();
+    visit.bkpt(imm);
 }

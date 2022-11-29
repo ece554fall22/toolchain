@@ -20,6 +20,10 @@ struct CPUInstructionProxy : public isa::InstructionVisitor {
     // misc
     virtual void nop() { instructions::nop(cpu, mem); }
     virtual void halt() { instructions::halt(cpu, mem); }
+    virtual void bkpt(bits<25> signal) {
+        fmt::print("\n\nBREAKPOINT BREAKPOINT : {:#x} : BREAKPOINT BREAKPOINT\n\n",
+                   signal.inner);
+    }
 
     // J
     virtual void jmp(s<25> imm) { instructions::jmp(cpu, mem, imm); }

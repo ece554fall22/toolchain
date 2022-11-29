@@ -27,11 +27,16 @@ static const std::map<
         {"nop", EMIT_NOARGS(nop)},
         {"halt", EMIT_NOARGS(nop)},
 
-        {"add",
+        {"bkpt", [](auto& e, const ast::Instruction& i) {
+            e.bkpt(i.operands[0].asBitsImm<25>());
+        }},
+
+        {"addi",
          [](auto& e, const auto& i) {
-             e.scalarArithmetic(
+             e.scalarArithmeticImmediate(
                  isa::ScalarArithmeticOp::Add, i.operands[0].asRegIdx(),
-                 i.operands[1].asRegIdx(), i.operands[2].asRegIdx());
+                 i.operands[1].asRegIdx(),
+                 i.operands[2].template asSignedImm<15>());
          }},
 
         // TODO: can we force std::bind to work here despite undef retn ty?
