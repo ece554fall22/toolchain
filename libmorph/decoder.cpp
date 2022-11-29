@@ -53,7 +53,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // ML-format: ldxx
     case 0b0001'010: // ld32
     case 0b0001'011: // ld36
-        return decodeBI(visit, instr);
+        return decodeML(visit, instr);
     // MS-format: stxx
     case 0b0001'100: // st32
     case 0b0001'101: // st36
