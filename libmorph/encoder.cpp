@@ -565,7 +565,7 @@ void isa::Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
 
 // flushdirty, flushclean, flushicache, flushline
 // TODO: split up
-void isa::Emitter::flushCache(isa::CacheControlOp op, u<25> imm) {
+void isa::Emitter::flushcache(isa::CacheControlOp op) {
     uint32_t instr = cacheControlOpcode(op) << 25;
     append(instr);
 }
