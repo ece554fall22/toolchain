@@ -107,6 +107,11 @@ struct CPUState {
 
     PC pc;
 
+    bool halted;
+
+    auto isHalted() const -> bool { return halted; }
+    void halt() { halted = true; }
+
     CPUState() {}
 
     void dump() const {
