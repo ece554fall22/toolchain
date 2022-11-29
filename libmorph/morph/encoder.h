@@ -37,6 +37,8 @@ class Emitter {
     // flow control
     void halt();
     void nop();
+    void bkpt(bits<25> imm);
+
     void jumpPCRel(s<25> imm, bool link);
     void jumpRegRel(reg_idx rA, s<20> imm, bool link);
 

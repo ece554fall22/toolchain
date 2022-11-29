@@ -10,6 +10,7 @@
 static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANTICS = {
     {"nop",  {}},
     {"halt", {}},
+    {"bkpt", {OperandType::Immediate}},
 
     {"jmp",  {OperandType::Label}},
     {"jal",  {OperandType::Label}},

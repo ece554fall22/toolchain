@@ -655,3 +655,10 @@ void isa::Emitter::nop() {
 
     append(instr);
 }
+
+void isa::Emitter::bkpt(bits<25> imm) {
+    uint32_t instr = 0b1010101 << 25;
+    instr |= imm.inner;
+
+    append(instr);
+}

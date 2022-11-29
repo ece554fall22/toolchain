@@ -7,6 +7,7 @@ namespace isa::disasm {
 enum class Opcode {
     Halt,
     Nop,
+    Bkpt,
 
     Jmp,
     Jal,
@@ -74,6 +75,10 @@ struct DisasmVisitor : public InstructionVisitor {
     // misc
     virtual void nop() { instr.opcode = Opcode::Nop; }
     virtual void halt() { instr.opcode = Opcode::Halt; }
+    virtual void bkpt(bits<25> signal) {
+        instr.opcode = Opcode::Bkpt;
+        instr.imm = signal.inner;
+    }
 
     // J
     virtual void jmp(s<25> imm) {

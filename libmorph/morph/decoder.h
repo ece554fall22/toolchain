@@ -17,6 +17,7 @@ struct InstructionVisitor {
     // misc
     virtual void nop() = 0;
     virtual void halt() = 0;
+    virtual void bkpt(bits<25> imm) = 0;
 
     // J
     virtual void jmp(s<25> imm) = 0;
@@ -118,6 +119,10 @@ struct PrintVisitor : public InstructionVisitor {
                                            isa::ScalarArithmeticOp op) {
         std::cout << op << "i r" << rD.inner << ", r" << rA.inner << ", "
                   << imm._sgn_inner() << "\n";
+    }
+
+    virtual void bkpt(bits<25> imm) {
+        std::cout << "bkpt " << imm.inner << "\n";
     }
 };
 
