@@ -8,6 +8,7 @@
 #include "lexer.h"
 #include <morph/ty.h>
 #include <morph/util.h>
+#include <morph/varint.h>
 
 namespace ast {
 
@@ -70,6 +71,14 @@ struct Operand {
 
     auto asRegIdx() const -> reg_idx {
         return reg_idx(this->template get<ast::OperandRegister>().idx);
+    }
+
+    template <size_t N> auto asSignedImm() const -> s<N> {
+        return s<N>(this->template get<ast::OperandImmediate>().val);
+    }
+
+    template <size_t N> auto asBitsImm() const -> bits<N> {
+        return s<N>(this->template get<ast::OperandImmediate>().val);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {
