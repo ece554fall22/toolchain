@@ -71,6 +71,8 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"wcsr", {OperandType::Immediate, OperandType::Register}},
 
     {"flushicache", {}},
+    {"flushdirty", {}},
+    {"flushclean", {}},
 
     // pseudos
     {"lda",  {OperandType::Register, OperandType::Label}},

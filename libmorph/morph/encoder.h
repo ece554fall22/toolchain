@@ -94,7 +94,7 @@ class Emitter {
     void floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA);
 
     // specials
-    void flushCache(isa::CacheControlOp op, u<25> imm);
+    void flushcache(isa::CacheControlOp op);
     void flushline(u<25> imm);
     void csr(isa::CsrOp op, reg_idx rA, u<2> csrNum);
     void concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, reg_idx rB,

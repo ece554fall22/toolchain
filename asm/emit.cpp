@@ -1,8 +1,7 @@
 #include "emit.h"
 
 #include <functional>
-
-#define EMIT_NOARGS(mnemonic) [](auto& e, const auto& i) { e.mnemonic(); }
+#include <morph/encoder.h>
 
 void emit_arith(isa::ScalarArithmeticOp op, isa::Emitter& e,
                 const ast::Instruction& i) {
@@ -16,8 +15,15 @@ void emit_arith_imm(isa::ScalarArithmeticOp op, isa::Emitter& e,
                                 i.operands[1].asRegIdx(),
                                 i.operands[2].template asBitsImm<15>());
 }
+
+void emit_flushcache(isa::CacheControlOp op, isa::Emitter& e,
+                     const ast::Instruction& i) {
+    e.flushcache(op);
+}
+
 // todo this is just fucked up std::bind but with a defined retn ty
 #define PARTIAL(fn, ...) [](auto& e, const auto& i) { fn(__VA_ARGS__, e, i); }
+#define EMIT_NOARGS(mnemonic) [](auto& e, const auto& i) { e.mnemonic(); }
 
 static const std::map<
     std::string, std::function<void(isa::Emitter&, const ast::Instruction&)>,
@@ -55,7 +61,12 @@ static const std::map<
                  u<2>(i.operands[1].template get<ast::OperandImmediate>().val));
          }},
 
-        {"flushicache", EMIT_NOARGS(nop)},
+        {"flushicache",
+         PARTIAL(emit_flushcache, isa::CacheControlOp::Flushicache)},
+        {"flushdirty",
+         PARTIAL(emit_flushcache, isa::CacheControlOp::Flushdirty)},
+        {"flushclean",
+         PARTIAL(emit_flushcache, isa::CacheControlOp::Flushclean)},
 };
 
 void EmissionPass::enter(const ast::Instruction& inst, size_t depth) {
