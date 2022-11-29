@@ -72,7 +72,7 @@ class Emitter {
     void vreduce(reg_idx rD, vreg_idx vA);
     void vsplat(vreg_idx vD, reg_idx rA);
     void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4], vmask_t mask);
-    void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, reg_idx vB, vmask_t mask);
+    void vsma(vreg_idx vD, reg_idx rA, vreg_idx vB, vreg_idx vC, vmask_t mask);
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB, vmask_t mask);
 
     // matrix extensions
