@@ -14,9 +14,8 @@ void emit_arith_imm(isa::ScalarArithmeticOp op, isa::Emitter& e,
                     const ast::Instruction& i) {
     e.scalarArithmeticImmediate(op, i.operands[0].asRegIdx(),
                                 i.operands[1].asRegIdx(),
-                                i.operands[2].template asSignedImm<15>());
+                                i.operands[2].template asBitsImm<15>());
 }
-
 // todo this is just fucked up std::bind but with a defined retn ty
 #define PARTIAL(fn, ...) [](auto& e, const auto& i) { fn(__VA_ARGS__, e, i); }
 
@@ -27,25 +26,24 @@ static const std::map<
         {"nop", EMIT_NOARGS(nop)},
         {"halt", EMIT_NOARGS(nop)},
 
-        {"bkpt", [](auto& e, const ast::Instruction& i) {
-            e.bkpt(i.operands[0].asBitsImm<25>());
-        }},
-
-        {"addi",
-         [](auto& e, const auto& i) {
-             e.scalarArithmeticImmediate(
-                 isa::ScalarArithmeticOp::Add, i.operands[0].asRegIdx(),
-                 i.operands[1].asRegIdx(),
-                 i.operands[2].template asSignedImm<15>());
+        {"bkpt",
+         [](auto& e, const ast::Instruction& i) {
+             e.bkpt(i.operands[0].asBitsImm<25>());
          }},
+
+        {"addi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Add)},
+        {"subi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Sub)},
+        {"andi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::And)},
+        {"xori", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Xor)},
+        {"shri", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Shr)},
+        {"shli", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Shl)},
 
         // TODO: can we force std::bind to work here despite undef retn ty?
         {"add", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Add)},
         {"sub", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Sub)},
         {"mul", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Mul)},
-        {"mul", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Mul)},
         {"and", PARTIAL(emit_arith, isa::ScalarArithmeticOp::And)},
-        {"or", PARTIAL(emit_arith,  isa::ScalarArithmeticOp::Or)},
+        {"or", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Or)},
         {"xor", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Xor)},
         {"shr", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shr)},
         {"shl", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shl)},
