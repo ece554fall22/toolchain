@@ -103,7 +103,7 @@ void shr(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
         (cpu.r[rA].inner >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
-void cmp(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+void cmp(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB) {
     auto valA = cpu.r[rA].asSigned();
     auto valB = cpu.r[rB].asSigned();
     // ALU
