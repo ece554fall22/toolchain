@@ -9,6 +9,8 @@
 #include <morph/ty.h>
 #include <morph/varint.h>
 
+#include "trace.h"
+
 struct MemSystem {
     MemSystem(size_t size) : mempool(size, 0) {}
 
@@ -101,6 +103,9 @@ struct PC {
 };
 
 struct CPUState {
+    CPUState() : r{}, v{}, f{}, pc{}, halted{false}, tracer{nullptr} {}
+    CPUState(std::unique_ptr<Tracer>&& tracer) : r{}, v{}, f{}, pc{}, halted{false}, tracer(std::move(tracer)) {}
+
     ScalarRegisterFile r;
     VectorRegisterFile v;
     ConditionFlags f;
@@ -109,10 +114,10 @@ struct CPUState {
 
     bool halted;
 
+    std::unique_ptr<Tracer> tracer;
+
     auto isHalted() const -> bool { return halted; }
     void halt() { halted = true; }
-
-    CPUState() {}
 
     void dump() const {
         std::cout << "pc: " << pc.getCurrentPC() << '\n';
