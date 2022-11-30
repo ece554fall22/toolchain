@@ -254,18 +254,17 @@ auto Parser::operand_label() -> std::optional<ast::OperandLabel> {
 auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
     if (curr().isNot(Token::Kind::L_SQUARE))
         return std::nullopt;
+    next(); // eat [
 
-    auto base = next();
-    if (base.isNot(Token::Kind::IDENTIFIER)) {
-        error("expected an identifier following [ in an operand addressing "
-              "memory");
+    auto base = operand_register();
+    if (!base) {
+        error("expected a register in memory operand");
         return std::nullopt;
     }
 
-    next();
     if (curr().is(Token::Kind::R_SQUARE)) { // early ending!
         next();                             // eat ]
-        return ast::OperandMemory{base, 0, false};
+        return ast::OperandMemory{*base, 0, false};
     } else if (curr().is(Token::Kind::PLUS)) { // offset
         auto offset = next();
         if (!offset.isIntegerLiteral()) {
@@ -290,7 +289,7 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
 
         next(); // eat ]
 
-        return ast::OperandMemory{base, *offsetVal, false};
+        return ast::OperandMemory{*base, *offsetVal, false};
     } else if (curr().is(Token::Kind::PLUSEQUAL)) { // offset and postincrement
         auto offset = next();
         if (!offset.isIntegerLiteral() &&
@@ -316,7 +315,7 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
 
         next(); // eat ]
 
-        return ast::OperandMemory{base, *offsetVal, true};
+        return ast::OperandMemory{*base, *offsetVal, true};
     } else {
         error(fmt::format("unexpected token {}", curr().getKind()));
         return std::nullopt;

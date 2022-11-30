@@ -1,0 +1,4 @@
+lil r1, 0x0
+lih r1, 0x0
+
+ld32 r2, [r1]
