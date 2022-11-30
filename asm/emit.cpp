@@ -37,6 +37,35 @@ static const std::map<
              e.bkpt(i.operands[0].asBitsImm<25>());
          }},
 
+        {"lil",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             e.loadImmediate(false, i.operands[0].asRegIdx(),
+                             i.operands[1].asSignedImm<18>());
+         }},
+        {"lih",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             e.loadImmediate(true, i.operands[0].asRegIdx(),
+                             i.operands[1].asSignedImm<18>());
+         }},
+
+        {"ld32",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             auto memOp = i.operands[1].get<ast::OperandMemory>();
+             assert(!memOp.increment); // TODO!
+
+             e.loadScalar(false, i.operands[0].asRegIdx(), memOp.base.idx,
+                          memOp.offset);
+         }},
+
+        {"ld36",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             auto memOp = i.operands[1].get<ast::OperandMemory>();
+             assert(!memOp.increment); // TODO!
+
+             e.loadScalar(true, i.operands[0].asRegIdx(), memOp.base.idx,
+                          memOp.offset);
+         }},
+
         {"addi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Add)},
         {"subi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Sub)},
         {"andi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::And)},
@@ -55,10 +84,9 @@ static const std::map<
         {"shl", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shl)},
 
         {"rcsr",
-         [](auto& e, const auto& i) {
-             e.csr(
-                 isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),
-                 u<2>(i.operands[1].template get<ast::OperandImmediate>().val));
+         [](auto& e, const ast::Instruction& i) {
+             e.csr(isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),
+                   u<2>(i.operands[1].get<ast::OperandImmediate>().val));
          }},
 
         {"flushicache",

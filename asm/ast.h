@@ -12,19 +12,6 @@
 
 namespace ast {
 
-struct OperandMemory {
-    Token base;
-    int64_t offset;
-    bool increment;
-
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const ast::OperandMemory& op) {
-        os << "Ptr { base=" << op.base.getLexeme() << ", offset=" << op.offset
-           << ", incr=" << op.increment << " }";
-        return os;
-    }
-};
-
 struct OperandImmediate {
     int64_t val;
 
@@ -57,6 +44,19 @@ struct OperandLabel {
     }
 };
 
+struct OperandMemory {
+    OperandRegister base;
+    int64_t offset;
+    bool increment;
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ast::OperandMemory& op) {
+        os << "Ptr { base=" << op.base << ", offset=" << op.offset
+           << ", incr=" << op.increment << " }";
+        return os;
+    }
+};
+
 struct Operand {
     std::variant<OperandImmediate, OperandLabel, OperandRegister, OperandMemory>
         inner;
@@ -70,7 +70,7 @@ struct Operand {
     template <class T> const T& get() const { return std::get<T>(inner); }
 
     auto asRegIdx() const -> reg_idx {
-        return reg_idx(this->template get<ast::OperandRegister>().idx);
+        return {this->template get<ast::OperandRegister>().idx};
     }
 
     template <size_t N> auto asSignedImm() const -> s<N> {
