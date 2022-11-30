@@ -1,22 +1,24 @@
 #include <argparse/argparse.hpp>
-#include <filesystem>
-#include <iostream>
-#include <fstream>
 #include <csignal>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 
 #include "cpu.h"
 #include "instructions.h"
 #include "trace.h"
 
+#include <fmt/color.h>
 #include <morph/decoder.h>
 #include <morph/util.h>
-#include <fmt/color.h>
 
 class CPUInstructionProxy : public isa::InstructionVisitor {
-public:
+  public:
     ~CPUInstructionProxy() override = default;
-    CPUInstructionProxy(auto& cpu, auto& mem) : cpu{cpu}, mem{mem} {}
-    CPUInstructionProxy(auto&& cpu, auto&& mem) = delete;
+    CPUInstructionProxy(CPUState& cpu, MemSystem& mem,
+                        std::shared_ptr<Tracer> tracer)
+        : cpu{cpu}, mem{mem}, tracer{tracer} {}
+    //    CPUInstructionProxy(auto&& cpu, auto&& mem, auto&& tracer) = delete;
     // misc
     void nop() override { instructions::nop(cpu, mem); }
     void halt() override { instructions::halt(cpu, mem); }
@@ -32,9 +34,15 @@ public:
 
     // JR
     void jmpr(reg_idx rA, s<20> imm) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->immInput(imm._sgn_inner());
+
         instructions::jmpr(cpu, mem, rA, imm);
     }
     void jalr(reg_idx rA, s<20> imm) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->immInput(imm._sgn_inner());
+
         instructions::jalr(cpu, mem, rA, imm);
     }
 
@@ -48,20 +56,40 @@ public:
     }
 
     void lil(reg_idx rD, s<18> imm) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->immInput(imm._sgn_inner());
+
         instructions::lil(cpu, mem, rD, imm);
+
+        tracer->writebackScalarReg(cpu, "rD", rD);
     }
     void lih(reg_idx rD, s<18> imm) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->immInput(imm._sgn_inner());
+
         instructions::lih(cpu, mem, rD, imm);
+
+        tracer->writebackScalarReg(cpu, "rD", rD);
     }
 
     void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->immInput(imm._sgn_inner());
+
         if (b36)
             instructions::ld36(cpu, mem, rD, rA, imm);
         else
             instructions::ld32(cpu, mem, rD, rA, imm);
+
+        tracer->writebackScalarReg(cpu, "rD", rD);
     }
 
     void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+        tracer->immInput(imm._sgn_inner());
+
         if (b36)
             instructions::st36(cpu, mem, rA, rB, imm);
         else
@@ -69,73 +97,86 @@ public:
     }
 
     void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
-                                  isa::ScalarArithmeticOp op) override {
+                          isa::ScalarArithmeticOp op) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+
         switch (op) {
         case isa::ScalarArithmeticOp::Add:
             instructions::add(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Sub:
             instructions::sub(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Mul:
             instructions::mul(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::And:
             instructions::and_(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Or:
             instructions::or_(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Xor:
             instructions::xor_(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Shr:
             instructions::shr(cpu, mem, rD, rA, rB);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Shl:
             instructions::shl(cpu, mem, rD, rA, rB);
-            return;
+            break;
+        default:
+            panic("invalid op for immediate");
         }
+
+        tracer->writebackScalarReg(cpu, "rD", rD);
     }
 
     void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
-                                           isa::ScalarArithmeticOp op) override {
+                                   isa::ScalarArithmeticOp op) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->immInput(imm._sgn_inner());
+
         switch (op) {
         case isa::ScalarArithmeticOp::Add:
             instructions::addi(cpu, mem, rD, rA, imm);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Sub:
             instructions::subi(cpu, mem, rD, rA, imm);
-            return;
+            break;
         case isa::ScalarArithmeticOp::And:
             instructions::andi(cpu, mem, rD, rA, imm);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Or:
             instructions::ori(cpu, mem, rD, rA, imm);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Xor:
             instructions::xori(cpu, mem, rD, rA, imm);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Shr:
             instructions::shri(cpu, mem, rD, rA, imm);
-            return;
+            break;
         case isa::ScalarArithmeticOp::Shl:
             instructions::shli(cpu, mem, rD, rA, imm);
-            return;
+            break;
         default:
-            panic("invalid op for immedate");
+            panic("invalid op for immediate");
         }
+
+        tracer->writebackScalarReg(cpu, "rD", rD);
     }
 
   private:
     CPUState& cpu;
     MemSystem& mem;
+    std::shared_ptr<Tracer> tracer;
 };
 
 volatile std::sig_atomic_t signal_flag = 0;
-void handle_sigint(int signal) {
-    signal_flag = signal;
-}
+void handle_sigint(int signal) { signal_flag = signal; }
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
@@ -154,14 +195,16 @@ int main(int argc, char* argv[]) {
 
     std::signal(SIGINT, handle_sigint);
 
-    std::unique_ptr<Tracer> tracer = nullptr;
+    std::shared_ptr<Tracer> tracer = nullptr;
     if (auto tracepath = ap.present<std::string>("--trace")) {
-        tracer = make_unique<Tracer>(*tracepath);
+        tracer = std::make_shared<FileTracer>(*tracepath);
+    } else {
+        tracer = std::make_shared<NullTracer>();
     }
 
-    CPUState cpuState(std::move(tracer));
+    CPUState cpuState;
     MemSystem mem(1024 /* 1k */);
-    CPUInstructionProxy iproxy(cpuState, mem);
+    CPUInstructionProxy iproxy(cpuState, mem, tracer);
     isa::PrintVisitor printvis(std::cout);
 
     {
@@ -190,20 +233,22 @@ int main(int argc, char* argv[]) {
         auto pc = cpuState.pc.getNewPC();
         auto ir = mem.readInstruction(pc);
 
-        if (cpuState.tracer) cpuState.tracer->begin(pc, ir);
+        tracer->begin(pc, ir);
 
         // TODO(erin): temp stdout logging
         fmt::print("pc={:#x} ir={:#x}\n", pc, ir);
         std::cout << "] ";
         isa::decodeInstruction(printvis, bits<32>(ir));
+        std::cout << '\n';
 
         // execute instruction
         isa::decodeInstruction(iproxy, bits<32>(ir));
 
-        if (cpuState.tracer) cpuState.tracer->end();
+        tracer->end();
 
         if (signal_flag == SIGINT) {
-            fmt::print(fmt::fg(fmt::color::cyan), " simulation halted by SIGINT\n");
+            fmt::print(fmt::fg(fmt::color::cyan),
+                       " simulation halted by SIGINT\n");
             cpuState.halt();
         }
     }

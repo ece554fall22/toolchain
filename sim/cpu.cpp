@@ -10,25 +10,31 @@ void MemSystem::flushDCacheClean() {}
 void MemSystem::flushDCacheLine(uint64_t at) {}
 
 void MemSystem::write(uint64_t addr, u<32> val) {
-    std::cout << "M[" << addr << "] = " << val << "\n";
+    //    tracer->memWrite(addr, val);
+    std::cout << "M[" << addr << "]/32 = " << val << "\n";
 }
 
 void MemSystem::write(uint64_t addr, u<36> val) {
-    std::cout << "M[" << addr << "] = " << val << "\n";
+    //    tracer->memWrite(addr, val);
+    std::cout << "M[" << addr << "]/36 = " << val << "\n";
 }
 
-void MemSystem::write(uint64_t addr, u<64> val) {
-    std::cout << "M[" << addr << "] = " << val << "\n";
-}
+// void MemSystem::write(uint64_t addr, u<64> val) {
+//     tracer->memWrite(addr, val);
+//     std::cout << "M[" << addr << "] = " << val << "\n";
+// }
 
 void MemSystem::write(uint64_t addr, f32x4 val) {
+    //    tracer->memWrite(addr, val);
     std::cout << "M[" << addr << "] = " << val << "\n";
 }
 
 auto MemSystem::read32(uint64_t addr) -> uint32_t {
     _check_alignment(addr, 32);
 
-    return this->mempool[addr / 4];
+    auto val = this->mempool[addr / 4];
+    //    tracer->memRead32(addr, val);
+    return val;
 }
 
 auto MemSystem::read36(uint64_t addr) -> uint64_t {
@@ -37,6 +43,8 @@ auto MemSystem::read36(uint64_t addr) -> uint64_t {
     // little-endian
     uint64_t val = this->mempool[addr / 4]; // lower
     val |= static_cast<uint64_t>(this->mempool[1 + addr / 4]) << 32;
+
+    //    tracer->memRead36(addr, val);
 
     return val;
 }

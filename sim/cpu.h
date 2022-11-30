@@ -9,14 +9,12 @@
 #include <morph/ty.h>
 #include <morph/varint.h>
 
-#include "trace.h"
-
 struct MemSystem {
-    MemSystem(size_t size) : mempool(size, 0) {}
+    explicit MemSystem(size_t size) : mempool(size, 0) {}
 
     void write(uint64_t addr, u<32> val);
     void write(uint64_t addr, u<36> val);
-    void write(uint64_t addr, u<64> val);
+    //    void write(uint64_t addr, u<64> val);
     void write(uint64_t addr, f32x4 val);
 
     auto read32(uint64_t addr) -> uint32_t;
@@ -33,6 +31,7 @@ struct MemSystem {
     static void _check_alignment(uint64_t addr, uint32_t alignTo);
 
     std::vector<uint32_t> mempool;
+    //    std::shared_ptr<Tracer> tracer;
 };
 
 struct ScalarRegisterFile {
@@ -95,7 +94,7 @@ struct PC {
         return current;
     }
 
-    auto getCurrentPC() const -> uint64_t { return current; }
+    [[nodiscard]] auto getCurrentPC() const -> uint64_t { return current; }
 
   private:
     uint64_t current;
@@ -103,8 +102,7 @@ struct PC {
 };
 
 struct CPUState {
-    CPUState() : r{}, v{}, f{}, pc{}, halted{false}, tracer{nullptr} {}
-    CPUState(std::unique_ptr<Tracer>&& tracer) : r{}, v{}, f{}, pc{}, halted{false}, tracer(std::move(tracer)) {}
+    CPUState() : r{}, v{}, f{}, pc{}, halted{false} {}
 
     ScalarRegisterFile r;
     VectorRegisterFile v;
@@ -114,9 +112,7 @@ struct CPUState {
 
     bool halted;
 
-    std::unique_ptr<Tracer> tracer;
-
-    auto isHalted() const -> bool { return halted; }
+    [[nodiscard]] auto isHalted() const -> bool { return halted; }
     void halt() { halted = true; }
 
     void dump() const {
@@ -126,8 +122,8 @@ struct CPUState {
                   << "----------------\n";
         for (size_t i = 0; i < ScalarRegisterFile::N_REGS; i++) {
             auto reg = this->r[i];
-            std::cout << std::setw(4) << fmt::format("r{}", i) << ": " << reg
-                      << '\n';
+            std::cout << std::setw(18)
+                      << fmt::format("r{}: {:#011x}\n", i, reg.inner);
         }
 
         std::cout << "vector registers\n"
