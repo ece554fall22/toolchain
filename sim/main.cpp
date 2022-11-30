@@ -12,6 +12,20 @@
 #include <morph/decoder.h>
 #include <morph/util.h>
 
+#define HANDLE_BR(suffix, cond, ...) \
+    case condition_t::cond:     \
+        instructions::b##cond##suffix(cpu, mem, ## __VA_ARGS__); \
+        break;
+
+#define FORALL_CONDS(suffix, ...) \
+        HANDLE_BR(suffix, nz, ## __VA_ARGS__) \
+        HANDLE_BR(suffix, ez, ## __VA_ARGS__) \
+        HANDLE_BR(suffix, lz, ## __VA_ARGS__) \
+        HANDLE_BR(suffix, gz, ## __VA_ARGS__) \
+        HANDLE_BR(suffix, le, ## __VA_ARGS__) \
+        HANDLE_BR(suffix, ge, ## __VA_ARGS__)
+
+
 class CPUInstructionProxy : public isa::InstructionVisitor {
   public:
     ~CPUInstructionProxy() override = default;
@@ -48,11 +62,22 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     // BI
     void branchimm(condition_t cond, s<22> imm) override {
-        todo("branch instruction proxies");
+        tracer->condcode(cond);
+        tracer->immInput(imm.inner);
+
+        switch (cond) {
+            FORALL_CONDS(i, imm)
+        }
     }
     // BR
     void branchreg(condition_t cond, reg_idx rA, s<17> imm) override {
-        todo("branch instruction proxies");
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->immInput(imm.inner);
+        tracer->condcode(cond);
+
+        switch (cond) {
+            FORALL_CONDS(r, rA, imm)
+        }
     }
 
     void lil(reg_idx rD, s<18> imm) override {

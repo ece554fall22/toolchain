@@ -11,6 +11,9 @@ std::ostream& operator<<(std::ostream& os, const InstructionTrace& trace) {
         os << " " << s;
     os << '\n';
 
+    if (trace.condcode)
+        os << "    branch_condition_code: " << *trace.condcode << '\n';
+
     if (trace.scalarRegOutput)
         os << "    scalar_writeback: " << *trace.scalarRegOutput << '\n';
 
@@ -21,14 +24,6 @@ std::ostream& operator<<(std::ostream& os, const InstructionTrace& trace) {
     isa::PrintVisitor printvis(os);
     isa::decodeInstruction(printvis, bits<32>(trace.ir));
     os << '\n';
-
-    //    if (trace.scalarMemRead) {
-    //        os << "    scalar_read: " << *trace.scalarMemRead << '\n';
-    //    }
-    //
-    //    if (trace.scalarMemWrite) {
-    //        os << "    scalar_read: " << *trace.scalarMemWrite << '\n';
-    //    }
 
     return os;
 }

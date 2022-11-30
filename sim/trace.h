@@ -40,6 +40,8 @@ struct Tracer {
     virtual void memWrite(uint64_t addr, f32x4 val) = 0;
     virtual void memRead32(uint64_t addr, uint32_t val) = 0;
     virtual void memRead36(uint64_t addr, uint64_t val) = 0;
+
+    virtual void condcode(condition_t cond) = 0;
 };
 
 struct NullTracer : public Tracer {
@@ -49,11 +51,11 @@ struct NullTracer : public Tracer {
 
     void end() override {}
 
-    void scalarRegInput(CPUState& cpu, const char* name, reg_idx r) override {}
+    void scalarRegInput(CPUState &cpu, const char *name, reg_idx r) override {}
 
-    void vectorRegInput(CPUState& cpu, const char* name, vreg_idx r) override {}
+    void vectorRegInput(CPUState &cpu, const char *name, vreg_idx r) override {}
 
-    void writebackScalarReg(CPUState& cpu, const char* name,
+    void writebackScalarReg(CPUState &cpu, const char *name,
                             reg_idx r) override {}
 
     void immInput(int64_t imm) override {}
@@ -67,6 +69,8 @@ struct NullTracer : public Tracer {
     void memRead32(uint64_t addr, uint32_t val) override {}
 
     void memRead36(uint64_t addr, uint64_t val) override {}
+
+    void condcode(condition_t cond) override {}
 };
 
 // struct PreExReg {
@@ -89,6 +93,7 @@ struct InstructionTrace {
     uint64_t pc;
     uint64_t ir;
     std::vector<std::string> inputs;
+    std::optional<condition_t> condcode;
     std::optional<std::string> scalarRegOutput;
     std::optional<std::string> vectorRegOutput;
 
@@ -113,11 +118,7 @@ struct FileTracer : public Tracer {
         itrace.inputs.clear();
         itrace.scalarRegOutput.reset();
         itrace.vectorRegOutput.reset();
-
-        //        itrace.scalarMemRead.reset();
-        //        itrace.scalarMemWrite.reset();
-        //        itrace.vectorMemRead.reset();
-        //        itrace.vectorMemWrite.reset();
+        itrace.condcode.reset();
     }
 
     void end() override {
@@ -163,6 +164,10 @@ struct FileTracer : public Tracer {
 
     void memRead36(uint64_t addr, uint64_t val) override {
         //        itrace.scalarMemRead = fmt::format("36 : {} = {}", addr, val);
+    }
+
+    void condcode(condition_t cond) override {
+        itrace.condcode = cond;
     }
 
   protected:
