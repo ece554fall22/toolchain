@@ -47,7 +47,7 @@ class Emitter {
 
     // scalar arithmetic
     void scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
-                          reg_idx rA, s<15> imm);
+                                   reg_idx rA, s<15> imm);
     void scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD, reg_idx rA,
                           reg_idx rB);
     void scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,

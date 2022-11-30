@@ -662,5 +662,3 @@ void isa::Emitter::bkpt(bits<25> imm) {
 
     append(instr);
 }
-
-
