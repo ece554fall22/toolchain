@@ -44,3 +44,67 @@ TEST_CASE("bits<N> concatenation") {
     auto bb = b.concat(b);
     CHECK(bb.inner == 0b1110101'1110101);
 }
+
+TEST_CASE("bits<N> bitwise manip") {
+    auto a = bits<5>(0b10111);
+    auto b = bits<5>(0b11101);
+
+    CHECK((~a).inner == 0b01000);
+    CHECK((a & b).inner == 0b10101);
+    CHECK((a | b).inner == 0b11111);
+    CHECK((a ^ b).inner == 0b01010);
+
+    CHECK(a.inner == 0b10111); // check nothing mutated
+    CHECK(b.inner == 0b11101); // check nothing mutated
+}
+
+TEST_CASE("bits<N> comparison") {
+    auto a = bits<5>(0b10111);
+    auto b = bits<5>(0b11101);
+    auto c = bits<5>(0b10111);
+
+    CHECK(a == c);
+    CHECK(c == a);
+
+    CHECK(a != b);
+    CHECK(b != a);
+
+    CHECK(b != c);
+    CHECK(c != b);
+}
+
+TEST_CASE("signed multiplication") {
+    auto a = s<5>(4);
+    auto b = s<3>(2);
+    auto c = s<4>(-2);
+
+    auto ab = a * b;
+    auto ba = b * a;
+    auto bc = b * c;
+    auto cb = c * b;
+    auto ca = c * a;
+    auto ac = a * c;
+
+    CHECK(ab == s<8>(8));
+    // CHECK(ab.size == 8);
+
+    CHECK(bc == s<7>(-4));
+    // CHECK(bc.size == 7);
+
+    CHECK(ca == s<9>(-8));
+    // CHECK(ca.size == 9);
+
+    // check commutativity
+    CHECK(ab == ba);
+    CHECK(bc == cb);
+    CHECK(ca == ac);
+}
+
+TEST_CASE("float2bits and bits2float") {
+    float f = 0.45;
+
+    auto bits = float2bits(f);
+    float f_roundtrip = bits2float(bits);
+
+    REQUIRE(f == f_roundtrip); // needs to be exact!
+}

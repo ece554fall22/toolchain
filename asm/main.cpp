@@ -7,8 +7,10 @@
 #include <argparse/argparse.hpp>
 #include <fmt/core.h>
 
+#include "emit.h"
 #include "lexer.h"
 #include "parser.h"
+#include "sema.h"
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
@@ -70,5 +72,41 @@ int main(int argc, char* argv[]) {
     if (ap["--dump-ast"] == true) {
         ASTPrintVisitor debugVisitor(std::cout);
         parser.visit(debugVisitor);
+    }
+
+    SemanticsPass semanticsPass{};
+    parser.visit(semanticsPass);
+    auto& semaErrors = semanticsPass.getErrors();
+    if (!semaErrors.empty()) {
+        fmt::print(fmt::emphasis::bold | fmt::emphasis::underline |
+                       fmt::fg(fmt::color::red),
+                   "errors in semantics pass:\n");
+
+        size_t i = 0;
+        for (auto& err : semaErrors) {
+            i++;
+            fmt::print(fmt::fg(fmt::color::red), "  line {}: {}\n", err.lineno,
+                       err.err);
+        }
+
+        fmt::print(fmt::fg(fmt::color::red),
+                   "\n-- aborting due to errors --\n");
+        exit(1);
+    }
+
+    EmissionPass emissionPass{};
+    parser.visit(emissionPass);
+
+    auto output = emissionPass.getData();
+    {
+        std::ofstream fOut(ap.get<std::string>("--output"), std::ios::binary);
+        for (uint32_t word : output) {
+            char v[4];
+            v[0] = (word >> 0) & 0xff;
+            v[1] = (word >> 8) & 0xff;
+            v[2] = (word >> 16) & 0xff;
+            v[3] = (word >> 24) & 0xff;
+            fOut.write(v, sizeof(v));
+        }
     }
 }

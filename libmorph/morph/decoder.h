@@ -1,35 +1,23 @@
 #pragma once
 
+#include <cstdint>
+
+#include <fmt/core.h>
+#include <fmt/ostream.h>
+
+#include "isa.h"
 #include "ty.h"
 #include "util.h"
 #include "varint.h"
-#include <cstdint>
 
 namespace isa {
-
-namespace disasm {
-enum class Opcode {
-    halt,
-    nop,
-    jmp,
-    jal,
-    jmpr,
-    jalr,
-};
-struct Instruction {
-    Opcode opcode;
-
-    reg_idx register_accesses[3];
-    int64_t imm;
-};
-} // namespace disasm
-
 struct InstructionVisitor {
     virtual ~InstructionVisitor() = default;
 
     // misc
     virtual void nop() = 0;
     virtual void halt() = 0;
+    virtual void bkpt(bits<25> imm) = 0;
 
     // J
     virtual void jmp(s<25> imm) = 0;
@@ -51,7 +39,22 @@ struct InstructionVisitor {
     virtual void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) = 0;
     // MS
     virtual void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) = 0;
+
+    // A
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                                  isa::ScalarArithmeticOp op) = 0;
+
+    // AI
+    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                           isa::ScalarArithmeticOp op) = 0;
 };
+
+void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
+
+// #define PRINT_RRR(fn, mnemonic)                                                \
+//     virtual void fn(reg_idx rD, reg_idx rA, reg_idx rB) {                      \
+//         fmt::print(#mnemonic " r{}, r{}, r{}", rD.inner, rA.inner, rB.inner);  \
+//     }
 
 struct PrintVisitor : public InstructionVisitor {
     virtual ~PrintVisitor() = default;
@@ -105,19 +108,24 @@ struct PrintVisitor : public InstructionVisitor {
             std::cout << "32";
         std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
     }
+
+    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                                  isa::ScalarArithmeticOp op) {
+        std::cout << op << " r" << rD.inner << ", r" << rA.inner << ", r"
+                  << rB.inner << "\n";
+    }
+
+    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                           isa::ScalarArithmeticOp op) {
+        std::cout << op << "i r" << rD.inner << ", r" << rA.inner << ", "
+                  << imm._sgn_inner() << "\n";
+    }
+
+    virtual void bkpt(bits<25> imm) {
+        std::cout << "bkpt " << imm.inner << "\n";
+    }
 };
 
-void decodeJ(InstructionVisitor& visit, bits<32> instr);
-void decodeJR(InstructionVisitor& visit, bits<32> instr);
-void decodeBR(InstructionVisitor& visit, bits<32> instr);
-void decodeBI(InstructionVisitor& visit, bits<32> instr);
-void decodeLI(InstructionVisitor& visit, bits<32> instr);
-void decodeML(InstructionVisitor& visit, bits<32> instr);
-void decodeMS(InstructionVisitor& visit, bits<32> instr);
-void decodeA(InstructionVisitor& visit, bits<32> instr);
-void decodeAI(InstructionVisitor& visit, bits<32> instr);
-void decodeCI(InstructionVisitor& visit, bits<32> instr);
-
-void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
+// #undef PRINT_RRR
 
 } // namespace isa

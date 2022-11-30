@@ -4,11 +4,14 @@
 #include <fmt/core.h>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 #include <morph/ty.h>
 #include <morph/varint.h>
 
 struct MemSystem {
+    MemSystem(size_t size) : mempool(size, 0) {}
+
     void write(uint64_t addr, u<32> val);
     void write(uint64_t addr, u<36> val);
     void write(uint64_t addr, u<64> val);
@@ -17,10 +20,17 @@ struct MemSystem {
     auto read32(uint64_t addr) -> uint32_t;
     auto read36(uint64_t addr) -> uint64_t;
 
+    auto readInstruction(uint64_t addr) -> uint32_t;
+
     void flushICache();
     void flushDCacheDirty();
     void flushDCacheClean();
     void flushDCacheLine(uint64_t at);
+
+    // private:
+    static void _check_alignment(uint64_t addr, uint32_t alignTo);
+
+    std::vector<uint32_t> mempool;
 };
 
 struct ScalarRegisterFile {
@@ -46,7 +56,6 @@ struct VectorRegisterFile {
 
     const Reg& operator[](size_t i) const { return inner[i]; }
     Reg& operator[](size_t i) { return inner[i]; }
-    // const Reg& operator[]()
 };
 
 struct ConditionFlags {
@@ -97,6 +106,11 @@ struct CPUState {
     ConditionFlags f;
 
     PC pc;
+
+    bool halted;
+
+    auto isHalted() const -> bool { return halted; }
+    void halt() { halted = true; }
 
     CPUState() {}
 

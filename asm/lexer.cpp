@@ -58,8 +58,15 @@ Token Lexer::next() noexcept {
                 const char* start = cursor;
                 eat(2);
                 return tokFrom(start, Token::Kind::PLUSEQUAL);
+            } else {
+                return tokAtom(Token::Kind::PLUS);
             }
-            return tokAtom(Token::Kind::PLUS);
+        case '-':
+            if (isdigit(peek(+1))) {
+                // fall through. is sign-pfxed literal
+            } else {
+                return tokAtom(Token::Kind::MINUS);
+            }
 
         case '0':
         case '1':
@@ -89,6 +96,9 @@ Token Lexer::lexIdentifierOrKeyword(const char* tok_start) {
 }
 
 Token Lexer::lexNumber(const char* tok_start) {
+    if (peek() == '-' || peek() == '+')
+        eat(); // can be prefixed with sign
+
     assert(isdigit(peek()));
 
     // hex!
@@ -118,7 +128,7 @@ Token Lexer::lexNumber(const char* tok_start) {
 
 void Lexer::eatComment() {
     while (true) {
-        switch (eat()) {
+        switch (peek()) {
         case '\n':
         case '\r':
             // end of comment!
@@ -127,10 +137,11 @@ void Lexer::eatComment() {
 
         case '\0':
             // rewind so we can emit the EOF token on \0
-            cursor--;
+            // cursor--;
             return;
 
         default:
+            eat();
             break;
         }
     }
@@ -141,15 +152,29 @@ std::optional<int64_t> parseIntegerToken(const Token& tok) {
     auto span = tok.getLexeme();
     std::from_chars_result res;
     if (tok.is(Token::Kind::INTEGER_DEC)) {
+        bool sign = false; // positive
+        if (span[0] == '+' || span[0] == '-') {
+            if (span[0] == '-')
+                sign = true;
+            span.remove_prefix(1);
+        }
+
         res = std::from_chars(span.data(), span.data() + span.size(), val, 10);
+        if (sign)
+            val = -val;
     } else if (tok.is(Token::Kind::INTEGER_HEX)) {
-        res = std::from_chars(span.data() + 2, span.data() + span.size(), val,
-                              16);
+        bool sign = false; // positive
+        if (span[0] == '+' || span[0] == '-') {
+            if (span[0] == '-')
+                sign = true;
+            span.remove_prefix(1);
+        }
+
+        span.remove_prefix(2);
+        res = std::from_chars(span.data(), span.data() + span.size(), val, 16);
+        if (sign)
+            val = -val;
     } else {
-        // fmt::print(fmt::fg(fmt::color::red),
-        //            "tried to parse a non-integer-literal token {} on line {}
-        //            " "as an integer literal", tok.getKind(),
-        //            tok.getSrcLoc()->lineno);
         return std::nullopt;
     }
 

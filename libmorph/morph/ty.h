@@ -8,7 +8,12 @@
 
 using reg_idx = u<5>;
 using vreg_idx = u<5>;
-enum class condition_t {
+
+constexpr size_t N_LANES = 4;
+using vmask_t = bits<4>;
+using vlaneidx_t = bits<2>;
+
+enum class condition_t : uint32_t {
     nz = 0b000,
     ez = 0b001,
     lz = 0b010,

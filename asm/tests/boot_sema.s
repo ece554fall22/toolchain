@@ -1,5 +1,3 @@
-%define CSR_COREID 0x2
-
 %section text
 %org 0x000000000
     ; wipe out previous code if we're restarting
@@ -8,13 +6,13 @@
     ; can zero registers, etc here if necessary.
 
     ; determine where we should start
-    rcsr r1, CSR_COREID
+    rcsr r1, 0x2
     ; compute offset into jump table
     lda r2, entrypointTable
     add r2, r2, r1
     ; find entrypoint and go
     ld36 r1, [r2]
-    jmpr r1
+    jmpr r1, 0
 
     ; jump table in the text section? yeah, it doesn't matter, we jump out before it
 entrypointTable: ; maps processor id to entrypoint address

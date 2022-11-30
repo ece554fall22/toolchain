@@ -1,17 +1,17 @@
 #include "morph/encoder.h"
 
-using isa::ScalarArithmeticOp;
-using isa::FloatArithmeticOp;
-using isa::VectorArithmeticOp;
-using isa::MatrixMultiplyOp;
-using isa::LoadStoreOp;
-using isa::FlushCacheOp;
-using isa::CsrOp;
-using isa::FloatIntConversionOp;
-using isa::ConcurrencyOp;
-using isa::BranchCompareOp;
-using isa::HaltNopOp;
+#include "morph/ty.h"
 
+using namespace isa;
+
+#define BITFILL(n) ((1L << n) - 1)
+
+// defensive against any changes in ty.h; we need these assumptions for
+// following bitmanip code in the instruction emitter
+static_assert(reg_idx::size == 5, "scalar register indices should be 5 bits");
+static_assert(vreg_idx::size == 5, "vector register indices should be 5 bits");
+static_assert(vmask_t::size == 4, "vector masks should be 4 bits");
+static_assert(vlaneidx_t::size == 2, "vector lane indices should be 2 bits");
 
 uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     switch (op) {
@@ -35,32 +35,13 @@ uint32_t scalarArithmeticOpToAIOpcode(ScalarArithmeticOp op) {
     }
 }
 
-uint32_t scalarArithmeticOpToAOpcode(ScalarArithmeticOp op) {
-    switch (op) {
-    case ScalarArithmeticOp::Not:
-        return 0b0011100;
-    case ScalarArithmeticOp::Add:
-    case ScalarArithmeticOp::Sub:
-    case ScalarArithmeticOp::Mult:
-    case ScalarArithmeticOp::And:
-    case ScalarArithmeticOp::Or:
-    case ScalarArithmeticOp::Xor:
-    case ScalarArithmeticOp::Shr:
-    case ScalarArithmeticOp::Shl:
-        return 0b0011011;
-    default:
-        panic("unsupported scalar arith op for A format");
-        return 0;
-    }
-}
-
 uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
     switch (op) {
     case ScalarArithmeticOp::Add:
         return 0b0000;
     case ScalarArithmeticOp::Sub:
         return 0b0001;
-    case ScalarArithmeticOp::Mult:
+    case ScalarArithmeticOp::Mul:
         return 0b0010;
     case ScalarArithmeticOp::And:
         return 0b0011;
@@ -74,19 +55,6 @@ uint32_t scalarArithmeticOpToArithCode(ScalarArithmeticOp op) {
         return 0b0111;
     default:
         panic("unsupported scalar arith op for A format");
-        return 0;
-    }
-}
-
-uint32_t floatArithmeticOpToAOpcode(FloatArithmeticOp op) {
-    switch (op) {
-    case FloatArithmeticOp::Fadd:
-    case FloatArithmeticOp::Fsub:
-    case FloatArithmeticOp::Fmult:
-    case FloatArithmeticOp::Fdiv:
-        return 0b0011101;
-    default:
-        panic("unsupported float arith op");
         return 0;
     }
 }
@@ -107,52 +75,8 @@ uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
     }
 }
 
-uint32_t vectorArithmeticOpToAOpcode(VectorArithmeticOp op) {
-    switch(op) {
-    case VectorArithmeticOp::Vadd:
-        return 0b0011111;
-    case VectorArithmeticOp::Vsub:
-        return 0b0100000;
-    case VectorArithmeticOp::Vmult:
-        return 0b0100001;
-    case VectorArithmeticOp::Vdiv:
-        return 0b0100010;
-    case VectorArithmeticOp::Vdot:
-        return 0b0100011;
-    case VectorArithmeticOp::Vdota:
-        return 0b0100100;
-    case VectorArithmeticOp::Vindx:
-        return 0b0100101;
-    case VectorArithmeticOp::Vreduce:
-        return 0b0100110;
-    case VectorArithmeticOp::Vsplat:
-        return 0b0100111;
-    case VectorArithmeticOp::Vswizzle:
-        return 0b0101000;
-    case VectorArithmeticOp::Vsadd:
-        return 0b0101001;
-    case VectorArithmeticOp::Vsmult:
-        return 0b0101010;
-    case VectorArithmeticOp::Vssub:
-        return 0b0101011;
-    case VectorArithmeticOp::Vsdiv:
-        return 0b0101100;
-    case VectorArithmeticOp::Vsma:
-        return 0b0101101;
-    case VectorArithmeticOp::Vmax:
-        return 0b0110100;
-    case VectorArithmeticOp::Vmin:
-        return 0b0110101;
-    case VectorArithmeticOp::Vcompsel:
-        return 0b0110110;
-    default:
-        panic("unsupported vector arith op");
-        return 0;
-    }
-}
-
 uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
-    switch(op) {
+    switch (op) {
     case MatrixMultiplyOp::WriteA:
         return 0b0101110;
     case MatrixMultiplyOp::WriteB:
@@ -171,71 +95,21 @@ uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
     }
 }
 
-uint32_t loadStoreOpToAOpcode(LoadStoreOp op) {
-    switch(op) {
-    case LoadStoreOp::Lih:
-        return 0b0001000;
-    case LoadStoreOp::Lil:
-        return 0b0001001;
-    case LoadStoreOp::Ld32:
-        return 0b0001010;
-    case LoadStoreOp::Ld36:
-        return 0b0001011;
-    case LoadStoreOp::St32:
-        return 0b0001100;
-    case LoadStoreOp::St36:
-        return 0b0001101;
-    case LoadStoreOp::Vldi:
-        return 0b0001110;
-    case LoadStoreOp::Vsti:
-        return 0b0010000;
-    case LoadStoreOp::Vldr:
-        return 0b0010001;
-    case LoadStoreOp::Vstr:
-        return 0b0010010;
-    default:
-        panic("unsupported load/store op");
-        return 0;
-    }
-}
-
-uint32_t flushCacheOpToAOpcode(FlushCacheOp op) {
-    switch(op) {
-    case FlushCacheOp::Flushdirty:
+uint32_t cacheControlOpcode(CacheControlOp op) {
+    switch (op) {
+    case CacheControlOp::Flushdirty:
         return 0b0111101;
-    case FlushCacheOp::Flushclean:
+    case CacheControlOp::Flushclean:
         return 0b0111110;
-    case FlushCacheOp::Flushicache:
+    case CacheControlOp::Flushicache:
         return 0b0111111;
-    case FlushCacheOp::Flushline:
-        return 0b1000000;
     default:
         panic("unsupported cache flush op");
         return 0;
     }
 }
 
-uint32_t branchCompareOpToAOpcode(BranchCompareOp op) {
-    switch(op) {
-    case BranchCompareOp::Bi:
-        return 0b0000110;
-    case BranchCompareOp::Br:
-        return 0b0000111;
-    case BranchCompareOp::Cmpi:
-        return 0b0011010;
-    case BranchCompareOp::Cmp:
-        return 0b0011110;
-    case BranchCompareOp::Cmpdec:
-        return 0b1000001;
-    case BranchCompareOp::Cmpinc:
-        return 0b1000010;
-    default:
-        panic("unsupported branch/compare op");
-        return 0;
-    }
-}
-
-void Emitter::jumpPCRel(s<25> imm, bool link) {
+void isa::Emitter::jumpPCRel(s<25> imm, bool link) {
     //                 opcode  | immediate offset
     //                link ---v
     uint32_t instr = 0b0000'010'0'0000'0000'0000'0000'0000'0000;
@@ -248,7 +122,7 @@ void Emitter::jumpPCRel(s<25> imm, bool link) {
     append(instr);
 }
 
-void Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
+void isa::Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
     //                 opcode  | imm | rA  | imm
     //                link ---v
     uint32_t instr = 0b0000'100'00000'00000'000'0000'0000'0000;
@@ -259,8 +133,8 @@ void Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
 
     // immediate upper 5 bits.
     // TODO: better slicing
-    auto immHigh = (imm.inner >> 15) & 0b11111;
-    auto immLow = imm.inner & 0b111111111111111;
+    auto immHigh = (imm.inner >> 15) & BITFILL(5);
+    auto immLow = imm.inner & BITFILL(15);
 
     instr |= immLow;
     instr |= (immHigh << 20);
@@ -268,9 +142,29 @@ void Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
     append(instr);
 }
 
+void isa::Emitter::branchImm(condition_t bt, s<22> imm) {
+    uint32_t instr = 0b0000110 << 25;
+
+    instr |= static_cast<uint32_t>(bt) << 22;
+    instr |= imm.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::branchReg(condition_t bt, reg_idx rA, s<17> imm) {
+    uint32_t instr = 0b0000111 << 25;
+
+    instr |= static_cast<uint32_t>(bt) << 22;
+    instr |= rA.inner << 15;
+    instr |= imm.inner;
+
+    append(instr);
+}
+
 // ALLISON: scalar arith ops include add, sub, or, and, xor, shr, and shl
-void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
-                                        reg_idx rA, s<15> imm) {
+void isa::Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op,
+                                             reg_idx rD, reg_idx rA,
+                                             s<15> imm) {
     uint32_t instr = 0;
     uint32_t opcode = scalarArithmeticOpToAIOpcode(op);
 
@@ -284,41 +178,80 @@ void Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op, reg_idx rD,
     instr |= (rA.inner << 15);
 
     // imm
-    instr |= (imm.inner & 0b111111111111111);
+    instr |= imm.inner & BITFILL(15);
 
     append(instr);
 }
 
-void Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
-                               reg_idx rA, reg_idx rB) {
-    uint32_t instr = 0;
+void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
+                                    reg_idx rA, reg_idx rB) {
+    uint32_t instr = 0b0011011 << 25;
 
-    uint32_t opcode = scalarArithmeticOpToAOpcode(op);
-    instr |= (opcode << 25);
-
-    // rD
+    // operand registers
     instr |= (rD.inner << 20);
+    instr |= (rA.inner << 15);
+    instr |= (rB.inner << 10);
 
-    // rA
+    // arithmetic op
+    instr |= scalarArithmeticOpToArithCode(op);
+
+    append(instr);
+}
+
+void isa::Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
+                                       reg_idx rA) {
+    uint32_t instr = 0b0011100 << 25;
+
+    // operand registers
+    instr |= (rD.inner << 20);
     instr |= (rA.inner << 15);
 
-    if (op != ScalarArithmeticOp::Not) {
-        // rB
-        instr |= (rB.inner << 10);
+    append(instr);
+}
 
-        // arithmetic op
-        instr |= scalarArithmeticOpToArithCode(op);
-    }
+// comparisons
+void isa::Emitter::compareImm(reg_idx rA, s<20> imm) {
+    uint32_t instr = 0b0011010 << 25;
+
+    auto immHi = (imm.inner >> 15) & BITFILL(5);
+    auto immLo = imm.inner & BITFILL(15);
+    instr |= immHi << 20;
+    instr |= rA.inner << 15;
+    instr |= immLo;
 
     append(instr);
 }
 
-void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
-                               reg_idx rA, reg_idx rB) {
-    uint32_t instr = 0;
+void isa::Emitter::compareReg(reg_idx rA, reg_idx rB) {
+    uint32_t instr = 0b0011110 << 25;
 
-    uint32_t opcode = floatArithmeticOpToAOpcode(op);
-    instr |= (opcode << 25);
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+
+    append(instr);
+}
+
+void isa::Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD,
+                                    reg_idx rA) {
+    uint32_t instr = 0b1000000 << 25;
+    switch (dir) {
+    case CmpMutateDirection::Increment:
+        instr |= 0b01 << 25;
+        break;
+    case CmpMutateDirection::Decrement:
+        instr |= 0b10 << 25;
+        break;
+    }
+
+    instr |= rD.inner << 20;
+    instr |= rA.inner << 15;
+
+    append(instr);
+}
+
+void isa::Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
+                                   reg_idx rA, reg_idx rB) {
+    uint32_t instr = 0b0011101 << 25;
 
     // rD
     instr |= (rD.inner << 20);
@@ -335,95 +268,170 @@ void Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-// vector instructions: vadd, vsub, vmult, vdiv, vdot, vdota, vsadd, vsmult,
-// vssub, vsdiv, vmax, vmin, vcompsel, vindx, vreduce, vsplat, vswizzle
-void Emitter::vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
-                                vreg_idx vA, vreg_idx vB, reg_idx rD, 
-                                reg_idx rA, reg_idx rB, u<4> mask, s<8> imm) {
+// vadd, vsub, vmul, vdiv, vmax, vmin
+void isa::Emitter::vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
+                                    vreg_idx vA, vreg_idx vB, vmask_t mask) {
     uint32_t instr = 0;
-
-    uint32_t opcode = vectorArithmeticOpToAOpcode(op);
-    instr |= (opcode << 25);
-
-    switch(op) {
-    case VectorArithmeticOp::Vdot:
-        instr |= (rD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (vB.inner << 10);
-    case VectorArithmeticOp::Vdota:
-        instr |= (rD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= (vB.inner << 5);
-    case VectorArithmeticOp::Vsma:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= (vB.inner << 5);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vindx:
-        instr |= (rD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= ((imm.inner & 0b11111111) << 7); // this immediate is 2 bits, but the extras 
-                                   // will flow into don't care spots so i didn't
-                                   // adjust the size at all
-    case VectorArithmeticOp::Vreduce:
-        instr |= (rD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vsplat:
-        instr |= (vD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vswizzle:
-        instr |= (vD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= ((imm.inner & 0b11111111) << 7);
-        instr |= (mask.inner & 0b1111);
-    case VectorArithmeticOp::Vcompsel:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (vB.inner << 5);
-        instr |= (mask.inner & 0b1111);
-    // scalar+vector ops
-    case VectorArithmeticOp::Vsadd:
-    case VectorArithmeticOp::Vsmult:
-    case VectorArithmeticOp::Vssub:
-    case VectorArithmeticOp::Vsdiv:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= (mask.inner & 0b1111);
-    // vector ops
-    case VectorArithmeticOp::Vadd:
-    case VectorArithmeticOp::Vsub:
-    case VectorArithmeticOp::Vmult:
-    case VectorArithmeticOp::Vdiv:
-    case VectorArithmeticOp::Vmax:
-    case VectorArithmeticOp::Vmin:
-        instr |= (vD.inner << 20);
-        instr |= (vA.inner << 15);
-        instr |= (vB.inner << 10);
-        instr |= (mask.inner & 0b1111);
-    default:
-        panic("unsupported vector arith op");
-        return;
+    switch (op) {
+    case LanewiseVectorOp::Add:
+        instr = 0b0011111 << 25;
+        break;
+    case LanewiseVectorOp::Sub:
+        instr = 0b0100000 << 25;
+        break;
+    case LanewiseVectorOp::Mul:
+        instr = 0b0100001 << 25;
+        break;
+    case LanewiseVectorOp::Div:
+        instr = 0b0100010 << 25;
+        break;
+    case LanewiseVectorOp::Max:
+        instr = 0b0110100 << 25;
+        break;
+    case LanewiseVectorOp::Min:
+        instr = 0b0110101 << 25;
+        break;
     }
 
-   append(instr);    
+    instr |= vD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+// vsadd, vsmul, vssub, vsdiv
+void isa::Emitter::vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD,
+                                     reg_idx rA, vreg_idx vB, vmask_t mask) {
+    uint32_t instr = 0;
+    switch (op) {
+    case VectorScalarOp::Add:
+        instr = 0b0101001 << 25;
+        break;
+    case VectorScalarOp::Mul:
+        instr = 0b0101010 << 25;
+        break;
+    case VectorScalarOp::Sub:
+        instr = 0b0101011 << 25;
+        break;
+    case VectorScalarOp::Div:
+        instr = 0b0101100 << 25;
+        break;
+    }
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask) {
+    uint32_t instr = 0b0100011 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB,
+                         vmask_t mask) {
+    uint32_t instr = 0b0100100 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= vA.inner << 10;
+    instr |= vB.inner << 5;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx) {
+    uint32_t instr = 0b0100101 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= idx.inner << 7;
+
+    append(instr);
+}
+
+void isa::Emitter::vreduce(reg_idx rD, vreg_idx vA) {
+    uint32_t instr = 0b0100110 << 25;
+
+    instr |= rD.inner << 20;
+    instr |= vA.inner << 15;
+
+    append(instr);
+}
+
+void isa::Emitter::vsplat(vreg_idx vD, reg_idx rA) {
+    uint32_t instr = 0b0100111 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+
+    append(instr);
+}
+
+void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
+                            vmask_t mask) {
+    uint32_t instr = 0b0101000 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= vA.inner << 15;
+    instr |= idxs[3].inner << 13;
+    instr |= idxs[2].inner << 11;
+    instr |= idxs[1].inner << 9;
+    instr |= idxs[0].inner << 7;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::vsma(vreg_idx vD, reg_idx rA, vreg_idx vB, vreg_idx vC,
+                        vmask_t mask) {
+    uint32_t instr = 0b0101101 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= vB.inner << 10;
+    instr |= vC.inner << 5;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
+                         vmask_t mask) {
+    uint32_t instr = 0b0110110 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+    instr |= vB.inner << 5;
+    instr |= mask.inner;
+
+    append(instr);
 }
 
 // matmul, writea, writeb, writec, readc, systolicstep
-void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA, vreg_idx vB,
-                            u<3> idx, bool high) {
+void isa::Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD,
+                                  vreg_idx vA, vreg_idx vB, u<3> idx,
+                                  bool high) {
 
     uint32_t instr = 0;
 
     uint32_t opcode = matrixMultiplyOpToAOpcode(op);
     instr |= (opcode << 25);
 
-    switch(op) {
+    switch (op) {
     case MatrixMultiplyOp::Matmul:
     case MatrixMultiplyOp::Systolicstep:
         break;
@@ -431,7 +439,7 @@ void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
         instr |= (vD.inner << 20);
         instr |= ((idx.inner & 0b111) << 17);
         if (high)
-            instr |= (1<<16);
+            instr |= (1 << 16);
     case MatrixMultiplyOp::WriteA:
     case MatrixMultiplyOp::WriteB:
     case MatrixMultiplyOp::WriteC:
@@ -446,106 +454,161 @@ void Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
     append(instr);
 }
 
-// lih, lil, ld32, ld36, st32, st36, vldi, vsti, vldr, vstr
-void Emitter::loadStore(isa::LoadStoreOp op, vreg_idx vD, vreg_idx vA, reg_idx rD, reg_idx rA,
-                        reg_idx rB, u<18> imm, u<4> mask) {
-    
+// lih, lil
+void isa::Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
     uint32_t instr = 0;
-    uint32_t opcode = loadStoreOpToAOpcode(op);
-    instr |= (opcode << 25);
+    if (hi)
+        instr |= 0b0001000 << 25;
+    else
+        instr |= 0b0001001 << 25;
 
-    switch(op) {
-    case LoadStoreOp::Lih:
-    case LoadStoreOp::Lil:
-        instr |= (rD.inner << 20);
-        instr |= (imm.inner & 0b111111111111111111);
-    case LoadStoreOp::Ld32:
-    case LoadStoreOp::Ld36:
-        instr |= (rD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (imm.inner & 0b11111111111111);
-    case LoadStoreOp::St32:
-    case LoadStoreOp::St36:
-        instr |= ((imm.inner & 0b111110000000000) << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (imm.inner & 0b1111111111);
-    case LoadStoreOp::Vldi:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= ((imm.inner & 0b11111111111) << 4);
-        instr |= (mask.inner & 0b1111);
-    case LoadStoreOp::Vsti:
-        instr |= ((imm.inner & 0b11111000000) << 20);
-        instr |= (rA.inner << 15);
-        instr |= (vA.inner << 10);
-        instr |= ((imm.inner & 0b111111) << 4);
-        instr |= (mask.inner & 0b1111);
-    case LoadStoreOp::Vldr:
-        instr |= (vD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (mask.inner & 0b1111);
-    case LoadStoreOp::Vstr:
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-        instr |= (vA.inner << 5);
-        instr |= (mask.inner & 0b1111);
-    default:
-        panic("unsupported load/store op");
-        return;
-    }
-    append(instr);                 
+    instr |= rD.inner << 20;
+    instr |= imm.inner;
+
+    append(instr);
+}
+
+// ld32, ld36
+void isa::Emitter::loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm) {
+    uint32_t instr = 0;
+    // opcode
+    if (b36)
+        instr |= 0b0001011 << 25;
+    else
+        instr |= 0b0001010 << 25;
+
+    // regs
+    instr |= rD.inner << 20;
+    instr |= rA.inner << 15;
+
+    // immediate
+    instr |= imm.inner;
+
+    append(instr);
+}
+
+// st32, st36
+void isa::Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
+    uint32_t instr = 0;
+    // opcode
+    if (b36)
+        instr |= 0b0001101 << 25;
+    else
+        instr |= 0b0001100 << 25;
+
+    // regs
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+
+    // immediate
+    auto immHi = (imm.inner >> 10) & BITFILL(5);
+    auto immLo = imm.inner & BITFILL(10);
+    instr |= immHi << 20;
+    instr |= immLo;
+
+    append(instr);
+}
+
+void isa::Emitter::loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm,
+                                       vmask_t mask) {
+    uint32_t instr = 0b0001110 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= imm.inner << 4;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm,
+                                        vmask_t mask) {
+    uint32_t instr = 0b0010000 << 25;
+
+    instr |= rA.inner << 15;
+    instr |= vB.inner << 10;
+
+    // immediate
+    auto immHi = (imm.inner >> 6) & BITFILL(5);
+    auto immLo = imm.inner & BITFILL(6);
+    instr |= immHi << 20;
+    instr |= immLo << 4;
+
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::loadVectorRegStride(vreg_idx vD, reg_idx rA, reg_idx rB,
+                                       vmask_t mask) {
+    uint32_t instr = 0b0010001 << 25;
+
+    instr |= vD.inner << 20;
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+    instr |= mask.inner;
+
+    append(instr);
+}
+
+void isa::Emitter::storeVectorRegStride(reg_idx rA, reg_idx rB, vreg_idx vA,
+                                        vmask_t mask) {
+    uint32_t instr = 0b0010010 << 25;
+
+    instr |= rA.inner << 15;
+    instr |= rB.inner << 10;
+    instr |= vA.inner << 5;
+    instr |= mask.inner;
+
+    append(instr);
 }
 
 // flushdirty, flushclean, flushicache, flushline
-void Emitter::flushCache(isa::FlushCacheOp op, u<25> imm) {
+// TODO: split up
+void isa::Emitter::flushcache(isa::CacheControlOp op) {
+    uint32_t instr = cacheControlOpcode(op) << 25;
+    append(instr);
+}
 
-    uint32_t instr = 0;
-    uint32_t opcode = flushCacheOpToAOpcode(op);
-    instr |= (opcode << 25);
-    if (op == FlushCacheOp::Flushline) {
-        auto immHigh = (imm.inner >> 15) & 0b1111111111;
-        auto immLow = imm.inner & 0b111111111111111;
-        instr |= immLow;
-        instr |= (immHigh << 15);
-    }
+void isa::Emitter::flushline(u<25> imm) {
+    uint32_t instr = 0b1000000 << 25;
 
-    append(instr);     
+    auto immHigh = (imm.inner >> 15) & BITFILL(10);
+    auto immLow = imm.inner & BITFILL(15);
+    instr |= immLow;
+    instr |= (immHigh << 15);
+
+    append(instr);
 }
 
 // wcsr, rcsr
-void Emitter::csr(isa::CsrOp op, u<2> csrNum) {
-
+void isa::Emitter::csr(isa::CsrOp op, reg_idx rA, u<2> csrNum) {
     uint32_t instr = 0;
-    
-    if (op == CsrOp::Wcsr) {
+    switch (op) {
+    case CsrOp::Wcsr:
         instr |= (0b0111001 << 25);
-    }
-    else if (op == CsrOp::Rcsr) {
+        break;
+    case CsrOp::Rcsr:
         instr |= (0b0111000 << 25);
+        break;
     }
-    else {
-        panic("unsupported csr op");
-        return;
-    }
-    instr |= (csrNum.inner & 0b11) << 23;
-    
+    instr |= csrNum.inner << 23;
+    instr |= rA.inner << 15;
+
     append(instr);
 }
 
 // ftoi, itof
-void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA) {
+void isa::Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD,
+                                reg_idx rA) {
 
     uint32_t instr = 0;
 
     if (op == FloatIntConversionOp::Ftoi) {
         instr |= (0b0110111 << 25);
-    }
-    else if (op == FloatIntConversionOp::Itof) {
+    } else if (op == FloatIntConversionOp::Itof) {
         instr |= (0b0111000);
-    }
-    else {
+    } else {
         panic("unsupported float int conversion op");
         return;
     }
@@ -557,18 +620,17 @@ void Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD, reg_idx rA)
 }
 
 // fa, cmpx
-void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, 
-                            reg_idx rB, u<15> imm) {
-    
+void isa::Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
+                               reg_idx rB, u<15> imm) {
+
     uint32_t instr = 0;
 
     if (op == ConcurrencyOp::Fa) {
         instr |= (0b0111011 << 25);
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
-        instr |= (imm.inner & 0b111111111111111);
-    }
-    else if (op == ConcurrencyOp::Cmpx) {
+        instr |= imm.inner & BITFILL(15);
+    } else if (op == ConcurrencyOp::Cmpx) {
         instr |= (0b0111100 << 25);
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
@@ -579,60 +641,24 @@ void Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
     }
 
     append(instr);
-
 }
 
-// bi, br, cmpi, cmp, cmpdec, cmpinc
-void Emitter::branchCompare(isa::BranchCompareOp op, reg_idx rD, reg_idx rA,
-                            reg_idx rB, u<22> imm, u<3> btx) {
-
-    uint32_t instr = 0;
-    uint32_t opcode = branchCompareOpToAOpcode(op);
-    instr |= (opcode << 25);
-
-    switch(op) {
-    case BranchCompareOp::Bi:
-        instr |= ((btx.inner & 0b111) << 22);
-        instr |= imm.inner & 0b1111111111111111111111; // TODO: yeah i hate this (should be 22 1s)
-    case BranchCompareOp::Br:
-        instr |= ((btx.inner & 0b111) << 22);
-        instr |= ((imm.inner >> 15) & 0b11) << 20;
-        instr |= rA.inner << 15;
-        instr |= (imm.inner & 0b111111111111111);
-    case BranchCompareOp::Cmpi:
-        instr |= ((imm.inner >> 15) & 0b11111) << 20;
-        instr |= rA.inner << 15;
-        instr |= (imm.inner & 0b111111111111111);
-    case BranchCompareOp::Cmp:
-        instr |= rA.inner << 15;
-        instr |= rB.inner << 10;
-    case BranchCompareOp::Cmpdec:
-    case BranchCompareOp::Cmpinc:
-        instr |= rD.inner << 20;
-        instr |= rA.inner << 15;
-        instr |= rB.inner << 10;
-    default:
-        panic("unsupported branch/compare op");
-        return;  
-    }
+// misc
+void isa::Emitter::halt() {
+    uint32_t instr = 0b0000000 << 25;
 
     append(instr);
-  
 }
 
-// halt, nop
-void Emitter::haltNop(isa::HaltNopOp op) {
-    uint32_t instr = 0;
-    if (op == HaltNopOp::Halt) {
-        instr |= (0b0000000 << 25);
-    }
-    else if (op == HaltNopOp::Nop) {
-        instr |= (0b0000001 << 25);
-    }
-    else {
-        panic("unsupported halt/nop");
-        return;
-    }
+void isa::Emitter::nop() {
+    uint32_t instr = 0b0000001 << 25;
+
+    append(instr);
+}
+
+void isa::Emitter::bkpt(bits<25> imm) {
+    uint32_t instr = 0b1010101 << 25;
+    instr |= imm.inner;
 
     append(instr);
 }

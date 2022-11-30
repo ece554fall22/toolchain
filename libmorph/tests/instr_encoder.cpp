@@ -4,7 +4,7 @@
 #include "morph/encoder.h"
 
 TEST_CASE("emits correct encodings") {
-    Emitter emitter;
+    isa::Emitter emitter;
 
     SUBCASE("jmp") {
         emitter.jumpPCRel(1337, false);
@@ -35,8 +35,8 @@ TEST_CASE("emits correct encodings") {
               0b0010100'00100'00011'111111111101001);
     }
 
-    SUBCASE("mult") {
-        emitter.scalarArithmetic(isa::ScalarArithmeticOp::Mult, 3, 4, 1);
+    SUBCASE("mul") {
+        emitter.scalarArithmetic(isa::ScalarArithmeticOp::Mul, 3, 4, 1);
         CHECK(emitter.getData().back() ==
               0b0011011'00011'00100'00001'000000'0010);
     }

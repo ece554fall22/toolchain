@@ -2,19 +2,24 @@
 #include "doctest.h"
 
 #include "morph/decoder.h"
+#include "morph/disasm.h"
 
 #include <array>
 
-TEST_CASE("smoketest spinloop") {
+using isa::disasm::Opcode;
+
+TEST_CASE("spinloop") {
     std::array<uint32_t, 2> code = {
         0x2000000, // nop
         0x5fffffe, // jmp #-2 ; PC' <- PC + 4 - 2 * 4 = PC - 4
     };
 
-    isa::PrintVisitor v;
+    isa::disasm::DisasmVisitor dv;
 
-    for (size_t i = 0; i < code.size(); i++) {
-        isa::decodeInstruction(v, code[i]);
-        CHECK(false);
-    }
+    isa::decodeInstruction(dv, code[0]);
+    CHECK(dv.getInstr().opcode == Opcode::Nop);
+
+    isa::decodeInstruction(dv, code[1]);
+    CHECK(dv.getInstr().opcode == Opcode::Jmp);
+    CHECK(dv.getInstr().imm == -2);
 }
