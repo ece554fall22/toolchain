@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include "decoder.h"
@@ -256,3 +257,4 @@ struct DisasmVisitor : public InstructionVisitor {
 };
 
 }; // namespace isa::disasm
+#endif
