@@ -147,8 +147,8 @@ int main(int argc, char* argv[]) {
 
     CPUState cpuState;
     MemSystem mem(1024 /* 1k */);
-    CPUInstructionProxy iproxy{cpuState, mem};
-    isa::PrintVisitor printvis;
+    CPUInstructionProxy iproxy(cpuState, mem);
+    isa::PrintVisitor printvis(std::cout);
 
     {
         auto path = ap.get<std::string>("memory");

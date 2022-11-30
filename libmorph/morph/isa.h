@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fmt/core.h>
+#include <fmt/ostream.h>
 #include <iostream>
 
 #include "util.h"
@@ -52,8 +54,6 @@ inline auto scalarArithmeticOpFromArithCode(bits<4> v) -> ScalarArithmeticOp {
     }
 }
 
-} // namespace isa
-
 inline std::ostream& operator<<(std::ostream& os,
                                 const isa::ScalarArithmeticOp& v) {
     switch (v) {
@@ -84,3 +84,8 @@ inline std::ostream& operator<<(std::ostream& os,
     }
     return os;
 }
+
+} // namespace isa
+
+template <>
+struct fmt::formatter<isa::ScalarArithmeticOp> : ostream_formatter {};

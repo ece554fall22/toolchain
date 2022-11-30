@@ -57,73 +57,68 @@ void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
 //     }
 
 struct PrintVisitor : public InstructionVisitor {
+    explicit PrintVisitor(std::ostream& os) : os{os} {}
     virtual ~PrintVisitor() = default;
 
     // misc
-    virtual void nop() { std::cout << "nop\n"; }
-    virtual void halt() { std::cout << "halt\n"; }
+    void nop() override { fmt::print(os, "nop"); }
+    void halt() override { fmt::print(os, "halt"); }
 
     // J
-    virtual void jmp(s<25> imm) { std::cout << "jmp " << imm << "\n"; }
-    virtual void jal(s<25> imm) { std::cout << "jal " << imm << "\n"; }
+    void jmp(s<25> imm) override { fmt::print(os, "jmp {:#x}", imm.inner); }
+    void jal(s<25> imm) override { fmt::print(os, "jal {:#x}", imm.inner); }
 
     // JR
-    virtual void jmpr(reg_idx rA, s<20> imm) {
-        std::cout << "jal r" << rA << ", " << imm << "\n";
+    void jmpr(reg_idx rA, s<20> imm) override {
+        fmt::print(os, "jmpr r{}, {:#x}", rA.inner, imm.inner);
     }
-    virtual void jalr(reg_idx rA, s<20> imm) {
-        std::cout << "jal r" << rA << ", " << imm << "\n";
+    void jalr(reg_idx rA, s<20> imm) override {
+        fmt::print(os, "jalr r{}, {:#x}", rA.inner, imm.inner);
     }
 
     // BI
-    virtual void branchimm(condition_t cond, s<22> imm) {
-        std::cout << "branch_imm " << cond << ", " << imm << "\n";
+    void branchimm(condition_t cond, s<22> imm) override {
+        fmt::print(os, "b{}i {:#x}", cond, imm.inner);
     }
     // BR
-    virtual void branchreg(condition_t cond, reg_idx rA, s<17> imm) {
-        std::cout << "branch_reg " << cond << ", " << rA << ", " << imm << "\n";
+    void branchreg(condition_t cond, reg_idx rA, s<17> imm) override {
+        fmt::print(os, "b{}i r{}, {:#x}", cond, rA.inner, imm.inner);
     }
 
-    virtual void lil(reg_idx rD, s<18> imm) {
-        std::cout << "lil " << rD << ", " << imm << "\n";
+    void lil(reg_idx rD, s<18> imm) override {
+        fmt::print(os, "lil r{}, {:#x}", rD, imm.inner);
     }
-    virtual void lih(reg_idx rD, s<18> imm) {
-        std::cout << "lih " << rD << ", " << imm << "\n";
-    }
-
-    virtual void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) {
-        std::cout << "ld";
-        if (b36)
-            std::cout << "36";
-        else
-            std::cout << "32";
-        std::cout << " " << rD << ", " << rA << ", " << imm << '\n';
+    void lih(reg_idx rD, s<18> imm) override {
+        fmt::print(os, "lih r{}, {:#x}", rD, imm.inner);
     }
 
-    virtual void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) {
-        std::cout << "st";
-        if (b36)
-            std::cout << "36";
-        else
-            std::cout << "32";
-        std::cout << " " << rA << ", " << rB << ", " << imm << '\n';
+    void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) override {
+        fmt::print(os, "ld{} r{}, [r{}+{:#x}]", b36 ? "36" : "32", rD.inner,
+                   rA.inner, imm.inner);
     }
 
-    virtual void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
-                                  isa::ScalarArithmeticOp op) {
-        std::cout << op << " r" << rD.inner << ", r" << rA.inner << ", r"
-                  << rB.inner << "\n";
+    void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) override {
+        fmt::print(os, "st{} r{}, [r{}+{:#x}]", b36 ? "36" : "32", rA.inner,
+                   rB.inner, imm.inner);
     }
 
-    virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
-                                           isa::ScalarArithmeticOp op) {
-        std::cout << op << "i r" << rD.inner << ", r" << rA.inner << ", "
-                  << imm._sgn_inner() << "\n";
+    void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                          isa::ScalarArithmeticOp op) override {
+        fmt::print(os, "{} r{}, r{}, r{}", op, rD.inner, rA.inner, rB.inner);
     }
 
-    virtual void bkpt(bits<25> imm) {
-        std::cout << "bkpt " << imm.inner << "\n";
+    void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
+                                   isa::ScalarArithmeticOp op) override {
+        fmt::print(os, "{} r{}, r{}, {}", op, rD.inner, rA.inner,
+                   imm._sgn_inner());
     }
+
+    void bkpt(bits<25> imm) override {
+        fmt::print(os, "bkpt {:#x}", imm.inner);
+    }
+
+  private:
+    std::ostream& os;
 };
 
 // #undef PRINT_RRR
