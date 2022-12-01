@@ -30,11 +30,14 @@ void decodeVSA(InstructionVisitor& visit, bits<32> instr);
 void decodeVsma(InstructionVisitor& visit, bits<32> instr);
 void decodeMatrixWrite(InstructionVisitor& visit, bits<32> instr);
 void decodeReadC(InstructionVisitor& visit, bits<32> instr);
+void decodeVcomp(InstructionVisitor& visit, bits<32> instr);
+void decodeFa(InstructionVisitor& visit, bits<32>instr);
+void decodeCmpx(InstructionVisitor& visit, bits<32>instr);
 
 
 // TODO: vldi, vsti, vldr, vstr,
-// vcompsel, ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean,
-// flushicache, flushline, cmpdec, cmpinc
+//  ftoi, itof, wcsr, rcsr,
+// cmpdec, cmpinc
 void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // crude decoder. our ISA is not compressed; we can just look
     // at the opcode field to understand what to do.
@@ -169,15 +172,28 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     case 0b0110'010:
         return decodeReadC(visit, instr);
         
+    // vcomp
+    case 0b0110'110:
+        return decodeVcomp(visit, instr);
+
+    // fa
+    case 0b0111'011:
+        return decodeFa(visit, instr);
+
+    // cmpx
+    case 0b0111'100:
+        return decodeCmpx(visit, instr);
+    
     // memory management
     case 0b0111'101: // flushdirty
+        return visit.flushdirty();
     case 0b0111'110: // flushclean
+        return visit.flushclean();
     case 0b0111'111: // flushicache
+        return visit.flushicache();
 
     case 0b1000'000: // flushline
-
-        unimplemented();
-        return;
+        return visit.flushline(instr.slice<24,0>());
 
     case 0b1010'101: // bkpt
         return decodeBkpt(visit, instr);
@@ -349,7 +365,7 @@ void decodeVreduce(InstructionVisitor& visit, bits<32> instr) {
 
 void decodeVsplat(InstructionVisitor& visit, bits<32> instr) {
     auto vD = instr.slice<24,20>();
-    auto rA = instr.slice<9,15>();
+    auto rA = instr.slice<19,15>();
     auto mask = instr.slice<3,0>();
     visit.vsplat(vD, rA, mask);
 }
@@ -396,5 +412,28 @@ void decodeReadC(InstructionVisitor& visit, bits<32> instr) {
     auto idx = instr.slice<19,17>();
     bool high = instr.bit(16);
     visit.readC(vD, idx, high);
+}
+
+void decodeVcomp(InstructionVisitor& visit, bits<3> instr) {
+    auto vD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    auto vB = instr.slice<9,5>();
+    auto mask = instr.slice<3,0>();
+    visit.vcomp(vD, rA, rB, vB, mask);
+}
+
+void decodeFa(InstructionVisitor& visit, bits<32>instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto imm = instr.slice<14,0>();
+    visit.fa(rD, rA, imm);
+}
+
+void decodeCmpx(InstructionVisitor& visit, bits<32>instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto imm = instr.slice<14,0>();
+    visit.cmpx(rD, rA, imm);
 }
 
