@@ -102,6 +102,27 @@ struct InstructionVisitor {
     // ReadC
     virtual void readC(vreg_idx vD, s<3> idx, bool high) = 0;
 
+    // Vcomp
+    virtual void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB, s<4> mask) = 0;
+
+    // Flushdirty
+    virtual void flushdirty() = 0;
+
+    // Flushclean
+    virtual void flushclean() = 0;
+
+    // Flushicache
+    virtual void flushicache() = 0;
+
+    // Flushline
+    virtual void flushline(s<25> imm) = 0;
+
+    // Fa
+    virtual void fa(reg_idx rD, reg_idx rA, s<15> imm) = 0;
+
+    // Cmpx
+    virtual void cmpx(reg_idx rD, reg_idx rA, s<15> imm) = 0;
+
 
 };
 
@@ -240,6 +261,35 @@ struct PrintVisitor : public InstructionVisitor {
     void readC(vreg_idx vD, s<3> idx, bool high) override {
         fmt::print(os, "readC {}, {:#b}, v{}", high? 1 : 0, idx.inner, vD.inner);
     }
+
+    void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB, s<4> mask) override {
+        fmt::print(os, "vcomp v{}, r{}, r{}, v{}, {:#b}", vD.inner, rA.inner, rB.inner, vB.inner, mask.inner);
+    }
+
+    void flushdirty() override {
+        fmt::print(os, "flushdirty");
+    }
+
+    void flushclean() override {
+        fmt::print(os, "flushclean");
+    }
+
+    void flushicache() override {
+        fmt::print(os, "flushicache");
+    }
+
+    void flushline(s<25> imm) override {
+        fmt::print(os, "flushline, {}", imm.inner);
+    }
+
+    void fa(reg_idx rD, reg_idx rA, s<15> imm)  override {
+        fmt::print(os, "fa r{}, r{}, {}", rD.inner, rA.inner, imm.inner);
+    }
+
+    void cmpx(reg_idx rD, reg_idx rA, s<15> imm) override {
+        fmt::print(os, "cmpx r{}, r{}, {}", rD.inner, rA.inner, imm.inner);
+    }
+
 
   private:
     std::ostream& os;
