@@ -47,6 +47,25 @@ struct InstructionVisitor {
     // AI
     virtual void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
                                            isa::ScalarArithmeticOp op) = 0;
+
+    // CMPI
+    virtual void cmpI(reg_idx rA, s<20> imm) = 0;
+
+    // NOT
+    virtual void arithmeticNot(reg_idx rD, reg_idx rA) = 0;
+
+    // FA
+    virtual void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                          isa::FloatArithmeticOp op) = 0;
+
+    // CMP
+    virtual void cmp(reg_idx rA, reg_idx rB) = 0;
+
+    // VA 
+    virtual void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA, 
+                          vreg_idx vB, s<4> mask) = 0;
+
+
 };
 
 void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
@@ -115,6 +134,28 @@ struct PrintVisitor : public InstructionVisitor {
 
     void bkpt(bits<25> imm) override {
         fmt::print(os, "bkpt {:#x}", imm.inner);
+    }
+
+    void cmpI(reg_idx rA, s<20> imm) override {
+        fmt::print(os, "cmpi r{}, {:#x}", rA.inner, imm.inner);
+    }
+
+    void arithmeticNot(reg_idx rD, reg_idx rA) override {
+        fmt::print(os, "not r{}, r{}", rD.inner, rA.inner);
+    }
+
+    void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
+                          isa::FloatArithmeticOp op) override {
+        fmt::print(os, "{} r{}, r{}, r{}", op, rD.inner, rA.inner, rB.inner);
+    }
+
+    void cmp(reg_idx rA, reg_idx rB) override {
+        fmt::print(os, "cmp r{}, r{}", rA.inner, rB.inner);
+    }
+
+    void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA, 
+                          vreg_idx vB, s<4> mask) override {
+        fmt::print(os, "{} v{}, v{}, v{}, {:#b}", op, vD.inner, vA.inner, vB.inner, mask);
     }
 
   private:
