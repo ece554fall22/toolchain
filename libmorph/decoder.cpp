@@ -15,7 +15,18 @@ void decodeA(InstructionVisitor& visit, bits<32> instr);
 void decodeAI(InstructionVisitor& visit, bits<32> instr);
 void decodeCI(InstructionVisitor& visit, bits<32> instr);
 void decodeBkpt(InstructionVisitor& visit, bits<32> instr);
+void decodeCmpI(InstructionVisitor& visit, bits<32> instr);
+void decodeNot(InstructionVisitor& visit, bits<32> instr);
+void decodeFA(InstructionVisitor& visit, bits<32> instr);
+void decodeCmp(InstructionVisitor& visit, bits<32>instr);
+void decodeVA(InstructionVisitor& visit, bits<32> instr);
 
+
+// TODO: vldi, vsti, vldr, vstr,
+// vdot, vdota, vindx, vreduce, vsplat, vswizzle, vsadd, vsmult, 
+// vssub, vsdiv, vsma, writea, writeb, writec, systolicstep, matmul, readc, 
+// vcompsel, ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean,
+// flushicache, flushline, cmpdec, cmpinc
 void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // crude decoder. our ISA is not compressed; we can just look
     // at the opcode field to understand what to do.
@@ -71,7 +82,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
 
     // CI-format: imm compare
     case 0b0011'010: // compi
-        unimplemented();
+        return decodeCmpI(visit, instr);
         return;
 
     // A-format: register arithmetic
@@ -80,18 +91,22 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
 
     // AN-format: not
     case 0b0011'100: // not
-        unimplemented();
-        return;
+        return decodeNot(visit, instr);
 
     // FA-format: floating arith
     case 0b0011'101: // all of them
-        unimplemented();
-        return;
-
+        return decodeFA(visit, instr);
+    
     // C-format: cmp
     case 0b0011'110: // cmp
-        unimplemented();
-        return;
+        return decodeCmp(visit, instr);
+    
+    // vector arith
+    case 0b0011'111:
+    case 0b0100'000:
+    case 0b0100'001:
+    case 0b0100'010:
+        return decodeVA(visit, instr);
 
     // memory management
     case 0b0111'101: // flushdirty
@@ -205,4 +220,40 @@ void decodeAI(InstructionVisitor& visit, bits<32> instr) {
 void decodeBkpt(InstructionVisitor& visit, bits<32> instr) {
     auto imm = instr.slice<24, 0>();
     visit.bkpt(imm);
+}
+
+void decodeCmpI(InstructionVisitor& visit, bits<32> instr) {
+    auto imm = s<20>(instr.slice<24, 20>().concat(instr.slice<14,0>()));
+    auto rA = instr.slice<19, 15>();
+    visit.cmpI(rA, imm);
+}
+
+void decodeNot(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24, 20>();
+    auto rA = instr.slice<19, 15>();
+    visit.arithmeticNot(rD, rA);
+}
+
+void decodeFA(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    auto op = isa::floatArithmeticOpFromArithCode(instr.slice<2,0>());
+    visit.floatArithmetic(rD, rA, rB, op);
+}
+
+void decodeCmp(InstructionVisitor& visit, bits<32>instr) {
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    visit.cmp(rA, rB);
+}
+
+void decodeVA(InstructionVisitor& visit, bits<32> instr) {
+    auto op = isa::vectorArithmeticOpFromOpcode(instr.slice<31,25>());
+    auto vD = instr.slice<24,20>();
+    auto vA = instr.slice<19,15>();
+    auto vB = instr.slice<14,10>();
+    auto mask = instr.slice<3,0>();
+
+    visit.vectorArithmetic(op, vD, vA, vB, mask);
 }

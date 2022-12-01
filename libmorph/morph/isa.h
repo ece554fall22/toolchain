@@ -9,6 +9,8 @@
 
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mul, And, Or, Xor, Shr, Shl };
+enum class FloatArithmeticOp {Fadd, Fsub, Fmult, Fdiv};
+enum class VectorArithmeticOp {Vadd, Vsub, Vmult, Vdiv, Vmax, Vmin};
 
 inline auto scalarArithmeticOpFromAIOpcode(bits<7> v) -> ScalarArithmeticOp {
     switch (v.inner) {
@@ -51,6 +53,38 @@ inline auto scalarArithmeticOpFromArithCode(bits<4> v) -> ScalarArithmeticOp {
         return isa::ScalarArithmeticOp::Shl;
     default:
         panic("invalid A-format math op");
+    }
+}
+
+inline auto floatArithmeticOpFromArithCode(bits<3> v) -> FloatArithmeticOp {
+    switch (v.inner) {
+    case 0b000:
+        return isa::FloatArithmeticOp::Fadd;
+    case 0b001:
+        return isa::FloatArithmeticOp::Fsub;
+    case 0b010:
+        return isa::FloatArithmeticOp::Fmult;
+    case 0b011:
+        return isa::FloatArithmeticOp::Fdiv;
+    default:
+        panic("invalid floating point op");
+    }
+}
+
+inline auto vectorArithmeticOpFromOpcode(bits<7> v) -> VectorArithmeticOp {
+    switch (v.inner) {
+    case 0b0011111:
+        return isa::VectorArithmeticOp::Vadd;
+    case 0b0100000:
+        return isa::VectorArithmeticOp::Vsub;
+    case 0b0100001:
+        return isa::VectorArithmeticOp::Vmult;
+    case 0b0100010:
+        return isa::VectorArithmeticOp::Vdiv;
+    case 0b0110100:
+        return isa::VectorArithmeticOp::Vmax;
+    case 0b0110101:
+        return isa::VectorArithmeticOp::Vmin;
     }
 }
 
