@@ -20,11 +20,19 @@ void decodeNot(InstructionVisitor& visit, bits<32> instr);
 void decodeFA(InstructionVisitor& visit, bits<32> instr);
 void decodeCmp(InstructionVisitor& visit, bits<32>instr);
 void decodeVA(InstructionVisitor& visit, bits<32> instr);
+void decodeVdot(InstructionVisitor& visit, bits<32> instr);
+void decodeVdota(InstructionVisitor& visit, bits<32> instr);
+void decodeVindx(InstructionVisitor& visit, bits<32> instr);
+void decodeVreduce(InstructionVisitor& visit, bits<32> instr);
+void decodeVsplat(InstructionVisitor& visit, bits<32> instr);
+void decodeVswizzle(InstructionVisitor& visit, bits<32> instr);
+void decodeVSA(InstructionVisitor& visit, bits<32> instr);
+void decodeVsma(InstructionVisitor& visit, bits<32> instr);
+void decodeMatrixWrite(InstructionVisitor& visit, bits<32> instr);
+void decodeReadC(InstructionVisitor& visit, bits<32> instr);
 
 
 // TODO: vldi, vsti, vldr, vstr,
-// vdot, vdota, vindx, vreduce, vsplat, vswizzle, vsadd, vsmult, 
-// vssub, vsdiv, vsma, writea, writeb, writec, systolicstep, matmul, readc, 
 // vcompsel, ftoi, itof, wcsr, rcsr, fa, cmpx, flushdirty, flushclean,
 // flushicache, flushline, cmpdec, cmpinc
 void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
@@ -108,6 +116,59 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     case 0b0100'010:
         return decodeVA(visit, instr);
 
+    // vdot
+    case 0b0100'011:
+        return decodeVdot(visit, instr);
+
+    // vdota
+    case 0b0100'100:
+        return decodeVdota(visit, instr);
+
+    // vindx
+    case 0b0100'101:
+        return decodeVindx(visit, instr);
+
+    // vreduce
+    case 0b0100'110:
+        return decodeVreduce(visit, instr);
+
+    // vsplat
+    case 0b0100'111:
+        return decodeVsplat(visit, instr);
+
+    // vswizzle
+    case 0b0101'000:
+        return decodeVswizzle(visit, instr);
+
+    // vector scalar arith ops
+    case 0b0101'001:
+    case 0b0101'010:
+    case 0b0101'011:
+    case 0b0101'100:
+        return decodeVSA(visit, instr);
+
+    // vsma
+    case 0b0101'101:
+        return decodeVsma(visit, instr);
+
+    // matrix write ops
+    case 0b0101'110:
+    case 0b0101'111:
+    case 0b0110'000:
+        return decodeMatrixWrite(visit, instr);
+    
+    // matmul
+    case 0b0110'001:
+        return visit.matmul();
+
+    // systolicstep
+    case 0b0110'011:
+        return visit.systolicstep();
+
+    // readc
+    case 0b0110'010:
+        return decodeReadC(visit, instr);
+        
     // memory management
     case 0b0111'101: // flushdirty
     case 0b0111'110: // flushclean
@@ -254,6 +315,86 @@ void decodeVA(InstructionVisitor& visit, bits<32> instr) {
     auto vA = instr.slice<19,15>();
     auto vB = instr.slice<14,10>();
     auto mask = instr.slice<3,0>();
-
     visit.vectorArithmetic(op, vD, vA, vB, mask);
 }
+
+void decodeVdot(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto vA = instr.slice<19,15>();
+    auto vB = instr.slice<14,10>();
+    visit.vdot(rD, vA, vB);
+}
+
+void decodeVdota(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto vA = instr.slice<14,10>();
+    auto vB = instr.slice<9,5>();
+    visit.vdota(rD, rA, vA, vB);
+}
+
+void decodeVindx(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto vA = instr.slice<19,15>();
+    auto imm = instr.slice<8,7>();
+    visit.vindx(rD, vA, imm);
+}
+
+void decodeVreduce(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto vA = instr.slice<19,15>();
+    auto mask = instr.slice<3,0>();
+    visit.vreduce(rD, vA, mask);
+}
+
+void decodeVsplat(InstructionVisitor& visit, bits<32> instr) {
+    auto vD = instr.slice<24,20>();
+    auto rA = instr.slice<9,15>();
+    auto mask = instr.slice<3,0>();
+    visit.vsplat(vD, rA, mask);
+}
+
+void decodeVswizzle(InstructionVisitor& visit, bits<32> instr) {
+    auto vD = instr.slice<24,20>();
+    auto vA = instr.slice<19,15>();
+    auto i4 = instr.slice<14,13>();
+    auto i3 = instr.slice<12,11>();
+    auto i2 = instr.slice<10,9>();
+    auto i1 = instr.slice<8,7>();
+    auto mask = instr.slice<3,0>();
+    visit.vswizzle(vD, vA, i1, i2, i3, i4, mask);
+}
+
+void decodeVSA(InstructionVisitor& visit, bits<32> instr) {
+    auto op = isa::vectorScalarArithmeticOpFromOpcode(instr.slice<31,25>());
+    auto vD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto vB = instr.slice<14,10>();
+    auto mask = instr.slice<3,0>();
+    visit.vectorScalarArithmetic(op, vD, rA, vB, mask);
+}
+
+void decodeVsma(InstructionVisitor& visit, bits<32> instr) {
+    auto vD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto vA = instr.slice<14,10>();
+    auto vB = instr.slice<9,5>();
+    auto mask = instr.slice<3,0>();
+    visit.vsma(vD, rA, vA, vB, mask);
+}
+
+void decodeMatrixWrite(InstructionVisitor& visit, bits<32> instr) {
+    auto op = isa::matrixWriteOpFromOpcode(instr.slice<31,25>());
+    auto idx = instr.slice<22,20>();
+    auto vA = instr.slice<19,15>();
+    auto vB = instr.slice<14,10>();
+    visit.matrixWrite(op, idx, vA, vB);
+}
+
+void decodeReadC(InstructionVisitor& visit, bits<32> instr) {
+    auto vD = instr.slice<24,20>();
+    auto idx = instr.slice<19,17>();
+    bool high = instr.bit(16);
+    visit.readC(vD, idx, high);
+}
+

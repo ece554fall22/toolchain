@@ -65,6 +65,43 @@ struct InstructionVisitor {
     virtual void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA, 
                           vreg_idx vB, s<4> mask) = 0;
 
+    // VDOT
+    virtual void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) = 0;
+
+    // VDOTA
+    virtual void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) = 0;
+
+    // VINDX
+    virtual void vindx(reg_idx rD, vreg_idx vA, s<2> imm) = 0;
+
+    // VREDUCE
+    virtual void vreduce(reg_idx rD, vreg_idx vA, s<4> mask) = 0;
+
+    // VSPLAT
+    virtual void vsplat(vreg_idx vD, reg_idx rA, s<4> mask) = 0;
+
+    // VSWIZZLE
+    virtual void vswizzle(vreg_idx vD, vreg_idx vA, s<2>i1, s<2>i2, s<2> i3, s<2> i4, s<4> mask) = 0;
+
+    // vector scalar ops
+    virtual void vectorScalarArithmetic(isa::VectorScalarArithmeticOp op, vreg_idx vD, 
+                                        reg_idx rA, vreg_idx vB, s<4> mask) = 0;
+    
+    // VSMA
+    virtual void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB, s<4> mask) = 0;
+
+    // Matrix write ops
+    virtual void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA, vreg_idx vB) = 0;
+
+    // Matmul
+    virtual void matmul() = 0;
+
+    // Systolicstep
+    virtual void systolicstep() = 0;
+
+    // ReadC
+    virtual void readC(vreg_idx vD, s<3> idx, bool high) = 0;
+
 
 };
 
@@ -155,7 +192,53 @@ struct PrintVisitor : public InstructionVisitor {
 
     void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA, 
                           vreg_idx vB, s<4> mask) override {
-        fmt::print(os, "{} v{}, v{}, v{}, {:#b}", op, vD.inner, vA.inner, vB.inner, mask);
+        fmt::print(os, "{} v{}, v{}, v{}, {:#b}", op, vD.inner, vA.inner, vB.inner, mask.inner);
+    }
+
+    void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) override {
+        fmt::print(os, "vdot r{}, v{}, v{}", rD.inner, vA.inner, vB.inner);
+    }
+
+    void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) override {
+        fmt::print(os, "vdota r{}, r{}, v{}, v{}", rD.inner, rA.inner, vA.inner, vB.inner);
+    }
+
+    void vindx(reg_idx rD, vreg_idx vA, s<2> imm) override {
+        fmt::print(os, "vindx r{}, v{}, {:#b}", rD.inner, vA.inner, imm.inner);
+    }
+
+    void vreduce(reg_idx rD, vreg_idx vA, s<4> mask) override {
+        fmt::print(os, "vreduce r{}, v{}, {:#b}", rD.inner, vA.inner, mask.inner);
+    }
+
+    void vsplat(vreg_idx vD, reg_idx rA, s<4> mask) override {
+        fmt::print(os, "vsplat v{}, r{}, {:#b}", vD.inner, rA.inner, mask.inner);
+    }
+
+    void vswizzle(vreg_idx vD, vreg_idx vA, s<2>i1, s<2>i2, s<2> i3, s<2> i4, s<4> mask) override {
+        fmt::print(os, "vswizzle v{}, v{}, {:#b}, {:#b}, {:#b}, {:#b}, {:#b}", vD.inner, 
+                    vA.inner, i1.inner, i2.inner, i3.inner, i4.inner, mask.inner);
+    }
+
+    void vectorScalarArithmetic(isa::VectorScalarArithmeticOp op, vreg_idx vD, 
+                                        reg_idx rA, vreg_idx vB, s<4> mask) override {
+        fmt::print(os, "{} v{}, r{}, v{} {:#b}", op, vD.inner, rA.inner, vB.inner, mask.inner);
+    }
+
+    void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB, s<4> mask) override {
+        fmt::print(os, "vsma v{}, r{}, v{}, v{}, {:#b}", vD.inner, rA.inner, vA.inner, vB.inner, mask.inner);
+    }
+
+    void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA, vreg_idx vB) override {
+        fmt::print(os, "{}, {:#x}, v{}, v{}", op, idx.inner, vA.inner, vB.inner);
+    }
+
+    void matmul() override { fmt::print(os, "matmul");}
+
+    void systolicstep() override {fmt::print(os, "systolicstep");}
+
+    void readC(vreg_idx vD, s<3> idx, bool high) override {
+        fmt::print(os, "readC {}, {:#b}, v{}", high? 1 : 0, idx.inner, vD.inner);
     }
 
   private:
