@@ -11,6 +11,8 @@ namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mul, And, Or, Xor, Shr, Shl };
 enum class FloatArithmeticOp {Fadd, Fsub, Fmult, Fdiv};
 enum class VectorArithmeticOp {Vadd, Vsub, Vmult, Vdiv, Vmax, Vmin};
+enum class VectorScalarArithmeticOp {Vsadd, Vsmult, Vssub, Vsdiv};
+enum class MatrixWriteOp {WriteA, WriteB, WriteC};
 
 inline auto scalarArithmeticOpFromAIOpcode(bits<7> v) -> ScalarArithmeticOp {
     switch (v.inner) {
@@ -85,6 +87,36 @@ inline auto vectorArithmeticOpFromOpcode(bits<7> v) -> VectorArithmeticOp {
         return isa::VectorArithmeticOp::Vmax;
     case 0b0110101:
         return isa::VectorArithmeticOp::Vmin;
+    default:
+        panic("invalid vector arith op");
+    }
+}
+
+inline auto vectorScalarArithmeticOpFromOpcode(bits<7> v) -> VectorScalarArithmeticOp {
+    switch (v.inner) {
+    case 0b0101001:
+        return isa::VectorScalarArithmeticOp::Vsadd;
+    case 0b0101010:
+        return isa::VectorScalarArithmeticOp::Vsmult;
+    case 0b0101011:
+        return isa::VectorScalarArithmeticOp::Vssub;
+    case 0b0101100:
+        return isa::VectorScalarArithmeticOp::Vsdiv;
+    default:
+        panic("invalid vector scalar arith op");
+    }
+}
+
+inline auto matrixWriteOpFromOpcode(bits<7> v) -> MatrixWriteOp {
+    switch (v.inner) {
+    case 0b0101100:
+        return isa::MatrixWriteOp::WriteA;
+    case 0b0101111:
+        return isa::MatrixWriteOp::WriteB;
+    case 0b0110000:
+        return isa::MatrixWriteOp::WriteC;
+    default:
+        panic("invalid matrix write op");
     }
 }
 
