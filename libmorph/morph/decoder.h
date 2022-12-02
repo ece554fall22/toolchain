@@ -35,6 +35,18 @@ struct InstructionVisitor {
     virtual void lil(reg_idx rD, s<18> imm) = 0;
     virtual void lih(reg_idx rD, s<18> imm) = 0;
 
+    // Vldi
+    virtual void vldi(vreg_idx vD, reg_idx rA, s<11> imm, s<4>mask) = 0;
+
+    // Vsti
+    virtual void vsti(s<11> imm, reg_idx rA, reg_idx vB, s<4> mask) = 0;
+
+    // Vldr
+    virtual void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, s<4> mask) = 0;
+
+    // Vstr
+    virtual void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, s<4> mask) = 0;
+
     // ML
     virtual void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) = 0;
     // MS
@@ -123,6 +135,23 @@ struct InstructionVisitor {
     // Cmpx
     virtual void cmpx(reg_idx rD, reg_idx rA, s<15> imm) = 0;
 
+    // FtoI
+    virtual void ftoi(reg_idx rD, reg_idx rA) = 0;
+
+    // Itof
+    virtual void itof(reg_idx rD, reg_idx rA) = 0;
+
+    // Wcsr
+    virtual void wcsr(s<2> csr, reg_idx rA) = 0;
+
+    // Rcsr
+    virtual void rcsr(s<2> csr, reg_idx rA) = 0;
+
+    // Cmpdec
+    virtual void cmpdec(reg_idx rD, reg_idx rA, reg_idx rB) = 0;
+
+    // Cmpinc
+    virtual void cmpinc(reg_idx rD, reg_idx rA, reg_idx rB) = 0;
 
 };
 
@@ -177,6 +206,22 @@ struct PrintVisitor : public InstructionVisitor {
     void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) override {
         fmt::print(os, "st{} r{}, [r{}+{:#x}]", b36 ? "36" : "32", rA.inner,
                    rB.inner, imm.inner);
+    }
+
+    void vldi(vreg_idx vD, reg_idx rA, s<11> imm, s<4>mask) override {
+        fmt::print(os, "vldi v{}, r{}, {:#x}, {:#b}", vD.inner, rA.inner, imm.inner, mask.inner);
+    }
+
+    void vsti(s<11> imm, reg_idx rA, reg_idx vB, s<4> mask) override {
+        fmt::print(os, "vsti r{}, v{} {:#x}, {:#b}", rA.inner, vB.inner, mask.inner);
+    }
+    
+    void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, s<4> mask) override {
+        fmt::print(os, "vldr v{}, r{}, r{}, {:#b}", vD.inner, rA.inner, rB.inner, mask.inner);
+    }
+
+    void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, s<4> mask) override {
+        fmt::print(os, "vstr r{}, r{}, v{}, {:#b}", rA.inner, rB.inner, vA.inner, mask.inner);
     }
 
     void scalarArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
@@ -279,17 +324,40 @@ struct PrintVisitor : public InstructionVisitor {
     }
 
     void flushline(s<25> imm) override {
-        fmt::print(os, "flushline, {}", imm.inner);
+        fmt::print(os, "flushline, {:#x}", imm.inner);
     }
 
     void fa(reg_idx rD, reg_idx rA, s<15> imm)  override {
-        fmt::print(os, "fa r{}, r{}, {}", rD.inner, rA.inner, imm.inner);
+        fmt::print(os, "fa r{}, r{}, {:#x}", rD.inner, rA.inner, imm.inner);
     }
 
     void cmpx(reg_idx rD, reg_idx rA, s<15> imm) override {
-        fmt::print(os, "cmpx r{}, r{}, {}", rD.inner, rA.inner, imm.inner);
+        fmt::print(os, "cmpx r{}, r{}, {:#x}", rD.inner, rA.inner, imm.inner);
     }
 
+    void ftoi(reg_idx rD, reg_idx rA) override {
+        fmt::print(os, "ftoi r{}, r{}", rD.inner, rA.inner);
+    }
+
+    void itof(reg_idx rD, reg_idx rA) override {
+        fmt::print(os, "itof r{}, r{}", rD.inner, rA.inner);
+    }
+
+    void wcsr(s<2> csr, reg_idx rA) override {
+        fmt::print(os, "wcsr c{}, r{}", csr.inner, rA.inner);
+    }
+
+    void rcsr(s<2> csr, reg_idx rA) override {
+        fmt::print(os, "rcsr c{}, r{}", csr.inner, rA.inner);
+    }
+
+    void cmpdec(reg_idx rD, reg_idx rA, reg_idx rB) override {
+        fmt::print(os, "cmpdec r{}, r{}, r{}", rD.inner, rA.inner, rB.inner);
+    }
+
+    void cmpinc(reg_idx rD, reg_idx rA, reg_idx rB) override {
+        fmt::print(os, "cmpinc r{}, r{}, r{}", rD.inner, rA.inner, rB.inner);
+    }
 
   private:
     std::ostream& os;
