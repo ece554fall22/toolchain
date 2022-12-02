@@ -9,10 +9,10 @@
 
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mul, And, Or, Xor, Shr, Shl };
-enum class FloatArithmeticOp {Fadd, Fsub, Fmult, Fdiv};
-enum class VectorArithmeticOp {Vadd, Vsub, Vmult, Vdiv, Vmax, Vmin};
-enum class VectorScalarArithmeticOp {Vsadd, Vsmult, Vssub, Vsdiv};
-enum class MatrixWriteOp {WriteA, WriteB, WriteC};
+enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
+enum class VectorArithmeticOp { Vadd, Vsub, Vmult, Vdiv, Vmax, Vmin };
+enum class VectorScalarArithmeticOp { Vsadd, Vsmult, Vssub, Vsdiv };
+enum class MatrixWriteOp { WriteA, WriteB, WriteC };
 
 inline auto scalarArithmeticOpFromAIOpcode(bits<7> v) -> ScalarArithmeticOp {
     switch (v.inner) {
@@ -92,7 +92,8 @@ inline auto vectorArithmeticOpFromOpcode(bits<7> v) -> VectorArithmeticOp {
     }
 }
 
-inline auto vectorScalarArithmeticOpFromOpcode(bits<7> v) -> VectorScalarArithmeticOp {
+inline auto vectorScalarArithmeticOpFromOpcode(bits<7> v)
+    -> VectorScalarArithmeticOp {
     switch (v.inner) {
     case 0b0101001:
         return isa::VectorScalarArithmeticOp::Vsadd;
@@ -151,7 +152,96 @@ inline std::ostream& operator<<(std::ostream& os,
     return os;
 }
 
+inline std::ostream& operator<<(std::ostream& os,
+                                const isa::FloatArithmeticOp& v) {
+    switch (v) {
+    case FloatArithmeticOp::Fadd:
+        os << "fadd";
+        break;
+    case FloatArithmeticOp::Fsub:
+        os << "fsub";
+        break;
+    case FloatArithmeticOp::Fmult:
+        os << "fmult";
+        break;
+    case FloatArithmeticOp::Fdiv:
+        os << "fdiv";
+        break;
+    }
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const isa::MatrixWriteOp& v) {
+    switch (v) {
+    case MatrixWriteOp::WriteA:
+        os << "writeA";
+        break;
+    case MatrixWriteOp::WriteB:
+        os << "writeB";
+        break;
+    case MatrixWriteOp::WriteC:
+        os << "writeC";
+        break;
+    }
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const isa::VectorArithmeticOp& v) {
+    switch (v) {
+    case VectorArithmeticOp::Vadd:
+        os << "vadd";
+        break;
+    case VectorArithmeticOp::Vsub:
+        os << "vsub";
+        break;
+    case VectorArithmeticOp::Vmult:
+        os << "vmul";
+        break;
+    case VectorArithmeticOp::Vdiv:
+        os << "vdiv";
+        break;
+    case VectorArithmeticOp::Vmax:
+        os << "vmax";
+        break;
+    case VectorArithmeticOp::Vmin:
+        os << "vmin";
+        break;
+    }
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const isa::VectorScalarArithmeticOp& v) {
+    switch (v) {
+    case VectorScalarArithmeticOp::Vsadd:
+        os << "vsadd";
+        break;
+    case VectorScalarArithmeticOp::Vsmult:
+        os << "vsmult";
+        break;
+    case VectorScalarArithmeticOp::Vssub:
+        os << "vssub";
+        break;
+    case VectorScalarArithmeticOp::Vsdiv:
+        os << "vsdiv";
+        break;
+    }
+    return os;
+}
+
 } // namespace isa
 
 template <>
 struct fmt::formatter<isa::ScalarArithmeticOp> : ostream_formatter {};
+
+template <>
+struct fmt::formatter<isa::FloatArithmeticOp> : ostream_formatter {};
+
+template <>
+struct fmt::formatter<isa::VectorArithmeticOp> : ostream_formatter {};
+
+template <>
+struct fmt::formatter<isa::VectorScalarArithmeticOp> : ostream_formatter {};
+
+template <> struct fmt::formatter<isa::MatrixWriteOp> : ostream_formatter {};
