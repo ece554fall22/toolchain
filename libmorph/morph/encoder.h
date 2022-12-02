@@ -8,7 +8,6 @@
 #include "varint.h"
 
 namespace isa {
-enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
 enum class LanewiseVectorOp { Add, Sub, Mul, Div, Min, Max };
 enum class VectorScalarOp {
     Add,

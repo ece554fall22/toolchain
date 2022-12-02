@@ -33,11 +33,18 @@ void decodeReadC(InstructionVisitor& visit, bits<32> instr);
 void decodeVcomp(InstructionVisitor& visit, bits<32> instr);
 void decodeFa(InstructionVisitor& visit, bits<32>instr);
 void decodeCmpx(InstructionVisitor& visit, bits<32>instr);
+void decodeFtoi(InstructionVisitor& visit, bits<32> instr);
+void decodeItof(InstructionVisitor& visit, bits<32> instr);
+void decodeWcsr(InstructionVisitor& visit, bits<32> instr);
+void decodeRcsr(InstructionVisitor& visit, bits<32> instr);
+void decodeCmpdec(InstructionVisitor& visit, bits<32> instr);
+void decodeCmpinc(InstructionVisitor& visit, bits<32> instr);
+void decodeVldi(InstructionVisitor& visit, bits<32> instr);
+void decodeVsti(InstructionVisitor& visit, bits<32> instr);
+void decodeVldr(InstructionVisitor& visit, bits<32> instr);
+void decodeVstr(InstructionVisitor& visit, bits<32> instr);
 
 
-// TODO: vldi, vsti, vldr, vstr,
-//  ftoi, itof, wcsr, rcsr,
-// cmpdec, cmpinc
 void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // crude decoder. our ISA is not compressed; we can just look
     // at the opcode field to understand what to do.
@@ -80,6 +87,22 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     case 0b0001'100: // st32
     case 0b0001'101: // st36
         return decodeMS(visit, instr);
+    
+    // Vldi
+    case 0b0001'110:
+        return decodeVldi(visit, instr);
+
+    // Vsti
+    case 0b0010'000:
+        return decodeVsti(visit, instr);
+
+    // Vldr
+    case 0b0010'001:
+        return decodeVldr(visit, instr);
+    
+    // Vstr
+    case 0b0010'010:
+        return decodeVstr(visit, instr);
 
     // AI-format: immediate arithmetic
     case 0b0010'011: // addi
@@ -175,6 +198,22 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // vcomp
     case 0b0110'110:
         return decodeVcomp(visit, instr);
+    
+    // ftoi
+    case 0b0110'111:
+        return decodeFtoi(visit, instr);
+
+    // itof
+    case 0b0111'000:
+        return decodeItof(visit, instr);
+
+    // wcsr
+    case 0b0111'001:
+        return decodeWcsr(visit, instr);
+
+    // rcsr
+    case 0b0111'010:
+        return decodeRcsr(visit, instr);
 
     // fa
     case 0b0111'011:
@@ -183,6 +222,7 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     // cmpx
     case 0b0111'100:
         return decodeCmpx(visit, instr);
+
     
     // memory management
     case 0b0111'101: // flushdirty
@@ -194,6 +234,14 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
 
     case 0b1000'000: // flushline
         return visit.flushline(instr.slice<24,0>());
+    
+    // cmpdec
+    case 0b1000'001:
+        return decodeCmpdec(visit, instr);
+    
+    // cmpinc
+    case 0b1000'010:
+        return decodeCmpinc(visit, instr);
 
     case 0b1010'101: // bkpt
         return decodeBkpt(visit, instr);
@@ -271,6 +319,38 @@ void decodeMS(InstructionVisitor& visit, bits<32> instr) {
     auto imm = s<15>(instr.slice<24, 20>().concat(instr.slice<9, 0>()));
 
     visit.st(rA, rB, imm, b36);
+}
+
+void decodeVldi(InstructionVisitor& visit, bits<32> instr) {
+    auto vD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto imm = instr.slice<14,4>();
+    auto mask = instr.slice<3,0>();
+    visit.vldi(vD, rA, imm, __fd_mask);
+}
+
+void decodeVsti(InstructionVisitor& visit, bits<32> instr) {
+    auto imm = instr.slice<24,20>().concat(instr.slice<9,4>());
+    auto rA = instr.slice<19,15>();
+    auto vB = instr.slice<14,10>();
+    auto mask = instr.slice<3,0>();
+    visit.vsti(imm, rA, vB, mask);
+}
+
+void decodeVldr(InstructionVisitor& visit, bits<32> instr) {
+    auto vD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    auto mask = instr.slice<3,0>();
+    visit.vldr(vD, rA, rB, mask);
+}
+
+void decodeVstr(InstructionVisitor& visit, bits<32> instr) {
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    auto vA = instr.slice<9,5>();
+    auto mask = instr.slice<3,0>();
+    visit.vstr(rA, rB, vA, mask);
 }
 
 void decodeA(InstructionVisitor& visit, bits<32> instr) {
@@ -436,4 +516,43 @@ void decodeCmpx(InstructionVisitor& visit, bits<32>instr) {
     auto imm = instr.slice<14,0>();
     visit.cmpx(rD, rA, imm);
 }
+
+void decodeFtoi(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    visit.ftoi(rD, rA);
+}
+
+void decodeItof(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    visit.itof(rD, rA);
+}
+
+void decodeWcsr(InstructionVisitor& visit, bits<32> instr) {
+    auto csr = instr.slice<24,23>();
+    auto rA = instr.slice<19,15>();
+    visit.wcsr(csr, rA);
+}
+
+void decodeRcsr(InstructionVisitor& visit, bits<32> instr) {
+    auto csr = instr.slice<24,23>();
+    auto rA = instr.slice<19,15>();
+    visit.rcsr(csr, rA);
+}
+
+void decodeCmpdec(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    visit.cmpdec(rD, rA, rB);
+}
+
+void decodeCmpinc(InstructionVisitor& visit, bits<32> instr) {
+    auto rD = instr.slice<24,20>();
+    auto rA = instr.slice<19,15>();
+    auto rB = instr.slice<14,10>();
+    visit.cmpinc(rD, rA, rB);
+}
+
 
