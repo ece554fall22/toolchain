@@ -1,3 +1,5 @@
+#pragma once
+
 #include "cpu.h"
 #include <morph/varint.h>
 // arbitrarily sized bitfields
