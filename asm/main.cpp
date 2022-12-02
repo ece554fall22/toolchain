@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
 
     ap.add_argument("-o", "--output")
         .help("output path")
+        .metavar("OUT")
         .default_value(std::string{"out.o"});
 
     ap.add_argument("--dump-lexemes")
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]) {
     f.open(inputs[0]);
     if (!f.is_open()) {
         std::cerr << "[!] cant open " << inputs[0] << std::endl;
+        std::exit(1);
     }
     f.seekg(0, std::ios::end);
     size_t fsize = f.tellg();

@@ -161,11 +161,6 @@ struct InstructionVisitor {
 
 void decodeInstruction(InstructionVisitor& visit, bits<32> instr);
 
-// #define PRINT_RRR(fn, mnemonic)                                                \
-//     virtual void fn(reg_idx rD, reg_idx rA, reg_idx rB) {                      \
-//         fmt::print(#mnemonic " r{}, r{}, r{}", rD.inner, rA.inner, rB.inner);  \
-//     }
-
 struct PrintVisitor : public InstructionVisitor {
     explicit PrintVisitor(std::ostream& os) : os{os} {}
     virtual ~PrintVisitor() = default;

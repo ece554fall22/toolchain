@@ -1,6 +1,11 @@
-#include <argparse/argparse.hpp>
+#include <csignal>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+
+#include <argparse/argparse.hpp>
+#include <fmt/color.h>
+#include <fmt/core.h>
 
 #include <morph/decoder.h>
 #include <morph/util.h>
@@ -8,10 +13,15 @@
 #include "cpu.h"
 #include "iproxy.h"
 
+volatile std::sig_atomic_t signal_flag = 0;
+void handle_sigint(int signal) { signal_flag = signal; }
+
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("sim");
 
     ap.add_argument("memory");
+
+    ap.add_argument("--trace").help("write a tracefile").metavar("TRACEFILE");
 
     try {
         ap.parse_args(argc, argv);
@@ -21,9 +31,18 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
+    std::signal(SIGINT, handle_sigint);
+
+    std::shared_ptr<Tracer> tracer = nullptr;
+    if (auto tracepath = ap.present<std::string>("--trace")) {
+        tracer = std::make_shared<FileTracer>(*tracepath);
+    } else {
+        tracer = std::make_shared<NullTracer>();
+    }
+
     CPUState cpuState;
     MemSystem mem(1024 /* 1k */);
-    CPUInstructionProxy iproxy(cpuState, mem);
+    CPUInstructionProxy iproxy(cpuState, mem, tracer);
     isa::PrintVisitor printvis(std::cout);
 
     {
@@ -37,8 +56,7 @@ int main(int argc, char* argv[]) {
             fmt::print(stderr, "[!] can't open `{}`\n", path);
             exit(1);
         }
-        // load blocks. WARNING WARNING TODO(erin): only works on little-endian
-        // architectures
+        // WARNING WARNING TODO(erin): only works on little-endian architectures
         fBin.read(reinterpret_cast<char*>(mem.mempool.data()),
                   mem.mempool.size() * 4);
     }
@@ -47,19 +65,31 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < 32; i++) {
         fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);
     }
+    fmt::print("\n");
 
     while (!cpuState.isHalted()) {
         auto pc = cpuState.pc.getNewPC();
         auto ir = mem.readInstruction(pc);
 
+        tracer->begin(pc, ir);
+
+        // TODO(erin): temp stdout logging
         fmt::print("pc={:#x} ir={:#x}\n", pc, ir);
         std::cout << "] ";
         isa::decodeInstruction(printvis, bits<32>(ir));
-        isa::decodeInstruction(iproxy, bits<32>(ir));
-    }
+        std::cout << '\n';
 
-    // // "run" a little program
-    // instructions::addi(cpuState, mem, /*r*/ 0, /*r*/ 0, 1);
+        // execute instruction
+        isa::decodeInstruction(iproxy, bits<32>(ir));
+
+        tracer->end();
+
+        if (signal_flag == SIGINT) {
+            fmt::print(fmt::fg(fmt::color::cyan),
+                       " simulation halted by SIGINT\n");
+            cpuState.halt();
+        }
+    }
 
     cpuState.dump();
 }

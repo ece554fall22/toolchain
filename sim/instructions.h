@@ -308,75 +308,75 @@ void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
 /************************************************************************/
 
 // BNZR
-void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     if (!cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner());
+        cpu.pc.setNextPC(cpu.r[rA].inner + imm._sgn_inner());
 }
 
 // BEZR
-void bezr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bezr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     if (cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rA] + imm);
 }
 
 // BLZR
-void blzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void blzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     if (cpu.f.sign)
-        cpu.pc.setNextPC(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rA] + imm);
 }
 
 // BGZR
-void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     if (!cpu.f.sign)
-        cpu.pc.setNextPC(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rA] + imm);
 }
 
 // BLER
-void bler(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bler(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     if (cpu.f.sign | cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rA] + imm);
 }
 
 // BGER
-void bger(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bger(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     if (!cpu.f.sign | cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rT] + imm);
+        cpu.pc.setNextPC(cpu.r[rA] + imm);
 }
 
 /** Relative to current PC */
 
 // BNZI
-void bnzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bnzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
     if (!cpu.f.zero)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BEZI
-void bezi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bezi(CPUState& cpu, MemSystem& mem, s<22> imm) {
     if (cpu.f.zero)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BLZI
-void blzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void blzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
     if (cpu.f.sign)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BGZI
-void bgzi(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bgzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
     if (!cpu.f.sign)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BLEI
-void blei(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void blei(CPUState& cpu, MemSystem& mem, s<22> imm) {
     if (cpu.f.sign || cpu.f.zero)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
 
 // BGEI
-void bgei(CPUState& cpu, MemSystem& mem, reg_idx rT, s<15> imm) {
+void bgei(CPUState& cpu, MemSystem& mem, s<22> imm) {
     if (!cpu.f.sign || cpu.f.zero)
         cpu.pc.addToNextPC(imm._sgn_inner() * 4);
 }
