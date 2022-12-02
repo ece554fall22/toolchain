@@ -51,11 +51,11 @@ struct NullTracer : public Tracer {
 
     void end() override {}
 
-    void scalarRegInput(CPUState &cpu, const char *name, reg_idx r) override {}
+    void scalarRegInput(CPUState& cpu, const char* name, reg_idx r) override {}
 
-    void vectorRegInput(CPUState &cpu, const char *name, vreg_idx r) override {}
+    void vectorRegInput(CPUState& cpu, const char* name, vreg_idx r) override {}
 
-    void writebackScalarReg(CPUState &cpu, const char *name,
+    void writebackScalarReg(CPUState& cpu, const char* name,
                             reg_idx r) override {}
 
     void immInput(int64_t imm) override {}
@@ -166,9 +166,7 @@ struct FileTracer : public Tracer {
         //        itrace.scalarMemRead = fmt::format("36 : {} = {}", addr, val);
     }
 
-    void condcode(condition_t cond) override {
-        itrace.condcode = cond;
-    }
+    void condcode(condition_t cond) override { itrace.condcode = cond; }
 
   protected:
     InstructionTrace itrace;

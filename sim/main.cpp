@@ -1,8 +1,11 @@
-#include <argparse/argparse.hpp>
 #include <csignal>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+
+#include <argparse/argparse.hpp>
+#include <fmt/color.h>
+#include <fmt/core.h>
 
 #include <morph/decoder.h>
 #include <morph/util.h>

@@ -78,7 +78,7 @@ static const std::map<
         {"sub", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Sub)},
         {"mul", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Mul)},
         {"and", PARTIAL(emit_arith, isa::ScalarArithmeticOp::And)},
-        {"or",  PARTIAL(emit_arith, isa::ScalarArithmeticOp::Or)},
+        {"or", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Or)},
         {"xor", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Xor)},
         {"shr", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shr)},
         {"shl", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shl)},

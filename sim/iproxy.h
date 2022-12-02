@@ -12,25 +12,25 @@
 #include "instructions.h"
 #include "trace.h"
 
-#define HANDLE_BR(suffix, cond, ...) \
-    case condition_t::cond:     \
-        instructions::b##cond##suffix(cpu, mem, ## __VA_ARGS__); \
+#define HANDLE_BR(suffix, cond, ...)                                           \
+    case condition_t::cond:                                                    \
+        instructions::b##cond##suffix(cpu, mem, ##__VA_ARGS__);                \
         break;
 
-#define FORALL_CONDS(suffix, ...) \
-        HANDLE_BR(suffix, nz, ## __VA_ARGS__) \
-        HANDLE_BR(suffix, ez, ## __VA_ARGS__) \
-        HANDLE_BR(suffix, lz, ## __VA_ARGS__) \
-        HANDLE_BR(suffix, gz, ## __VA_ARGS__) \
-        HANDLE_BR(suffix, le, ## __VA_ARGS__) \
-        HANDLE_BR(suffix, ge, ## __VA_ARGS__)
+#define FORALL_CONDS(suffix, ...)                                              \
+    HANDLE_BR(suffix, nz, ##__VA_ARGS__)                                       \
+    HANDLE_BR(suffix, ez, ##__VA_ARGS__)                                       \
+    HANDLE_BR(suffix, lz, ##__VA_ARGS__)                                       \
+    HANDLE_BR(suffix, gz, ##__VA_ARGS__)                                       \
+    HANDLE_BR(suffix, le, ##__VA_ARGS__)                                       \
+    HANDLE_BR(suffix, ge, ##__VA_ARGS__)
 
 class CPUInstructionProxy : public isa::InstructionVisitor {
-public:
+  public:
     ~CPUInstructionProxy() override = default;
     CPUInstructionProxy(CPUState& cpu, MemSystem& mem,
                         std::shared_ptr<Tracer> tracer)
-            : cpu{cpu}, mem{mem}, tracer{tracer} {}
+        : cpu{cpu}, mem{mem}, tracer{tracer} {}
 
     // misc
     void nop() override { instructions::nop(cpu, mem); }
@@ -64,9 +64,7 @@ public:
         tracer->condcode(cond);
         tracer->immInput(imm.inner);
 
-        switch (cond) {
-            FORALL_CONDS(i, imm)
-        }
+        switch (cond) { FORALL_CONDS(i, imm) }
     }
     // BR
     void branchreg(condition_t cond, reg_idx rA, s<17> imm) override {
@@ -74,9 +72,7 @@ public:
         tracer->immInput(imm.inner);
         tracer->condcode(cond);
 
-        switch (cond) {
-            FORALL_CONDS(r, rA, imm)
-        }
+        switch (cond) { FORALL_CONDS(r, rA, imm) }
     }
 
     void lil(reg_idx rD, s<18> imm) override {
@@ -127,32 +123,32 @@ public:
         tracer->scalarRegInput(cpu, "rB", rB);
 
         switch (op) {
-            case isa::ScalarArithmeticOp::Add:
-                instructions::add(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::Sub:
-                instructions::sub(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::Mul:
-                instructions::mul(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::And:
-                instructions::and_(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::Or:
-                instructions::or_(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::Xor:
-                instructions::xor_(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::Shr:
-                instructions::shr(cpu, mem, rD, rA, rB);
-                break;
-            case isa::ScalarArithmeticOp::Shl:
-                instructions::shl(cpu, mem, rD, rA, rB);
-                break;
-            default:
-                panic("invalid op for immediate");
+        case isa::ScalarArithmeticOp::Add:
+            instructions::add(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::Sub:
+            instructions::sub(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::Mul:
+            instructions::mul(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::And:
+            instructions::and_(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::Or:
+            instructions::or_(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::Xor:
+            instructions::xor_(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::Shr:
+            instructions::shr(cpu, mem, rD, rA, rB);
+            break;
+        case isa::ScalarArithmeticOp::Shl:
+            instructions::shl(cpu, mem, rD, rA, rB);
+            break;
+        default:
+            panic("invalid op for immediate");
         }
 
         tracer->writebackScalarReg(cpu, "rD", rD);
@@ -165,29 +161,29 @@ public:
         tracer->immInput(imm._sgn_inner());
 
         switch (op) {
-            case isa::ScalarArithmeticOp::Add:
-                instructions::addi(cpu, mem, rD, rA, imm);
-                break;
-            case isa::ScalarArithmeticOp::Sub:
-                instructions::subi(cpu, mem, rD, rA, imm);
-                break;
-            case isa::ScalarArithmeticOp::And:
-                instructions::andi(cpu, mem, rD, rA, imm);
-                break;
-            case isa::ScalarArithmeticOp::Or:
-                instructions::ori(cpu, mem, rD, rA, imm);
-                break;
-            case isa::ScalarArithmeticOp::Xor:
-                instructions::xori(cpu, mem, rD, rA, imm);
-                break;
-            case isa::ScalarArithmeticOp::Shr:
-                instructions::shri(cpu, mem, rD, rA, imm);
-                break;
-            case isa::ScalarArithmeticOp::Shl:
-                instructions::shli(cpu, mem, rD, rA, imm);
-                break;
-            default:
-                panic("invalid op for immediate");
+        case isa::ScalarArithmeticOp::Add:
+            instructions::addi(cpu, mem, rD, rA, imm);
+            break;
+        case isa::ScalarArithmeticOp::Sub:
+            instructions::subi(cpu, mem, rD, rA, imm);
+            break;
+        case isa::ScalarArithmeticOp::And:
+            instructions::andi(cpu, mem, rD, rA, imm);
+            break;
+        case isa::ScalarArithmeticOp::Or:
+            instructions::ori(cpu, mem, rD, rA, imm);
+            break;
+        case isa::ScalarArithmeticOp::Xor:
+            instructions::xori(cpu, mem, rD, rA, imm);
+            break;
+        case isa::ScalarArithmeticOp::Shr:
+            instructions::shri(cpu, mem, rD, rA, imm);
+            break;
+        case isa::ScalarArithmeticOp::Shl:
+            instructions::shli(cpu, mem, rD, rA, imm);
+            break;
+        default:
+            panic("invalid op for immediate");
         }
 
         tracer->writebackScalarReg(cpu, "rD", rD);
