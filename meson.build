@@ -5,4 +5,3 @@ project('toolchain', 'cpp',
 subdir('libmorph')
 subdir('asm')
 subdir('sim')
-subdir('testgen')
