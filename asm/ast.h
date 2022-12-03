@@ -78,7 +78,7 @@ struct Operand {
     }
 
     template <size_t N> auto asBitsImm() const -> bits<N> {
-        return s<N>(this->template get<ast::OperandImmediate>().val);
+        return bits<N>(this->template get<ast::OperandImmediate>().val);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const ast::Operand& op) {

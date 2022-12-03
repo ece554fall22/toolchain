@@ -82,6 +82,11 @@ static const std::map<
         {"xor", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Xor)},
         {"shr", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shr)},
         {"shl", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shl)},
+        {"not",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             e.scalarArithmeticNot(i.operands[0].asRegIdx(),
+                                   i.operands[1].asRegIdx());
+         }},
 
         {"rcsr",
          [](auto& e, const ast::Instruction& i) {

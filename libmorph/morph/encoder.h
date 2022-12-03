@@ -49,8 +49,7 @@ class Emitter {
                                    reg_idx rA, s<15> imm);
     void scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD, reg_idx rA,
                           reg_idx rB);
-    void scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
-                             reg_idx rA);
+    void scalarArithmeticNot(reg_idx rD, reg_idx rA);
 
     void compareImm(reg_idx rA, s<20> imm);
     void compareReg(reg_idx rA, reg_idx rB);
@@ -79,7 +78,7 @@ class Emitter {
                         vreg_idx vB, u<3> idx, bool high);
 
     // memory transfer
-    void loadImmediate(bool high, reg_idx rD, u<18> imm);
+    void loadImmediate(bool high, reg_idx rD, bits<18> imm);
     void loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm);
     void storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm);
 

@@ -198,8 +198,7 @@ void isa::Emitter::scalarArithmetic(isa::ScalarArithmeticOp op, reg_idx rD,
     append(instr);
 }
 
-void isa::Emitter::scalarArithmeticNot(isa::ScalarArithmeticOp op, reg_idx rD,
-                                       reg_idx rA) {
+void isa::Emitter::scalarArithmeticNot(reg_idx rD, reg_idx rA) {
     uint32_t instr = 0b0011100 << 25;
 
     // operand registers
@@ -455,7 +454,7 @@ void isa::Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD,
 }
 
 // lih, lil
-void isa::Emitter::loadImmediate(bool hi, reg_idx rD, u<18> imm) {
+void isa::Emitter::loadImmediate(bool hi, reg_idx rD, bits<18> imm) {
     uint32_t instr = 0;
     if (hi)
         instr |= 0b0001000 << 25;
