@@ -39,6 +39,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         fmt::print(
             "\n\nBREAKPOINT BREAKPOINT : {:#x} : BREAKPOINT BREAKPOINT\n\n",
             signal.inner);
+        cpu.dump();
     }
 
     // J

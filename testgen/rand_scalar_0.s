@@ -63,6 +63,7 @@ lil r30, -0xc8b9
 lih r30, 0x6bd5
 lil r31, -0xfa98
 lih r31, -0x6d4d
+bkpt 0
 ;; random scalar arithmetic
 xor  r27, r12, r5
 shl  r24, r0, r17
@@ -90,6 +91,7 @@ not  r7, r26
 mul  r14, r18, r17
 shr  r2, r6, r2
 add  r10, r13, r4
+bkpt 1
 or   r13, r10, r24
 sub  r18, r26, r16
 sub  r30, r24, r15

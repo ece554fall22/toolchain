@@ -129,7 +129,7 @@ struct FileTracer : public Tracer {
     void scalarRegInput(CPUState& cpu, const char* name,
                         reg_idx ridx) override {
         itrace.inputs.push_back(
-            fmt::format("{}=r{}={}", name, ridx.inner, cpu.r[ridx]));
+            fmt::format("{}=r{}={:#x}", name, ridx.inner, cpu.r[ridx].raw()));
     }
     void vectorRegInput(CPUState& cpu, const char* name, vreg_idx r) override {}
 
@@ -139,8 +139,8 @@ struct FileTracer : public Tracer {
 
     void writebackScalarReg(CPUState& cpu, const char* name,
                             reg_idx ridx) override {
-        itrace.scalarRegOutput =
-            fmt::format("{}={}", name, ridx.inner, cpu.r[ridx]);
+        itrace.scalarRegOutput = fmt::format("{}={}={:#x}", name, ridx.inner,
+                                             cpu.r[ridx], cpu.r[ridx].raw());
     }
 
     void memWrite(uint64_t addr, u<32> val) override {

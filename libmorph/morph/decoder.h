@@ -191,10 +191,10 @@ struct PrintVisitor : public InstructionVisitor {
     }
 
     void lil(reg_idx rD, s<18> imm) override {
-        fmt::print(os, "lil r{}, {:#x}", rD, imm.inner);
+        fmt::print(os, "lil r{}, {:#x}", rD, imm.raw());
     }
     void lih(reg_idx rD, s<18> imm) override {
-        fmt::print(os, "lih r{}, {:#x}", rD, imm.inner);
+        fmt::print(os, "lih r{}, {:#x}", rD, imm.raw());
     }
 
     void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) override {

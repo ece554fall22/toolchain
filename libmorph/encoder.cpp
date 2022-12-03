@@ -117,7 +117,7 @@ void isa::Emitter::jumpPCRel(s<25> imm, bool link) {
         instr |= (1 << 25);
 
     // immediate
-    instr |= imm.inner; // TODO cleanup
+    instr |= imm.raw(); // TODO cleanup
 
     append(instr);
 }
@@ -133,8 +133,8 @@ void isa::Emitter::jumpRegRel(reg_idx rA, s<20> imm, bool link) {
 
     // immediate upper 5 bits.
     // TODO: better slicing
-    auto immHigh = (imm.inner >> 15) & BITFILL(5);
-    auto immLow = imm.inner & BITFILL(15);
+    auto immHigh = (imm.raw() >> 15) & BITFILL(5);
+    auto immLow = imm.raw() & BITFILL(15);
 
     instr |= immLow;
     instr |= (immHigh << 20);
@@ -146,7 +146,7 @@ void isa::Emitter::branchImm(condition_t bt, s<22> imm) {
     uint32_t instr = 0b0000110 << 25;
 
     instr |= static_cast<uint32_t>(bt) << 22;
-    instr |= imm.inner;
+    instr |= imm.raw();
 
     append(instr);
 }
@@ -156,7 +156,7 @@ void isa::Emitter::branchReg(condition_t bt, reg_idx rA, s<17> imm) {
 
     instr |= static_cast<uint32_t>(bt) << 22;
     instr |= rA.inner << 15;
-    instr |= imm.inner;
+    instr |= imm.raw();
 
     append(instr);
 }
@@ -178,7 +178,7 @@ void isa::Emitter::scalarArithmeticImmediate(isa::ScalarArithmeticOp op,
     instr |= (rA.inner << 15);
 
     // imm
-    instr |= imm.inner & BITFILL(15);
+    instr |= imm.raw() & BITFILL(15);
 
     append(instr);
 }
@@ -212,8 +212,8 @@ void isa::Emitter::scalarArithmeticNot(reg_idx rD, reg_idx rA) {
 void isa::Emitter::compareImm(reg_idx rA, s<20> imm) {
     uint32_t instr = 0b0011010 << 25;
 
-    auto immHi = (imm.inner >> 15) & BITFILL(5);
-    auto immLo = imm.inner & BITFILL(15);
+    auto immHi = (imm.raw() >> 15) & BITFILL(5);
+    auto immLo = imm.raw() & BITFILL(15);
     instr |= immHi << 20;
     instr |= rA.inner << 15;
     instr |= immLo;
@@ -462,7 +462,7 @@ void isa::Emitter::loadImmediate(bool hi, reg_idx rD, bits<18> imm) {
         instr |= 0b0001001 << 25;
 
     instr |= rD.inner << 20;
-    instr |= imm.inner;
+    instr |= imm.raw();
 
     append(instr);
 }
@@ -481,7 +481,7 @@ void isa::Emitter::loadScalar(bool b36, reg_idx rD, reg_idx rA, s<15> imm) {
     instr |= rA.inner << 15;
 
     // immediate
-    instr |= imm.inner;
+    instr |= imm.raw();
 
     append(instr);
 }
@@ -500,8 +500,8 @@ void isa::Emitter::storeScalar(bool b36, reg_idx rA, reg_idx rB, s<15> imm) {
     instr |= rB.inner << 10;
 
     // immediate
-    auto immHi = (imm.inner >> 10) & BITFILL(5);
-    auto immLo = imm.inner & BITFILL(10);
+    auto immHi = (imm.raw() >> 10) & BITFILL(5);
+    auto immLo = imm.raw() & BITFILL(10);
     instr |= immHi << 20;
     instr |= immLo;
 
@@ -514,7 +514,7 @@ void isa::Emitter::loadVectorImmStride(vreg_idx vD, reg_idx rA, s<11> imm,
 
     instr |= vD.inner << 20;
     instr |= rA.inner << 15;
-    instr |= imm.inner << 4;
+    instr |= imm.raw() << 4;
     instr |= mask.inner;
 
     append(instr);
@@ -528,8 +528,8 @@ void isa::Emitter::storeVectorImmStride(reg_idx rA, vreg_idx vB, s<11> imm,
     instr |= vB.inner << 10;
 
     // immediate
-    auto immHi = (imm.inner >> 6) & BITFILL(5);
-    auto immLo = imm.inner & BITFILL(6);
+    auto immHi = (imm.raw() >> 6) & BITFILL(5);
+    auto immLo = imm.raw() & BITFILL(6);
     instr |= immHi << 20;
     instr |= immLo << 4;
 
@@ -572,8 +572,8 @@ void isa::Emitter::flushcache(isa::CacheControlOp op) {
 void isa::Emitter::flushline(u<25> imm) {
     uint32_t instr = 0b1000000 << 25;
 
-    auto immHigh = (imm.inner >> 15) & BITFILL(10);
-    auto immLow = imm.inner & BITFILL(15);
+    auto immHigh = (imm.raw() >> 15) & BITFILL(10);
+    auto immLow = imm.raw() & BITFILL(15);
     instr |= immLow;
     instr |= (immHigh << 15);
 
@@ -628,7 +628,7 @@ void isa::Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
         instr |= (0b0111011 << 25);
         instr |= (rD.inner << 20);
         instr |= (rA.inner << 15);
-        instr |= imm.inner & BITFILL(15);
+        instr |= imm.raw() & BITFILL(15);
     } else if (op == ConcurrencyOp::Cmpx) {
         instr |= (0b0111100 << 25);
         instr |= (rD.inner << 20);
@@ -657,7 +657,7 @@ void isa::Emitter::nop() {
 
 void isa::Emitter::bkpt(bits<25> imm) {
     uint32_t instr = 0b1010101 << 25;
-    instr |= imm.inner;
+    instr |= imm.raw();
 
     append(instr);
 }
