@@ -64,6 +64,8 @@ template <size_t SIZE> struct bits {
         return result;
     }
 
+    auto raw() const -> inner_t { return this->inner & mask; }
+
     auto _sgn_inner() const -> signed_inner_t {
         return static_cast<signed_inner_t>(this->inner);
     }
@@ -212,7 +214,7 @@ template <size_t N> struct s : public bits<N> {
 
     auto asUnsigned() const -> u<N> {
         u<N> v;
-        v.inner = this->inner;
+        v.inner = this->inner & bits<N>::mask;
         return v;
     }
 

@@ -15,12 +15,12 @@ void halt(CPUState& cpu, MemSystem& mem) { cpu.halt(); }
 // -- load immediate
 void lil(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
     auto mask = 0b000000000000000000111111111111111111;
-    cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | imm.inner;
+    cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | imm.raw();
 }
 
 void lih(CPUState& cpu, MemSystem& mem, reg_idx rD, s<18> imm) {
     auto mask = 0b111111111111111111000000000000000000;
-    cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | (imm.inner << 18);
+    cpu.r[rD].inner = (cpu.r[rD].inner & ~mask) | (imm.raw() << 18);
 }
 
 /************************************************************************/
@@ -78,6 +78,8 @@ void mul(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
         cpu.r[rA].asSigned().truncMult<36>(cpu.r[rB].asSigned()).asUnsigned();
 }
 
+// #define BITOP_RRR(mnemonic, infixop) {
+
 // AND
 void and_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
     cpu.r[rD] = (cpu.r[rA] & cpu.r[rB]);
@@ -96,13 +98,13 @@ void xor_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 // SHL
 void shl(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
     cpu.r[rD].inner =
-        (cpu.r[rA].inner << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
+        (cpu.r[rA].raw() << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 // SHR
 void shr(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
     cpu.r[rD].inner =
-        (cpu.r[rA].inner >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
+        (cpu.r[rA].raw() >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
 }
 
 void cmp(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB) {
