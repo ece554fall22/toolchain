@@ -6,6 +6,28 @@
 
 #include <iostream>
 
+#define RRR(id)                                                                \
+    {                                                                          \
+        id, {                                                                  \
+            OperandType::ScalarRegister, OperandType::ScalarRegister,          \
+                OperandType::ScalarRegister                                    \
+        }                                                                      \
+    }
+#define RRI(id)                                                                \
+    {                                                                          \
+        id, {                                                                  \
+            OperandType::ScalarRegister, OperandType::ScalarRegister,          \
+                OperandType::ScalarRegister                                    \
+        }                                                                      \
+    }
+#define MVVV(id)                                                               \
+    {                                                                          \
+        id, {                                                                  \
+            OperandType::VectorMask, OperandType::VectorRegister,              \
+                OperandType::VectorRegister, OperandType::VectorRegister       \
+        }                                                                      \
+    }
+
 // clang-format off
 static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANTICS = {
     {"nop",  {}},
@@ -24,12 +46,12 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"blei", {OperandType::Label}},
     {"bgei", {OperandType::Label}},
 
-    {"bnzr", {OperandType::Register, OperandType::Immediate}},
-    {"bezr", {OperandType::Register, OperandType::Immediate}},
-    {"blzr", {OperandType::Register, OperandType::Immediate}},
-    {"bgzr", {OperandType::Register, OperandType::Immediate}},
-    {"bler", {OperandType::Register, OperandType::Immediate}},
-    {"bger", {OperandType::Register, OperandType::Immediate}},
+    {"bnzr", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"bezr", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"blzr", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"bgzr", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"bler", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"bger", {OperandType::ScalarRegister, OperandType::Immediate}},
 
     {"lih",  {OperandType::ScalarRegister, OperandType::Immediate}},
     {"lil",  {OperandType::ScalarRegister, OperandType::Immediate}},
@@ -39,29 +61,34 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"st32", {OperandType::Memory,         OperandType::ScalarRegister}},
     {"st36", {OperandType::Memory,         OperandType::ScalarRegister}},
 
-    {"addi", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
-    {"subi", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
-    {"andi", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
-    {"ori",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
-    {"xori", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
-    {"shli", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
-    {"shri", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    RRI("addi"),
+    RRI("subi"),
+    RRI("andi"),
+    RRI("ori"),
+    RRI("xori"),
+    RRI("shli"),
+    RRI("shri"),
 
     {"cmpi", {OperandType::ScalarRegister, OperandType::Immediate}},
 
-{"add",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"sub",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"mul",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"and",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"or",   {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"xor",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"shr",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"shl",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
-{"not",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
+    RRR("add"),
+    RRR("sub"),
+    RRR("mul"),
+    RRR("and"),
+    RRR("or"),
+    RRR("xor"),
+    RRR("shr"),
+    RRR("shl"),
+    RRR("not"),
 
     {"cmp",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
-    {"vadd", {OperandType::Register}}
+    MVVV("vadd"),
+    MVVV("vsub"),
+    MVVV("vmul"),
+    MVVV("vdiv"),
+    MVVV("vmax"),
+    MVVV("vmin"),
 
     {"rcsr", {OperandType::ScalarRegister, OperandType::Immediate}},
     {"wcsr", {OperandType::Immediate,      OperandType::ScalarRegister}},
@@ -69,7 +96,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"flushicache", {}},
     {"flushdirty", {}},
     {"flushclean", {}},
-    {"flushline", {OperandType::Register, OperandType::Immediate}},
+    {"flushline", {OperandType::ScalarRegister, OperandType::Immediate}},
 
     // pseudos
     {"lda",  {OperandType::ScalarRegister, OperandType::Label}},
@@ -98,13 +125,41 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
         for (const auto& operand : inst.operands) {
             switch (sema[i]) {
             case OperandType::ScalarRegister:
-                if (!operand.is<ast::OperandRegister>()) {
+                if (!operand.is<ast::OperandRegister>() ||
+                    operand.get<ast::OperandRegister>().vector) {
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format(
+                              "operand {} to instruction `{}` has "
+                              "wrong type; expected scalar register operand",
+                              i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::VectorRegister:
+                if (!operand.is<ast::OperandRegister>() ||
+                    !operand.get<ast::OperandRegister>().vector) {
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format(
+                              "operand {} to instruction `{}` has "
+                              "wrong type; expected vector register operand",
+                              i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::VectorMask: {
+                if (!operand.is<ast::OperandImmediate>()) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
                           fmt::format("operand {} to instruction `{}` has "
-                                      "wrong type; expected register operand",
+                                      "wrong type; expected vector mask",
+                                      i, inst.mnemonic.getLexeme()));
+                }
+                auto val = operand.get<ast::OperandImmediate>().val;
+                if (val < 0 || val > 0b1111) {
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format("vector mask to instruction `{}` must be "
+                                      "a 4-bit bitfield",
                                       i, inst.mnemonic.getLexeme()));
                 }
                 break;
+            }
             case OperandType::Immediate:
                 if (!operand.is<ast::OperandImmediate>()) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
@@ -122,11 +177,22 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
                 }
                 break;
             case OperandType::Memory:
-                if (!operand.is<ast::OperandMemory>()) {
+                if (!operand.is<ast::OperandMemory>() ||
+                    operand.get<ast::OperandMemory>().increment) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
                           fmt::format("operand {} to instruction `{}` has "
                                       "wrong type; expected memory operand",
                                       i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::VectorMemory:
+                if (!operand.is<ast::OperandMemory>() ||
+                    !operand.get<ast::OperandMemory>().increment) {
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format(
+                              "operand {} to instruction `{}` has "
+                              "wrong type; expected vector memory operand",
+                              i, inst.mnemonic.getLexeme()));
                 }
                 break;
             }

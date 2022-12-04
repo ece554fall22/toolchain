@@ -12,6 +12,7 @@ struct SemanticsError {
 enum class OperandType {
     ScalarRegister,
     VectorRegister,
+    VectorMask,
     Immediate,
     Label,
     Memory,
