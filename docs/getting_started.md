@@ -6,11 +6,11 @@ you need
 - modern gcc or clang (supports C++20).
 - [ninja](https://ninja-build.org/).
 - [meson](https://mesonbuild.com).
-- python3.9
+- python3.9 or later
 
 i wouldn't recommend trying to build directly on windows because you would need to use mingw or fiddle with making msvc compile this. instead probably just use WSL. on CAE you can just install ninja and meson locally and use the system C++ compiler and python, like so:
 ```sh
-python3.9 -m pip install --user --upgrade meson ninja
+python3 -m pip install --user --upgrade meson ninja
 ```
 if you're using bash and the CAE default bashrc, you need to add `~/.local/bin` to your path to use things installed via pip. you can do that by adding the line
 ```bash
@@ -23,9 +23,17 @@ on MacOS, if you have [homebrew](https://brew.sh) you can do
 brew install meson ninja python@3.10
 ```
 
+on WSL it's ubuntu so you have an extremely old `gcc` and no clang. just grab it from llvm's repos:
+```sh
+wget https://apt.llvm.org/llvm.sh; chmod +x llvm.sh
+sudo ./llvm.sh 15
+```
+
 once you have everything set up just do the following in the root of the repository:
 ```sh
 meson setup builddir
+# or specify specific compilers if you had to install clang or something
+CC=clang-15 CXX=clang++-15 meson setup builddir
 ```
 this sets up a build directory called `builddir/`. you can `cd` there and do stuff or just work from the root. i'll do the latter.
 
