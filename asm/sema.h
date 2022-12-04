@@ -10,10 +10,12 @@ struct SemanticsError {
 };
 
 enum class OperandType {
-    Register,
+    ScalarRegister,
+    VectorRegister,
     Immediate,
     Label,
     Memory,
+    VectorMemory,
 };
 
 class SemanticsPass {

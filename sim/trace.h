@@ -97,11 +97,6 @@ struct InstructionTrace {
     std::optional<std::string> scalarRegOutput;
     std::optional<std::string> vectorRegOutput;
 
-    //    std::optional<std::string> scalarMemWrite;
-    //    std::optional<std::string> scalarMemRead;
-    //    std::optional<std::string> vectorMemWrite;
-    //    std::optional<std::string> vectorMemRead;
-
     friend std::ostream& operator<<(std::ostream& os,
                                     const InstructionTrace& trace);
 };
@@ -139,7 +134,7 @@ struct FileTracer : public Tracer {
 
     void writebackScalarReg(CPUState& cpu, const char* name,
                             reg_idx ridx) override {
-        itrace.scalarRegOutput = fmt::format("{}={}={:#x}", name, ridx.inner,
+        itrace.scalarRegOutput = fmt::format("{}=r{}={:#x}", name, ridx.inner,
                                              cpu.r[ridx], cpu.r[ridx].raw());
     }
 

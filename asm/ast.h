@@ -29,7 +29,7 @@ struct OperandRegister {
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const ast::OperandRegister& op) {
-        os << "Register(" << (op.vector ? "v" : "r") << op.idx << ")";
+        os << "ScalarRegister(" << (op.vector ? "v" : "r") << op.idx << ")";
         return os;
     }
 };

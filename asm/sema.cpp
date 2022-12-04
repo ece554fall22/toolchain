@@ -14,8 +14,8 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
 
     {"jmp",  {OperandType::Label}},
     {"jal",  {OperandType::Label}},
-    {"jmpr", {OperandType::Register, OperandType::Immediate}},
-    {"jalr", {OperandType::Register, OperandType::Immediate}},
+    {"jmpr", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"jalr", {OperandType::ScalarRegister, OperandType::Immediate}},
 
     {"bnzi", {OperandType::Label}},
     {"bezi", {OperandType::Label}},
@@ -24,58 +24,55 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"blei", {OperandType::Label}},
     {"bgei", {OperandType::Label}},
 
-    {"bnzr", {}},
-    {"bezr", {}},
-    {"blzr", {}},
-    {"bgzr", {}},
-    {"bler", {}},
-    {"bger", {}},
+    {"bnzr", {OperandType::Register, OperandType::Immediate}},
+    {"bezr", {OperandType::Register, OperandType::Immediate}},
+    {"blzr", {OperandType::Register, OperandType::Immediate}},
+    {"bgzr", {OperandType::Register, OperandType::Immediate}},
+    {"bler", {OperandType::Register, OperandType::Immediate}},
+    {"bger", {OperandType::Register, OperandType::Immediate}},
 
-    {"lih",  {OperandType::Register, OperandType::Immediate}},
-    {"lil",  {OperandType::Register, OperandType::Immediate}},
+    {"lih",  {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"lil",  {OperandType::ScalarRegister, OperandType::Immediate}},
 
-    {"ld32", {OperandType::Register, OperandType::Memory}},
-    {"ld36", {OperandType::Register, OperandType::Memory}},
-    {"st32", {OperandType::Memory,   OperandType::Register}},
-    {"st36", {OperandType::Memory,   OperandType::Register}},
+    {"ld32", {OperandType::ScalarRegister, OperandType::Memory}},
+    {"ld36", {OperandType::ScalarRegister, OperandType::Memory}},
+    {"st32", {OperandType::Memory,         OperandType::ScalarRegister}},
+    {"st36", {OperandType::Memory,         OperandType::ScalarRegister}},
 
-    {"addi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"subi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"andi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"ori",  {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"xori", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"shli", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"shri", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
+    {"addi", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    {"subi", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    {"andi", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    {"ori",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    {"xori", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    {"shli", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
+    {"shri", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::Immediate}},
 
-    {"cmpi", {OperandType::Register, OperandType::Immediate}},
+    {"cmpi", {OperandType::ScalarRegister, OperandType::Immediate}},
 
-    {"addi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"subi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"andi", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"ori",  {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"xori", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"shli", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
-    {"shri", {OperandType::Register, OperandType::Register, OperandType::Immediate}},
+{"add",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"sub",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"mul",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"and",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"or",   {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"xor",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"shr",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"shl",  {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::ScalarRegister}},
+{"not",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
-    {"add",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"sub",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"mul",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"and",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"or",   {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"xor",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"shr",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"shl",  {OperandType::Register, OperandType::Register, OperandType::Register}},
-    {"not",  {OperandType::Register, OperandType::Register}},
+    {"cmp",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
-    {"rcsr", {OperandType::Register, OperandType::Immediate}},
-    {"wcsr", {OperandType::Immediate, OperandType::Register}},
+    {"vadd", {OperandType::Register}}
+
+    {"rcsr", {OperandType::ScalarRegister, OperandType::Immediate}},
+    {"wcsr", {OperandType::Immediate,      OperandType::ScalarRegister}},
 
     {"flushicache", {}},
     {"flushdirty", {}},
     {"flushclean", {}},
+    {"flushline", {OperandType::Register, OperandType::Immediate}},
 
     // pseudos
-    {"lda",  {OperandType::Register, OperandType::Label}},
+    {"lda",  {OperandType::ScalarRegister, OperandType::Label}},
 
     // data
     {"dw36", {OperandType::Immediate}},
@@ -100,7 +97,7 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
         size_t i = 0;
         for (const auto& operand : inst.operands) {
             switch (sema[i]) {
-            case OperandType::Register:
+            case OperandType::ScalarRegister:
                 if (!operand.is<ast::OperandRegister>()) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
                           fmt::format("operand {} to instruction `{}` has "

@@ -35,7 +35,8 @@ struct Token {
     bool isNot(Kind other) const noexcept { return !is(other); }
     bool isEoF() const noexcept { return is(Kind::ENDOFFILE); }
     bool isIntegerLiteral() const noexcept {
-        return is(Kind::INTEGER_DEC) || is(Kind::INTEGER_HEX);
+        return is(Kind::INTEGER_DEC) || is(Kind::INTEGER_HEX) ||
+               is(Kind::INTEGER_BIN);
     }
 
     std::string_view getLexeme() const noexcept { return lexeme; }

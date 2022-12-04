@@ -87,6 +87,8 @@ bool isidchar(char x) {
     return isalpha(x) || isdigit(x) || x == '_' || x == '$' || x == '.';
 }
 
+bool isbdigit(char x) { return x == '0' || x == '1'; }
+
 Token Lexer::lexIdentifierOrKeyword(const char* tok_start) {
     while (isidchar(peek())) {
         eat();
@@ -111,10 +113,23 @@ Token Lexer::lexNumber(const char* tok_start) {
                               lineno));
         }
 
-        while (isxdigit(peek()))
+        while (isbdigit(peek()))
             eat();
 
         return tokFrom(tok_start, Token::Kind::INTEGER_HEX);
+    } else if (peek() == '0' && peek(+1) == 'b') {
+        cursor += 2;
+
+        if (!isbdigit(peek())) {
+            error(fmt::format("bin literal prefix `0b` on line {} must be "
+                              "followed by binary characters",
+                              lineno));
+        }
+
+        while (isbdigit(peek()))
+            eat();
+
+        return tokFrom(tok_start, Token::Kind::INTEGER_BIN);
     }
 
     // normal case: decimals
@@ -150,7 +165,7 @@ void Lexer::eatComment() {
 std::optional<int64_t> parseIntegerToken(const Token& tok) {
     int64_t val;
     auto span = tok.getLexeme();
-    std::from_chars_result res;
+    std::from_chars_result res{};
     if (tok.is(Token::Kind::INTEGER_DEC)) {
         bool sign = false; // positive
         if (span[0] == '+' || span[0] == '-') {
@@ -174,6 +189,9 @@ std::optional<int64_t> parseIntegerToken(const Token& tok) {
         res = std::from_chars(span.data(), span.data() + span.size(), val, 16);
         if (sign)
             val = -val;
+    } else if (tok.is(Token::Kind::INTEGER_BIN)) {
+        span.remove_prefix(2);
+        res = std::from_chars(span.data(), span.data() + span.size(), val, 2);
     } else {
         return std::nullopt;
     }

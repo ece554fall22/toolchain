@@ -1,5 +1,7 @@
 #pragma once
 
+#include <morph/varint.h>
+
 constexpr int N_CORES = 8;
 using coreset_t = bits<N_CORES>;
 
