@@ -1,0 +1,7 @@
+nop     ; <- 0x0
+jal tgt ; <- 0x4
+nop     ; <- 0x8
+nop
+nop
+tgt: nop
+bkpt 0xa ; r31 should be 0x4

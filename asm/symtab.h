@@ -1,9 +1,9 @@
 #pragma once
 
+#include <compare>
 #include <cstdint>
 #include <map>
 #include <ostream>
-#include <compare>
 
 #include <fmt/core.h>
 #include <fmt/ostream.h>

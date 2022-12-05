@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 #include "isa.h"
 #include "ty.h"
@@ -94,10 +94,13 @@ class Emitter {
                      u<15> imm);
 
     auto getData() -> const auto& { return this->data; }
-    auto getPC() -> uint64_t { return this->currentPC; }
+    auto getPC() const -> uint64_t { return this->currentPC; }
 
   private:
-    void append(uint32_t enc) { data.push_back(enc); currentPC += 4; }
+    void append(uint32_t enc) {
+        data.push_back(enc);
+        currentPC += 4;
+    }
 
     uint64_t currentPC;
     std::vector<uint32_t> data;

@@ -1,2 +1,3 @@
-spin: nop
+spin:
+    nop
     jmp spin

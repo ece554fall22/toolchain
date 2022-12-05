@@ -11,7 +11,7 @@ void LabelVisitor::enter(const ast::LabelDecl& ld, size_t depth) {
         }
 
         canonicalIdent =
-                std::string(currentParentLabel->ident.getLexeme()) + canonicalIdent;
+            std::string(currentParentLabel->ident.getLexeme()) + canonicalIdent;
     } else {
         // parent label
         currentParentLabel = std::make_unique<ast::LabelDecl>(ld.ident);

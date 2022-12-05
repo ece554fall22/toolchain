@@ -32,9 +32,9 @@ int main(int argc, char* argv[]) {
         .implicit_value(true);
 
     ap.add_argument("--dump-symtab")
-            .help("dump the symbol table")
-            .default_value(false)
-            .implicit_value(true);
+        .help("dump the symbol table")
+        .default_value(false)
+        .implicit_value(true);
 
     ap.add_argument("sources").nargs(argparse::nargs_pattern::at_least_one);
 
