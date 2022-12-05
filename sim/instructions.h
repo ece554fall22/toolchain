@@ -140,8 +140,8 @@ SCALAR_FLOAT_BINOP(fmul, *);
 SCALAR_FLOAT_BINOP(fdiv, /);
 
 void itof(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA) {
-//    float val = bits2float(cpu.r[rA].slice<31, 0>());
-    float val = (float) cpu.r[rA].asSigned()._sgn_inner();
+    //    float val = bits2float(cpu.r[rA].slice<31, 0>());
+    float val = (float)cpu.r[rA].asSigned()._sgn_inner();
     cpu.r[rD].inner = float2bits(val).inner;
 }
 

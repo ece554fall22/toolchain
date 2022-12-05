@@ -4,9 +4,9 @@
 #include <cassert>
 #include <compare>
 #include <cstdint>
+#include <fmt/core.h>
 #include <iostream>
 #include <type_traits>
-#include <fmt/core.h>
 
 #define BITFILL(n) ((1ULL << n) - 1)
 
@@ -138,9 +138,7 @@ template <size_t N> struct u : public bits<N> {
     u(bits<N> b) : bits<N>(b) { assert(b.inner <= max_val); }
 
     /// Interpret as signed integer data.
-    auto asSigned() const noexcept -> s<N> {
-        return s<N>(*this);
-    }
+    auto asSigned() const noexcept -> s<N> { return s<N>(*this); }
 
     /// addition of integer constants
     u<N>& operator+=(int rhs) {

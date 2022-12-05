@@ -160,7 +160,8 @@ auto Parser::instruction() -> std::unique_ptr<ast::Instruction> {
         if (curr().isEndOfLine()) {
             break;
         } else if (curr().isNot(Token::Kind::COMMA)) {
-            error(fmt::format("expected , in instruction argument list, not {}", curr().getKind()));
+            error(fmt::format("expected , in instruction argument list, not {}",
+                              curr().getKind()));
             return nullptr;
         }
 

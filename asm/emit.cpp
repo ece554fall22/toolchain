@@ -26,7 +26,8 @@ void emit_vector_lanewise(isa::LanewiseVectorOp op, isa::Emitter& e,
 void emit_vector_scalar(isa::VectorScalarOp op, isa::Emitter& e,
                         const ast::Instruction& i) {
     e.vectorScalarArith(op, i.operands[1].asRegIdx(), i.operands[3].asRegIdx(),
-                        i.operands[2].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
+                        i.operands[2].asRegIdx(),
+                        i.operands[0].asBitsImm<vmask_t::size>());
 }
 
 void emit_flushcache(isa::CacheControlOp op, isa::Emitter& e,
@@ -113,12 +114,16 @@ static const std::map<
         {"vsmul", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Mul)},
         {"vsdiv", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Div)},
 
-        {"vidx", [](isa::Emitter& e, const ast::Instruction& i) {
-            e.vidx(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asBitsImm<vlaneidx_t::size>());
-        }},
-        {"vsplat", [](isa::Emitter& e, const ast::Instruction& i) {
-            e.vsplat(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
-        }},
+        {"vidx",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             e.vidx(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
+                    i.operands[2].asBitsImm<vlaneidx_t::size>());
+         }},
+        {"vsplat",
+         [](isa::Emitter& e, const ast::Instruction& i) {
+             e.vsplat(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(),
+                      i.operands[0].asBitsImm<vmask_t::size>());
+         }},
 
         {"rcsr",
          [](auto& e, const ast::Instruction& i) {

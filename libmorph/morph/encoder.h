@@ -62,7 +62,8 @@ class Emitter {
     void vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx);
     void vreduce(reg_idx rD, vreg_idx vA);
     void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask);
-    void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3, vmask_t mask);
+    void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
+                  vlaneidx_t i2, vlaneidx_t i3, vmask_t mask);
     void vsma(vreg_idx vD, reg_idx rA, vreg_idx vB, vreg_idx vC, vmask_t mask);
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB, vmask_t mask);
 

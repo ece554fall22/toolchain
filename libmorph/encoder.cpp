@@ -380,7 +380,8 @@ void isa::Emitter::vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) {
     append(instr);
 }
 
-void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3,
+void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0,
+                            vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3,
                             vmask_t mask) {
     uint32_t instr = 0b0101000 << 25;
 

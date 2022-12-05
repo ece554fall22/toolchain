@@ -10,6 +10,20 @@
 #include <morph/util.h>
 #include <morph/varint.h>
 
+struct Symbol {
+    std::string ident;
+    // why not smart? append-only symbol table; shared_ptr is not right model.
+    Symbol* parent;
+
+    friend std::ostream& operator<<(std::ostream& os, const Symbol& l) {
+        if (l.parent) {
+            os << *l.parent << ".";
+        }
+        os << l.ident;
+        return os;
+    }
+};
+
 namespace ast {
 
 struct OperandImmediate {
