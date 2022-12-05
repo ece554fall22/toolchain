@@ -31,6 +31,7 @@ trace format:
     vector_mask: {vector_mask:b}
     branch_condition_code: {conditioncode}
     control_flow: taken={is_taken} taken_addr={taken_addr} not_taken_addr={not_taken_addr}
+    flag_writeback: {flags}
     scalar_writeback: r{writeback_reg} = {writeback_val}
     vector_writeback: v{writeback_reg} = {writeback_val}
     scalar_load: {read_addr} = {read_val}
