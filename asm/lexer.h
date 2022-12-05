@@ -34,6 +34,7 @@ struct Token {
     bool is(Kind other) const noexcept { return kind == other; }
     bool isNot(Kind other) const noexcept { return !is(other); }
     bool isEoF() const noexcept { return is(Kind::ENDOFFILE); }
+    bool isEndOfLine() const noexcept { return isEoF() || is(Kind::LINEBREAK); }
     bool isIntegerLiteral() const noexcept {
         return is(Kind::INTEGER_DEC) || is(Kind::INTEGER_HEX) ||
                is(Kind::INTEGER_BIN);

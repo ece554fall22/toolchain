@@ -113,7 +113,7 @@ Token Lexer::lexNumber(const char* tok_start) {
                               lineno));
         }
 
-        while (isbdigit(peek()))
+        while (isxdigit(peek()))
             eat();
 
         return tokFrom(tok_start, Token::Kind::INTEGER_HEX);
