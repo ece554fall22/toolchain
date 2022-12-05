@@ -215,10 +215,14 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         unimplemented();
     }
 
-    void cmpI(reg_idx rA, s<20> imm) override { unimplemented(); }
+    void cmpI(reg_idx rA, s<20> imm) override { instructions::cmpi(cpu, mem, rA, imm); }
 
     void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
                          isa::FloatArithmeticOp op) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+
         switch (op) {
         case isa::FloatArithmeticOp::Fadd:
             instructions::fadd(cpu, mem, rD, rA, rB);
@@ -233,6 +237,8 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
             instructions::fdiv(cpu, mem, rD, rA, rB);
             break;
         }
+
+        tracer->writebackScalarReg(cpu, "rD", rD);
     }
 
     void cmp(reg_idx rA, reg_idx rB) override {

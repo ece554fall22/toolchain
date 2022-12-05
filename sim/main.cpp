@@ -23,6 +23,11 @@ int main(int argc, char* argv[]) {
 
     ap.add_argument("--trace").help("write a tracefile").metavar("TRACEFILE");
 
+    ap.add_argument("--log-execution")
+        .help("print PC, IR, and disassembly for each executed instruction (NOT a formal trace format!)")
+        .default_value(false)
+        .implicit_value(true);
+
     try {
         ap.parse_args(argc, argv);
     } catch (const std::runtime_error& err) {
@@ -61,21 +66,21 @@ int main(int argc, char* argv[]) {
                   mem.mempool.size() * 4);
     }
 
-    cpuState.v[1][0] = 0.5f;
-    cpuState.v[1][1] = 0.1f;
-    cpuState.v[1][2] = 0.2f;
-    cpuState.v[1][3] = 0.3f;
+    // cpuState.v[1][0] = 0.5f;
+    // cpuState.v[1][1] = 0.1f;
+    // cpuState.v[1][2] = 0.2f;
+    // cpuState.v[1][3] = 0.3f;
 
-    cpuState.v[2][0] = -1.5f;
-    cpuState.v[2][1] = -5.1f;
-    cpuState.v[2][2] = 2.2f;
-    cpuState.v[2][3] = 3.3f;
+    // cpuState.v[2][0] = -1.5f;
+    // cpuState.v[2][1] = -5.1f;
+    // cpuState.v[2][2] = 2.2f;
+    // cpuState.v[2][3] = 3.3f;
 
-    fmt::print("dumping 0 page:\n");
-    for (size_t i = 0; i < 32; i++) {
-        fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);
-    }
-    fmt::print("\n");
+    // fmt::print("dumping 0 page:\n");
+    // for (size_t i = 0; i < 32; i++) {
+    //     fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);
+    // }
+    // fmt::print("\n");
 
     while (!cpuState.isHalted()) {
         auto pc = cpuState.pc.getNewPC();
@@ -83,11 +88,12 @@ int main(int argc, char* argv[]) {
 
         tracer->begin(pc, ir);
 
-        // TODO(erin): temp stdout logging
-        fmt::print("pc={:#x} ir={:#x}\n", pc, ir);
-        std::cout << "] ";
-        isa::decodeInstruction(printvis, bits<32>(ir));
-        std::cout << '\n';
+        if (ap["--log-execution"] == true) {
+            fmt::print("pc={:#x} ir={:#x}\n", pc, ir);
+            std::cout << "] ";
+            isa::decodeInstruction(printvis, bits<32>(ir));
+            std::cout << '\n';
+        }
 
         // execute instruction
         isa::decodeInstruction(iproxy, bits<32>(ir));

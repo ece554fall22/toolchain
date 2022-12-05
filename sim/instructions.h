@@ -62,6 +62,19 @@ void shri(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     cpu.r[rD].inner = (cpu.r[rA].inner >> imm._sgn_inner()) & bits<36>::mask;
 }
 
+void cmpi(CPUState& cpu, MemSystem& mem, reg_idx rA, s<20> imm) {
+    auto valA = cpu.r[rA].asSigned();
+    auto valB = imm;
+    // ALU
+    auto res = valA - valB;
+
+    // compute flags
+    cpu.f.zero = (res == 0);
+    cpu.f.sign = (res < 0);
+    cpu.f.overflow = (valA.sign() && valB.sign() && !res.sign()) ||
+                     (!valA.sign() && !valB.sign() && res.sign());
+}
+
 // ADD
 void add(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
     cpu.r[rD] = (cpu.r[rA].asSigned() + cpu.r[rB].asSigned()).asUnsigned();
