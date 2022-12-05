@@ -1,0 +1,10 @@
+[wrap-file]
+directory = cli-2.0.2
+source_url = https://github.com/daniele77/cli/archive/refs/tags/v2.0.2.tar.gz
+source_filename = cli-2.0.2.tar.gz
+source_hash = 50e2cb469fc209957aea49d37e3ab7c777b7d16bd1f4be4b485fb6122ead4360
+
+patch_directory = danielecli
+
+[provide]
+danielecli = danielecli_dep
