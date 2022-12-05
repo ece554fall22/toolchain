@@ -1,7 +1,6 @@
-argparse_dep   = dependency('argparse', required: true)
-fmt_dep        = dependency('fmt', required: true)
-doctest_dep    = dependency('doctest', required: true)
-danielecli_dep = dependency('danielecli', required: true)
+argparse_dep = dependency('argparse', required: true)
+fmt_dep      = dependency('fmt', required: true)
+doctest_dep  = dependency('doctest', required: true)
 
 sim_inc = include_directories('.')
 sim_deps = [libmorph_dep, fmt_dep]
