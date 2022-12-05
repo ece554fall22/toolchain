@@ -1,6 +1,7 @@
 argparse_dep = dependency('argparse', required: true)
 fmt_dep      = dependency('fmt', required: true)
 doctest_dep  = dependency('doctest', required: true)
+json_dep     = dependency('nlohmann_json', required: true)
 
 sim_inc = include_directories('.')
 sim_deps = [libmorph_dep, fmt_dep]
@@ -14,7 +15,7 @@ libsim = static_library(
 sim_exe = executable('sim', files('main.cpp'),
                      include_directories: sim_inc,
                      link_with: [libsim],
-                     dependencies: [argparse_dep] + sim_deps)
+                     dependencies: [argparse_dep, json_dep] + sim_deps)
 
 test_instruction_impl = executable('test_instruction_impl',
     'tests/instruction_impl.cpp',

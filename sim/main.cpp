@@ -6,12 +6,15 @@
 #include <argparse/argparse.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
+#include <nlohmann/json.hpp>
 
 #include <morph/decoder.h>
 #include <morph/util.h>
 
 #include "cpu.h"
 #include "iproxy.h"
+
+using json = nlohmann::json;
 
 volatile std::sig_atomic_t signal_flag = 0;
 void handle_sigint(int signal) { signal_flag = signal; }
@@ -22,9 +25,12 @@ int main(int argc, char* argv[]) {
     ap.add_argument("memory");
 
     ap.add_argument("--trace").help("write a tracefile").metavar("TRACEFILE");
-
+    ap.add_argument("--init-state")
+        .help("seed the CPU state from a JSON file")
+        .metavar("SEED");
     ap.add_argument("--log-execution")
-        .help("print PC, IR, and disassembly for each executed instruction (NOT a formal trace format!)")
+        .help("print PC, IR, and disassembly for each executed instruction "
+              "(NOT a formal trace format!)")
         .default_value(false)
         .implicit_value(true);
 
@@ -66,15 +72,42 @@ int main(int argc, char* argv[]) {
                   mem.mempool.size() * 4);
     }
 
-    // cpuState.v[1][0] = 0.5f;
-    // cpuState.v[1][1] = 0.1f;
-    // cpuState.v[1][2] = 0.2f;
-    // cpuState.v[1][3] = 0.3f;
+    {
+        auto path = ap.present<std::string>("--init-state");
+        if (path) {
+            if (!std::filesystem::is_regular_file(*path)) {
+                fmt::print(stderr, "[!] `{}` is not a file\n", *path);
+                exit(1);
+            }
 
-    // cpuState.v[2][0] = -1.5f;
-    // cpuState.v[2][1] = -5.1f;
-    // cpuState.v[2][2] = 2.2f;
-    // cpuState.v[2][3] = 3.3f;
+            std::ifstream fInit(*path);
+            if (!fInit.is_open()) {
+                fmt::print(stderr, "[!] can't open `{}`\n", *path);
+                exit(1);
+            }
+
+            json data = json::parse(fInit, nullptr, true, true);
+            for (auto& [cpukey, cpudata] : data.at("cpus").items()) {
+                size_t cpu_idx = std::stoi(cpukey);
+                assert(cpu_idx == 0 && "lol one cpu"); // todo
+
+                if (cpudata.contains("v")) {
+                    auto vecvals = cpudata["v"];
+                    assert(vecvals.is_array() && "cpu/n/v must be array");
+                    assert(vecvals.size() == 32 &&
+                           "cpu/n/v must be 32 el long");
+                    size_t reg_idx = 0;
+                    for (auto& vec : vecvals) {
+                        for (size_t lane = 0; lane < N_LANES; lane++) {
+                            cpuState.v[reg_idx][lane] =
+                                vec.at(lane).get<float>();
+                        }
+                        reg_idx++;
+                    }
+                }
+            }
+        }
+    }
 
     // fmt::print("dumping 0 page:\n");
     // for (size_t i = 0; i < 32; i++) {
