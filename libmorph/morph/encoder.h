@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdint>
 
 #include "isa.h"
 #include "ty.h"
@@ -24,7 +25,7 @@ enum class CmpMutateDirection { Increment, Decrement };
 
 class Emitter {
   public:
-    Emitter() : data{} {}
+    Emitter() : currentPC{0x0}, data{} {}
 
     // flow control
     void halt();
@@ -93,10 +94,12 @@ class Emitter {
                      u<15> imm);
 
     auto getData() -> const auto& { return this->data; }
+    auto getPC() -> uint64_t { return this->currentPC; }
 
   private:
-    void append(uint32_t enc) { data.push_back(enc); }
+    void append(uint32_t enc) { data.push_back(enc); currentPC += 4; }
 
+    uint64_t currentPC;
     std::vector<uint32_t> data;
 };
 }; // namespace isa

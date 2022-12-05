@@ -61,6 +61,16 @@ int main(int argc, char* argv[]) {
                   mem.mempool.size() * 4);
     }
 
+    cpuState.v[1][0] = 0.5f;
+    cpuState.v[1][1] = 0.1f;
+    cpuState.v[1][2] = 0.2f;
+    cpuState.v[1][3] = 0.3f;
+
+    cpuState.v[2][0] = -1.5f;
+    cpuState.v[2][1] = -5.1f;
+    cpuState.v[2][2] = 2.2f;
+    cpuState.v[2][3] = 3.3f;
+
     fmt::print("dumping 0 page:\n");
     for (size_t i = 0; i < 32; i++) {
         fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);

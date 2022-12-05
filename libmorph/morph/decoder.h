@@ -171,15 +171,15 @@ struct PrintVisitor : public InstructionVisitor {
     void halt() override { fmt::print(os, "halt"); }
 
     // J
-    void jmp(s<25> imm) override { fmt::print(os, "jmp {:#x}", imm.inner); }
-    void jal(s<25> imm) override { fmt::print(os, "jal {:#x}", imm.inner); }
+    void jmp(s<25> imm) override { fmt::print(os, "jmp {:#x}", imm._sgn_inner()); }
+    void jal(s<25> imm) override { fmt::print(os, "jal {:#x}", imm._sgn_inner()); }
 
     // JR
     void jmpr(reg_idx rA, s<20> imm) override {
-        fmt::print(os, "jmpr r{}, {:#x}", rA.inner, imm.inner);
+        fmt::print(os, "jmpr r{}, {:#x}", rA.inner, imm._sgn_inner());
     }
     void jalr(reg_idx rA, s<20> imm) override {
-        fmt::print(os, "jalr r{}, {:#x}", rA.inner, imm.inner);
+        fmt::print(os, "jalr r{}, {:#x}", rA.inner, imm._sgn_inner());
     }
 
     // BI

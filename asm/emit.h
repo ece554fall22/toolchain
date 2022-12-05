@@ -4,12 +4,13 @@
 
 #include <fmt/core.h>
 
-#include "ast.h"
 #include <morph/encoder.h>
+#include "ast.h"
+#include "symtab.h"
 
 class EmissionPass {
   public:
-    EmissionPass() : emitter{} {}
+    explicit EmissionPass(const SymbolTable& symtab) : emitter{}, symtab{symtab} {}
 
     void enter(const ast::Instruction& inst, size_t depth);
 
@@ -25,4 +26,5 @@ class EmissionPass {
     }
 
     isa::Emitter emitter;
+    const SymbolTable& symtab;
 };

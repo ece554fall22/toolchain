@@ -3,67 +3,79 @@
 #include <functional>
 #include <morph/encoder.h>
 
-void emit_arith(isa::ScalarArithmeticOp op, isa::Emitter& e,
+void emit_arith(isa::ScalarArithmeticOp op, isa::Emitter& e, const SymbolTable& symtab,
                 const ast::Instruction& i) {
     e.scalarArithmetic(op, i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
                        i.operands[2].asRegIdx());
 }
 
-void emit_arith_imm(isa::ScalarArithmeticOp op, isa::Emitter& e,
+void emit_arith_imm(isa::ScalarArithmeticOp op, isa::Emitter& e, const SymbolTable& symtab,
                     const ast::Instruction& i) {
     e.scalarArithmeticImmediate(op, i.operands[0].asRegIdx(),
                                 i.operands[1].asRegIdx(),
                                 i.operands[2].template asBitsImm<15>());
 }
 
-void emit_vector_lanewise(isa::LanewiseVectorOp op, isa::Emitter& e,
+void emit_vector_lanewise(isa::LanewiseVectorOp op, isa::Emitter& e, const SymbolTable& symtab,
                           const ast::Instruction& i) {
     e.vectorLanewiseArith(op, i.operands[1].asRegIdx(),
                           i.operands[2].asRegIdx(), i.operands[3].asRegIdx(),
                           i.operands[0].asBitsImm<4>());
 }
 
-void emit_vector_scalar(isa::VectorScalarOp op, isa::Emitter& e,
+void emit_vector_scalar(isa::VectorScalarOp op, isa::Emitter& e, const SymbolTable& symtab,
                         const ast::Instruction& i) {
     e.vectorScalarArith(op, i.operands[1].asRegIdx(), i.operands[3].asRegIdx(),
                         i.operands[2].asRegIdx(),
                         i.operands[0].asBitsImm<vmask_t::size>());
 }
 
-void emit_flushcache(isa::CacheControlOp op, isa::Emitter& e,
+void emit_flushcache(isa::CacheControlOp op, isa::Emitter& e, const SymbolTable& symtab,
                      const ast::Instruction& i) {
     e.flushcache(op);
 }
 
 // todo this is just fucked up std::bind but with a defined retn ty
-#define PARTIAL(fn, ...) [](auto& e, const auto& i) { fn(__VA_ARGS__, e, i); }
-#define EMIT_NOARGS(mnemonic) [](auto& e, const auto& i) { e.mnemonic(); }
+#define PARTIAL(fn, ...) [](auto& e, const SymbolTable& st, const auto& i) { fn(__VA_ARGS__, e, st, i); }
+#define EMIT_NOARGS(mnemonic) [](auto& e, const SymbolTable& st, const auto& i) { e.mnemonic(); }
 
 static const std::map<
-    std::string, std::function<void(isa::Emitter&, const ast::Instruction&)>,
+    std::string, std::function<void(isa::Emitter&, const SymbolTable&, const ast::Instruction&)>,
     std::less<>>
     INSTRUCTION_EMITTERS = {
         {"nop", EMIT_NOARGS(nop)},
         {"halt", EMIT_NOARGS(nop)},
 
         {"bkpt",
-         [](auto& e, const ast::Instruction& i) {
+         [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.bkpt(i.operands[0].asBitsImm<25>());
          }},
 
+        {"jmp", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            auto symb = symtab.get(i.operands[0].get<ast::OperandLabel>().label.getLexeme());
+            assert(symb.has_value() && "undef symbol uh oh"); // TODO
+            int64_t offset = static_cast<int64_t>(symb->addr) - (e.getPC() + 4);
+            fmt::print("PC={:#x}\n",e.getPC());
+            fmt::print("offset={:#x}\n", offset);
+            assert((offset % 4) == 0 && "alignment");
+            offset /= 4; // immediate scaling
+
+            e.jumpPCRel(s<25>(offset), false);
+        }},
+
         {"lil",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.loadImmediate(false, i.operands[0].asRegIdx(),
                              i.operands[1].asSignedImm<18>());
          }},
         {"lih",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.loadImmediate(true, i.operands[0].asRegIdx(),
                              i.operands[1].asSignedImm<18>());
          }},
 
         {"ld32",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto memOp = i.operands[1].get<ast::OperandMemory>();
              assert(!memOp.increment); // TODO!
 
@@ -72,7 +84,7 @@ static const std::map<
          }},
 
         {"ld36",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto memOp = i.operands[1].get<ast::OperandMemory>();
              assert(!memOp.increment); // TODO!
 
@@ -97,7 +109,7 @@ static const std::map<
         {"shr", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shr)},
         {"shl", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shl)},
         {"not",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.scalarArithmeticNot(i.operands[0].asRegIdx(),
                                    i.operands[1].asRegIdx());
          }},
@@ -115,18 +127,18 @@ static const std::map<
         {"vsdiv", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Div)},
 
         {"vidx",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.vidx(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
                     i.operands[2].asBitsImm<vlaneidx_t::size>());
          }},
         {"vsplat",
-         [](isa::Emitter& e, const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.vsplat(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(),
                       i.operands[0].asBitsImm<vmask_t::size>());
          }},
 
         {"rcsr",
-         [](auto& e, const ast::Instruction& i) {
+         [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.csr(isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),
                    u<2>(i.operands[1].get<ast::OperandImmediate>().val));
          }},
@@ -143,7 +155,7 @@ void EmissionPass::enter(const ast::Instruction& inst, size_t depth) {
     auto it = INSTRUCTION_EMITTERS.find(inst.mnemonic.getLexeme());
     if (it != INSTRUCTION_EMITTERS.end()) {
         auto em = it->second;
-        em(this->emitter, inst);
+        em(this->emitter, symtab, inst);
     } else {
         error(fmt::format("we don't know how to emit `{}`",
                           inst.mnemonic.getLexeme()));

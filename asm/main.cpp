@@ -11,6 +11,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "sema.h"
+#include "symtab.h"
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser ap("asm");
@@ -29,6 +30,11 @@ int main(int argc, char* argv[]) {
         .help("dump the AST immediately after parsing")
         .default_value(false)
         .implicit_value(true);
+
+    ap.add_argument("--dump-symtab")
+            .help("dump the symbol table")
+            .default_value(false)
+            .implicit_value(true);
 
     ap.add_argument("sources").nargs(argparse::nargs_pattern::at_least_one);
 
@@ -96,7 +102,13 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    EmissionPass emissionPass{};
+    LabelVisitor labelPass{};
+    parser.visit(labelPass);
+    if (ap["--dump-symtab"] == true) {
+        std::cout << labelPass.getSymtab() << '\n';
+    }
+
+    EmissionPass emissionPass(labelPass.getSymtab());
     parser.visit(emissionPass);
 
     auto output = emissionPass.getData();

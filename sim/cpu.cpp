@@ -30,7 +30,7 @@ void MemSystem::write(uint64_t addr, f32x4 val) {
 }
 
 auto MemSystem::read32(uint64_t addr) -> uint32_t {
-    _check_alignment(addr, 32);
+    _check_addr(addr, 32);
 
     auto val = this->mempool[addr / 4];
     //    tracer->memRead32(addr, val);
@@ -38,7 +38,7 @@ auto MemSystem::read32(uint64_t addr) -> uint32_t {
 }
 
 auto MemSystem::read36(uint64_t addr) -> uint64_t {
-    _check_alignment(addr, 64);
+    _check_addr(addr, 64);
 
     // little-endian
     uint64_t val = this->mempool[addr / 4]; // lower
@@ -50,14 +50,17 @@ auto MemSystem::read36(uint64_t addr) -> uint64_t {
 }
 
 auto MemSystem::readInstruction(uint64_t addr) -> uint32_t {
-    _check_alignment(addr, 32);
+    _check_addr(addr, 32);
 
     // /4 to get u32-addr instead of byte addr
     return this->mempool[addr / 4];
 }
 
-void MemSystem::_check_alignment(uint64_t addr, uint32_t alignTo) {
+void MemSystem::_check_addr(uint64_t addr, uint32_t alignTo) const {
     // alignTo in bits
     if ((addr % (alignTo / 8)) != 0)
         panic("misaligned memory address");
+
+    if (addr > mempool.size())
+        panic("access past end of emulated memory");
 }

@@ -28,7 +28,7 @@ struct MemSystem {
     void flushDCacheLine(uint64_t at);
 
     // private:
-    static void _check_alignment(uint64_t addr, uint32_t alignTo);
+    void _check_addr(uint64_t addr, uint32_t alignTo) const;
 
     std::vector<uint32_t> mempool;
     //    std::shared_ptr<Tracer> tracer;
