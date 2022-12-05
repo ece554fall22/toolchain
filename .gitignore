@@ -18,3 +18,4 @@ builddir/
 ## outputs
 *.o
 *.trace
+*.bin

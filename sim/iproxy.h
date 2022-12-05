@@ -189,56 +189,143 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
         tracer->writebackScalarReg(cpu, "rD", rD);
     }
-    void vldi(vreg_idx vD, reg_idx rA, s<11> imm, s<4> mask) override {}
 
-    void vsti(s<11> imm, reg_idx rA, reg_idx vB, s<4> mask) override {}
+    void arithmeticNot(reg_idx rD, reg_idx rA) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
 
-    void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, s<4> mask) override {}
+        instructions::not_(cpu, mem, rD, rA);
 
-    void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, s<4> mask) override {}
+        tracer->writebackScalarReg(cpu, "rD", rD);
+    }
 
-    void cmpI(reg_idx rA, s<20> imm) override {}
+    void vldi(vreg_idx vD, reg_idx rA, s<11> imm, vmask_t mask) override {
+        unimplemented();
+    }
 
-    void arithmeticNot(reg_idx rD, reg_idx rA) override {}
+    void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) override {
+        unimplemented();
+    }
+
+    void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) override {
+        unimplemented();
+    }
+
+    void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, vmask_t mask) override {
+        unimplemented();
+    }
+
+    void cmpI(reg_idx rA, s<20> imm) override { unimplemented(); }
 
     void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
-                         isa::FloatArithmeticOp op) override {}
+                         isa::FloatArithmeticOp op) override {
+        switch (op) {
+        case isa::FloatArithmeticOp::Fadd:
+            instructions::fadd(cpu, mem, rD, rA, rB);
+            break;
+        case isa::FloatArithmeticOp::Fsub:
+            instructions::fsub(cpu, mem, rD, rA, rB);
+            break;
+        case isa::FloatArithmeticOp::Fmul:
+            instructions::fmul(cpu, mem, rD, rA, rB);
+            break;
+        case isa::FloatArithmeticOp::Fdiv:
+            instructions::fdiv(cpu, mem, rD, rA, rB);
+            break;
+        }
+    }
 
-    void cmp(reg_idx rA, reg_idx rB) override {}
+    void cmp(reg_idx rA, reg_idx rB) override {
+        instructions::cmp(cpu, mem, rA, rB);
+    }
 
-    void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA,
-                          vreg_idx vB, s<4> mask) override {}
+    void vectorArithmetic(isa::LanewiseVectorOp op, vreg_idx vD, vreg_idx vA,
+                          vreg_idx vB, vmask_t mask) override {
+        switch (op) {
+        case isa::LanewiseVectorOp::Add:
+            instructions::vadd(cpu, mem, vD, vA, vB, mask);
+            break;
+        case isa::LanewiseVectorOp::Sub:
+            instructions::vsub(cpu, mem, vD, vA, vB, mask);
+            break;
+        case isa::LanewiseVectorOp::Mul:
+            instructions::vmul(cpu, mem, vD, vA, vB, mask);
+            break;
+        case isa::LanewiseVectorOp::Div:
+            instructions::vdiv(cpu, mem, vD, vA, vB, mask);
+            break;
+        case isa::LanewiseVectorOp::Min:
+            instructions::vmin(cpu, mem, vD, vA, vB, mask);
+            break;
+        case isa::LanewiseVectorOp::Max:
+            instructions::vmax(cpu, mem, vD, vA, vB, mask);
+            break;
+        }
+    }
 
-    void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) override {}
+    void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) override {
+        instructions::vdot(cpu, mem, rD, vA, vB);
+    }
 
-    void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) override {}
+    void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) override {
+        instructions::vdota(cpu, mem, rD, rA, vA, vB);
+    }
 
-    void vindx(reg_idx rD, vreg_idx vA, s<2> imm) override {}
+    void vidx(reg_idx rD, vreg_idx vA, vlaneidx_t imm) override {
+        instructions::vidx(cpu, mem, rD, vA, imm);
+    }
 
-    void vreduce(reg_idx rD, vreg_idx vA, s<4> mask) override {}
+    void vreduce(reg_idx rD, vreg_idx vA, vmask_t mask) override {
+        instructions::vreduce(cpu, mem, rD, vA, mask);
+    }
 
-    void vsplat(vreg_idx vD, reg_idx rA, s<4> mask) override {}
+    void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) override {
+        instructions::vsplat(cpu, mem, vD, rA, mask);
+    }
 
-    void vswizzle(vreg_idx vD, vreg_idx vA, s<2> i1, s<2> i2, s<2> i3, s<2> i4,
-                  s<4> mask) override {}
+    void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
+                  vlaneidx_t i2, vlaneidx_t i3, vmask_t mask) override {
+        instructions::vswizzle(cpu, mem, vD, vA, i0, i1, i2, i3, mask);
+    }
 
-    void vectorScalarArithmetic(isa::VectorScalarArithmeticOp op, vreg_idx vD,
-                                reg_idx rA, vreg_idx vB, s<4> mask) override {}
+    void vectorScalarArithmetic(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
+                                vreg_idx vB, vmask_t mask) override {
+        switch (op) {
+        case isa::VectorScalarOp::Add:
+            instructions::vsadd(cpu, mem, vD, rA, vB, mask);
+            break;
+        case isa::VectorScalarOp::Sub:
+            instructions::vssub(cpu, mem, vD, rA, vB, mask);
+            break;
+        case isa::VectorScalarOp::Mul:
+            instructions::vsmul(cpu, mem, vD, rA, vB, mask);
+            break;
+        case isa::VectorScalarOp::Div:
+            instructions::vsdiv(cpu, mem, vD, rA, vB, mask);
+            break;
+        }
+    }
 
     void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB,
-              s<4> mask) override {}
+              vmask_t mask) override {
+        instructions::vsma(cpu, mem, vD, rA, vA, vB, mask);
+    }
 
     void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
-                     vreg_idx vB) override {}
+                     vreg_idx vB) override {
+        unimplemented();
+    }
 
-    void matmul() override {}
+    void matmul() override { unimplemented(); }
 
-    void systolicstep() override {}
+    void systolicstep() override { unimplemented(); }
 
-    void readC(vreg_idx vD, s<3> idx, bool high) override {}
+    void readC(vreg_idx vD, s<3> idx, bool high) override { unimplemented(); }
 
-    void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
-               s<4> mask) override {}
+    void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vA,
+               vmask_t mask) override {
+        instructions::vcomp(cpu, mem, vD, rA, rB, vA, mask);
+    }
 
     void flushdirty() override { mem.flushDCacheDirty(); }
 
@@ -250,21 +337,25 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         mem.flushDCacheLine(cpu.r[rA] + imm._sgn_inner());
     }
 
-    void fa(reg_idx rD, reg_idx rA, s<15> imm) override {}
+    void fa(reg_idx rD, reg_idx rA, s<15> imm) override { unimplemented(); }
 
-    void cmpx(reg_idx rD, reg_idx rA, s<15> imm) override {}
+    void cmpx(reg_idx rD, reg_idx rA, s<15> imm) override { unimplemented(); }
 
-    void ftoi(reg_idx rD, reg_idx rA) override {}
+    void ftoi(reg_idx rD, reg_idx rA) override { unimplemented(); }
 
-    void itof(reg_idx rD, reg_idx rA) override {}
+    void itof(reg_idx rD, reg_idx rA) override { unimplemented(); }
 
-    void wcsr(s<2> csr, reg_idx rA) override {}
+    void wcsr(s<2> csr, reg_idx rA) override { unimplemented(); }
 
-    void rcsr(s<2> csr, reg_idx rA) override {}
+    void rcsr(s<2> csr, reg_idx rA) override { unimplemented(); }
 
-    void cmpdec(reg_idx rD, reg_idx rA, reg_idx rB) override {}
+    void cmpdec(reg_idx rD, reg_idx rA, reg_idx rB) override {
+        unimplemented();
+    }
 
-    void cmpinc(reg_idx rD, reg_idx rA, reg_idx rB) override {}
+    void cmpinc(reg_idx rD, reg_idx rA, reg_idx rB) override {
+        unimplemented();
+    }
 
   private:
     CPUState& cpu;
