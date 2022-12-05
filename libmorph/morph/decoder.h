@@ -36,16 +36,16 @@ struct InstructionVisitor {
     virtual void lih(reg_idx rD, s<18> imm) = 0;
 
     // Vldi
-    virtual void vldi(vreg_idx vD, reg_idx rA, s<11> imm, s<4> mask) = 0;
+    virtual void vldi(vreg_idx vD, reg_idx rA, s<11> imm, vmask_t mask) = 0;
 
     // Vsti
-    virtual void vsti(s<11> imm, reg_idx rA, reg_idx vB, s<4> mask) = 0;
+    virtual void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) = 0;
 
     // Vldr
-    virtual void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, s<4> mask) = 0;
+    virtual void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) = 0;
 
     // Vstr
-    virtual void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, s<4> mask) = 0;
+    virtual void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, vmask_t mask) = 0;
 
     // ML
     virtual void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) = 0;
@@ -74,8 +74,8 @@ struct InstructionVisitor {
     virtual void cmp(reg_idx rA, reg_idx rB) = 0;
 
     // VA
-    virtual void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD,
-                                  vreg_idx vA, vreg_idx vB, s<4> mask) = 0;
+    virtual void vectorArithmetic(isa::LanewiseVectorOp op, vreg_idx vD,
+                                  vreg_idx vA, vreg_idx vB, vmask_t mask) = 0;
 
     // VDOT
     virtual void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) = 0;
@@ -83,27 +83,28 @@ struct InstructionVisitor {
     // VDOTA
     virtual void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) = 0;
 
-    // VINDX
-    virtual void vindx(reg_idx rD, vreg_idx vA, s<2> imm) = 0;
+    // VIDX
+    virtual void vidx(reg_idx rD, vreg_idx vA, vlaneidx_t imm) = 0;
 
     // VREDUCE
-    virtual void vreduce(reg_idx rD, vreg_idx vA, s<4> mask) = 0;
+    virtual void vreduce(reg_idx rD, vreg_idx vA, vmask_t mask) = 0;
 
     // VSPLAT
-    virtual void vsplat(vreg_idx vD, reg_idx rA, s<4> mask) = 0;
+    virtual void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) = 0;
 
     // VSWIZZLE
-    virtual void vswizzle(vreg_idx vD, vreg_idx vA, s<2> i1, s<2> i2, s<2> i3,
-                          s<2> i4, s<4> mask) = 0;
+    virtual void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0,
+                          vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3,
+                          vmask_t mask) = 0;
 
     // vector scalar ops
-    virtual void vectorScalarArithmetic(isa::VectorScalarArithmeticOp op,
-                                        vreg_idx vD, reg_idx rA, vreg_idx vB,
-                                        s<4> mask) = 0;
+    virtual void vectorScalarArithmetic(isa::VectorScalarOp op, vreg_idx vD,
+                                        reg_idx rA, vreg_idx vB,
+                                        vmask_t mask) = 0;
 
     // VSMA
     virtual void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB,
-                      s<4> mask) = 0;
+                      vmask_t mask) = 0;
 
     // Matrix write ops
     virtual void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
@@ -120,7 +121,7 @@ struct InstructionVisitor {
 
     // Vcomp
     virtual void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
-                       s<4> mask) = 0;
+                       vmask_t mask) = 0;
 
     // Flushdirty
     virtual void flushdirty() = 0;
@@ -207,22 +208,22 @@ struct PrintVisitor : public InstructionVisitor {
                    imm.inner, rA.inner);
     }
 
-    void vldi(vreg_idx vD, reg_idx rA, s<11> imm, s<4> mask) override {
+    void vldi(vreg_idx vD, reg_idx rA, s<11> imm, vmask_t mask) override {
         fmt::print(os, "vldi {:#b}, v{}, [r{}+={:#x}]", mask.inner, vD.inner,
                    rA.inner, imm.inner);
     }
 
-    void vsti(s<11> imm, reg_idx rA, reg_idx vB, s<4> mask) override {
+    void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) override {
         fmt::print(os, "vldi {:#b}, [r{}+={:#x}], v{}", mask.inner, rA.inner,
                    imm.inner, vB.inner);
     }
 
-    void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, s<4> mask) override {
+    void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) override {
         fmt::print(os, "vldr {:#b}, v{}, [r{}+=r{}]", mask.inner, vD.inner,
                    rA.inner, rB.inner);
     }
 
-    void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, s<4> mask) override {
+    void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, vmask_t mask) override {
         fmt::print(os, "vldr {:#b}, v{}, [r{}+=r{}]", mask.inner, rA.inner,
                    rB.inner, vA.inner);
     }
@@ -259,9 +260,9 @@ struct PrintVisitor : public InstructionVisitor {
         fmt::print(os, "cmp r{}, r{}", rA.inner, rB.inner);
     }
 
-    void vectorArithmetic(isa::VectorArithmeticOp op, vreg_idx vD, vreg_idx vA,
-                          vreg_idx vB, s<4> mask) override {
-        fmt::print(os, "{} v{}, v{}, v{}, {:#b}", op, vD.inner, vA.inner,
+    void vectorArithmetic(isa::LanewiseVectorOp op, vreg_idx vD, vreg_idx vA,
+                          vreg_idx vB, vmask_t mask) override {
+        fmt::print(os, "v{} v{}, v{}, v{}, {:#b}", op, vD.inner, vA.inner,
                    vB.inner, mask.inner);
     }
 
@@ -274,35 +275,35 @@ struct PrintVisitor : public InstructionVisitor {
                    vB.inner);
     }
 
-    void vindx(reg_idx rD, vreg_idx vA, s<2> imm) override {
-        fmt::print(os, "vindx r{}, v{}, {:#b}", rD.inner, vA.inner, imm.inner);
+    void vidx(reg_idx rD, vreg_idx vA, u<2> imm) override {
+        fmt::print(os, "vidx r{}, v{}, {:#b}", rD.inner, vA.inner, imm.inner);
     }
 
-    void vreduce(reg_idx rD, vreg_idx vA, s<4> mask) override {
+    void vreduce(reg_idx rD, vreg_idx vA, vmask_t mask) override {
         fmt::print(os, "vreduce r{}, v{}, {:#b}", rD.inner, vA.inner,
                    mask.inner);
     }
 
-    void vsplat(vreg_idx vD, reg_idx rA, s<4> mask) override {
+    void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) override {
         fmt::print(os, "vsplat v{}, r{}, {:#b}", vD.inner, rA.inner,
                    mask.inner);
     }
 
-    void vswizzle(vreg_idx vD, vreg_idx vA, s<2> i1, s<2> i2, s<2> i3, s<2> i4,
-                  s<4> mask) override {
-        fmt::print(os, "vswizzle v{}, v{}, {:#b}, {:#b}, {:#b}, {:#b}, {:#b}",
-                   vD.inner, vA.inner, i1.inner, i2.inner, i3.inner, i4.inner,
-                   mask.inner);
+    void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
+                  vlaneidx_t i2, vlaneidx_t i3, vmask_t mask) override {
+        fmt::print(os, "vswizzle {:#b}, v{}, v{}, {:#b}, {:#b}, {:#b}, {:#b}",
+                   mask.inner, vD.inner, vA.inner, i0.inner, i1.inner, i2.inner,
+                   i3.inner);
     }
 
-    void vectorScalarArithmetic(isa::VectorScalarArithmeticOp op, vreg_idx vD,
-                                reg_idx rA, vreg_idx vB, s<4> mask) override {
-        fmt::print(os, "{} v{}, r{}, v{} {:#b}", op, vD.inner, rA.inner,
+    void vectorScalarArithmetic(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
+                                vreg_idx vB, vmask_t mask) override {
+        fmt::print(os, "vs{} v{}, r{}, v{} {:#b}", op, vD.inner, rA.inner,
                    vB.inner, mask.inner);
     }
 
     void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB,
-              s<4> mask) override {
+              vmask_t mask) override {
         fmt::print(os, "vsma v{}, r{}, v{}, v{}, {:#b}", vD.inner, rA.inner,
                    vA.inner, vB.inner, mask.inner);
     }
@@ -323,7 +324,7 @@ struct PrintVisitor : public InstructionVisitor {
     }
 
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
-               s<4> mask) override {
+               vmask_t mask) override {
         fmt::print(os, "vcomp v{}, r{}, r{}, v{}, {:#b}", vD.inner, rA.inner,
                    rB.inner, vB.inner, mask.inner);
     }

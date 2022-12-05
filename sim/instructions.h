@@ -139,7 +139,19 @@ SCALAR_FLOAT_BINOP(fsub, -);
 SCALAR_FLOAT_BINOP(fmul, *);
 SCALAR_FLOAT_BINOP(fdiv, /);
 
+void itof(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA) {
+//    float val = bits2float(cpu.r[rA].slice<31, 0>());
+    float val = (float) cpu.r[rA].asSigned()._sgn_inner();
+    cpu.r[rD].inner = float2bits(val).inner;
+}
+
 // -- vector instructions
+template <typename F> inline void _lane_apply(F fn) {
+    for (size_t lane = 0; lane < N_LANES; lane++) {
+        fn(lane);
+    }
+}
+
 template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
     for (size_t lane = 0; lane < N_LANES; lane++) {
         if (mask.bit(lane))
@@ -184,12 +196,11 @@ VEC_VS_BINOP(vsdiv, /);
 VEC_EXTREMA(vmax, std::max);
 VEC_EXTREMA(vmin, std::min);
 
-void vdot(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA, vreg_idx vB,
-          vmask_t mask) {
+void vdot(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA, vreg_idx vB) {
 
     // compute dot
     float acc = 0.f;
-    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
+    _lane_apply([&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
 
     // dump to rD
     cpu.r[rD].inner =
@@ -198,13 +209,13 @@ void vdot(CPUState& cpu, MemSystem& mem, reg_idx rD, vreg_idx vA, vreg_idx vB,
 }
 
 void vdota(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, vreg_idx vA,
-           vreg_idx vB, vmask_t mask) {
+           vreg_idx vB) {
 
     // load rA to accumulator
     float acc = bits2float(cpu.r[rA].slice<31, 0>());
 
     // compute dot
-    _lane_apply(mask, [&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
+    _lane_apply([&](auto i) { acc += cpu.v[vA][i] * cpu.v[vB][i]; });
 
     // dump to rD
     cpu.r[rD].inner =
@@ -234,7 +245,9 @@ void vsplat(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA,
 }
 
 void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
-              vlaneidx_t idxs[4], vmask_t mask) {
+              vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3,
+              vmask_t mask) {
+    vlaneidx_t idxs[4] = {i0, i1, i2, i3};
     _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
 }
 
@@ -248,12 +261,12 @@ void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA,
 }
 
 void vcomp(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
-           vreg_idx vA, vmask_t mask) {
+           vreg_idx vB, vmask_t mask) {
     float a = bits2float(cpu.r[rA].slice<31, 0>());
     float b = bits2float(cpu.r[rB].slice<31, 0>());
 
     _lane_apply(mask,
-                [&](auto i) { cpu.v[vD][i] = (cpu.v[vA][i] > 0.f) ? a : b; });
+                [&](auto i) { cpu.v[vD][i] = (cpu.v[vB][i] > 0.f) ? a : b; });
 }
 
 // -- scalar memory instructions

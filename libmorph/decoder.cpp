@@ -13,7 +13,6 @@ void decodeML(InstructionVisitor& visit, bits<32> instr);
 void decodeMS(InstructionVisitor& visit, bits<32> instr);
 void decodeA(InstructionVisitor& visit, bits<32> instr);
 void decodeAI(InstructionVisitor& visit, bits<32> instr);
-void decodeCI(InstructionVisitor& visit, bits<32> instr);
 void decodeBkpt(InstructionVisitor& visit, bits<32> instr);
 void decodeCmpI(InstructionVisitor& visit, bits<32> instr);
 void decodeNot(InstructionVisitor& visit, bits<32> instr);
@@ -22,7 +21,7 @@ void decodeCmp(InstructionVisitor& visit, bits<32> instr);
 void decodeVA(InstructionVisitor& visit, bits<32> instr);
 void decodeVdot(InstructionVisitor& visit, bits<32> instr);
 void decodeVdota(InstructionVisitor& visit, bits<32> instr);
-void decodeVindx(InstructionVisitor& visit, bits<32> instr);
+void decodeVidx(InstructionVisitor& visit, bits<32> instr);
 void decodeVreduce(InstructionVisitor& visit, bits<32> instr);
 void decodeVsplat(InstructionVisitor& visit, bits<32> instr);
 void decodeVswizzle(InstructionVisitor& visit, bits<32> instr);
@@ -150,9 +149,9 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
     case 0b0100'100:
         return decodeVdota(visit, instr);
 
-    // vindx
+    // vidx
     case 0b0100'101:
-        return decodeVindx(visit, instr);
+        return decodeVidx(visit, instr);
 
     // vreduce
     case 0b0100'110:
@@ -428,11 +427,11 @@ void decodeVdota(InstructionVisitor& visit, bits<32> instr) {
     visit.vdota(rD, rA, vA, vB);
 }
 
-void decodeVindx(InstructionVisitor& visit, bits<32> instr) {
+void decodeVidx(InstructionVisitor& visit, bits<32> instr) {
     auto rD = instr.slice<24, 20>();
     auto vA = instr.slice<19, 15>();
     auto imm = instr.slice<8, 7>();
-    visit.vindx(rD, vA, imm);
+    visit.vidx(rD, vA, imm);
 }
 
 void decodeVreduce(InstructionVisitor& visit, bits<32> instr) {
