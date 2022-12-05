@@ -46,6 +46,12 @@ auto compute_offset(const isa::Emitter& e, const Symbol& symb) -> int64_t {
     return offset;
 }
 
+void emit_br(condition_t cond, isa::Emitter& e, const SymbolTable& symtab,
+             const ast::Instruction& i) {
+    e.branchReg(cond, i.operands[0].asRegIdx(),
+                i.operands[1].asSignedImm<17>());
+}
+
 // todo this is just fucked up std::bind but with a defined retn ty
 #define PARTIAL(fn, ...)                                                       \
     [](auto& e, const SymbolTable& st, const auto& i) {                        \
@@ -106,6 +112,13 @@ static const std::map<std::string,
 
              e.jumpRegRel(i.operands[0].asRegIdx(), s<20>(offset), true);
          }},
+
+        {"bnzr", PARTIAL(emit_br, condition_t::nz)},
+        {"bezr", PARTIAL(emit_br, condition_t::ez)},
+        {"blzr", PARTIAL(emit_br, condition_t::lz)},
+        {"bgzr", PARTIAL(emit_br, condition_t::gz)},
+        {"bler", PARTIAL(emit_br, condition_t::le)},
+        {"bger", PARTIAL(emit_br, condition_t::ge)},
 
         {"lil",
          [](isa::Emitter& e, const SymbolTable& symtab,
