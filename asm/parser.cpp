@@ -157,10 +157,10 @@ auto Parser::instruction() -> std::unique_ptr<ast::Instruction> {
     std::vector<ast::Operand> args;
     while (auto arg = operand()) {
         args.push_back(*arg);
-        if (curr().is(Token::Kind::LINEBREAK)) {
+        if (curr().isEndOfLine()) {
             break;
         } else if (curr().isNot(Token::Kind::COMMA)) {
-            error("expected , in instruction argument list");
+            error(fmt::format("expected , in instruction argument list, not {}", curr().getKind()));
             return nullptr;
         }
 
@@ -168,7 +168,7 @@ auto Parser::instruction() -> std::unique_ptr<ast::Instruction> {
     }
 
     // LINEBREAK
-    if (curr().isNot(Token::Kind::LINEBREAK)) {
+    if (!curr().isEndOfLine()) {
         error(fmt::format("expected linebreak after instruction, not {}",
                           curr().getKind()));
         return nullptr;

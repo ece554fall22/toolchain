@@ -59,7 +59,7 @@ class Parser {
     auto next(size_t incr = 1) -> const Token& {
         cursor += incr;
         if (cursor >= tokens.size())
-            throw std::runtime_error("oops");
+            cursor = tokens.size() - 1;
 
         return tokens[cursor];
     }
