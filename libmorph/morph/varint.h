@@ -6,15 +6,17 @@
 #include <cstdint>
 #include <iostream>
 #include <type_traits>
+#include <fmt/core.h>
 
-#define BITFILL(n) ((1L << n) - 1)
+#define BITFILL(n) ((1ULL << n) - 1)
 
 template <size_t SIZE> struct bits {
     typedef uint64_t inner_t;
-    static constexpr size_t backing_size = 64;
     typedef int64_t signed_inner_t;
+
     static constexpr size_t size = SIZE;
-    static constexpr inner_t mask = (1UL << size) - 1;
+    static constexpr size_t backing_size = 64;
+    static constexpr inner_t mask = (1ULL << size) - 1;
 
     static_assert(SIZE <= 64,
                   "size cannot be larger than 64-bit backing storage");
@@ -30,7 +32,7 @@ template <size_t SIZE> struct bits {
     bool bit(size_t i) const {
         assert(i >= 0 && i < SIZE);
 
-        return this->inner & (1 << i);
+        return this->inner & (1ULL << i);
     }
 
     // extract bits, verilog-style
@@ -126,7 +128,7 @@ template <size_t N> struct u;
 template <size_t N> struct s;
 
 template <size_t N> struct u : public bits<N> {
-    static constexpr typename bits<N>::inner_t max_val = (1UL << N) - 1;
+    static constexpr typename bits<N>::inner_t max_val = (1ULL << N) - 1;
 
     u() : u(0) {}
     u(uint64_t v) {
@@ -137,9 +139,7 @@ template <size_t N> struct u : public bits<N> {
 
     /// Interpret as signed integer data.
     auto asSigned() const noexcept -> s<N> {
-        s<N> v;
-        v.inner = this->inner;
-        return v;
+        return s<N>(*this);
     }
 
     /// addition of integer constants
@@ -180,9 +180,9 @@ template <size_t N> struct u : public bits<N> {
 // make sure the backing store is signed extended
 template <size_t N> struct s : public bits<N> {
     static constexpr typename bits<N>::signed_inner_t max_val =
-        (1L << (N - 1)) - 1;
+        (1ULL << (N - 1)) - 1;
     static constexpr typename bits<N>::signed_inner_t min_val =
-        -(1L << (N - 1));
+        -(1ULL << (N - 1));
 
     s() : s(0) {}
     s(int64_t v) {
@@ -191,7 +191,7 @@ template <size_t N> struct s : public bits<N> {
     }
     s(bits<N> b) : bits<N>(b) {
         if (this->bit(N - 1)) {
-            this->inner |= ((1UL << (bits<N>::backing_size - N)) - 1) << N;
+            this->inner |= ((1ULL << (bits<N>::backing_size - N)) - 1) << N;
         }
 
         assert((min_val <= this->_sgn_inner()) &&
@@ -204,7 +204,7 @@ template <size_t N> struct s : public bits<N> {
 
         // check sign bit and sign extend
         if (v.bit(N - 1)) {
-            v.inner |= ((1UL << (bits<N>::backing_size - N)) - 1) << N;
+            v.inner |= ((1ULL << (bits<N>::backing_size - N)) - 1) << N;
         }
 
         return v;
