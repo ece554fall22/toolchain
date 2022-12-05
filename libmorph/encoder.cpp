@@ -65,7 +65,7 @@ uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
         return 0b000;
     case FloatArithmeticOp::Fsub:
         return 0b001;
-    case FloatArithmeticOp::Fmult:
+    case FloatArithmeticOp::Fmul:
         return 0b010;
     case FloatArithmeticOp::Fdiv:
         return 0b011;
@@ -268,8 +268,8 @@ void isa::Emitter::floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD,
 }
 
 // vadd, vsub, vmul, vdiv, vmax, vmin
-void isa::Emitter::vecLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
-                                    vreg_idx vA, vreg_idx vB, vmask_t mask) {
+void isa::Emitter::vectorLanewiseArith(isa::LanewiseVectorOp op, vreg_idx vD,
+                                       vreg_idx vA, vreg_idx vB, vmask_t mask) {
     uint32_t instr = 0;
     switch (op) {
     case LanewiseVectorOp::Add:
@@ -370,25 +370,26 @@ void isa::Emitter::vreduce(reg_idx rD, vreg_idx vA) {
     append(instr);
 }
 
-void isa::Emitter::vsplat(vreg_idx vD, reg_idx rA) {
+void isa::Emitter::vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) {
     uint32_t instr = 0b0100111 << 25;
 
     instr |= vD.inner << 20;
     instr |= rA.inner << 15;
+    instr |= mask.raw();
 
     append(instr);
 }
 
-void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t idxs[4],
+void isa::Emitter::vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3,
                             vmask_t mask) {
     uint32_t instr = 0b0101000 << 25;
 
     instr |= vD.inner << 20;
     instr |= vA.inner << 15;
-    instr |= idxs[3].inner << 13;
-    instr |= idxs[2].inner << 11;
-    instr |= idxs[1].inner << 9;
-    instr |= idxs[0].inner << 7;
+    instr |= i3.inner << 13;
+    instr |= i2.inner << 11;
+    instr |= i1.inner << 9;
+    instr |= i0.inner << 7;
     instr |= mask.inner;
 
     append(instr);

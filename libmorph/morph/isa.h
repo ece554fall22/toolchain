@@ -9,9 +9,14 @@
 
 namespace isa {
 enum class ScalarArithmeticOp { Add, Sub, Mul, And, Or, Xor, Shr, Shl };
-enum class FloatArithmeticOp { Fadd, Fsub, Fmult, Fdiv };
-enum class VectorArithmeticOp { Vadd, Vsub, Vmult, Vdiv, Vmax, Vmin };
-enum class VectorScalarArithmeticOp { Vsadd, Vsmult, Vssub, Vsdiv };
+enum class FloatArithmeticOp { Fadd, Fsub, Fmul, Fdiv };
+enum class LanewiseVectorOp { Add, Sub, Mul, Div, Min, Max };
+enum class VectorScalarOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+};
 enum class MatrixWriteOp { WriteA, WriteB, WriteC };
 
 inline auto scalarArithmeticOpFromAIOpcode(bits<7> v) -> ScalarArithmeticOp {
@@ -65,7 +70,7 @@ inline auto floatArithmeticOpFromArithCode(bits<3> v) -> FloatArithmeticOp {
     case 0b001:
         return isa::FloatArithmeticOp::Fsub;
     case 0b010:
-        return isa::FloatArithmeticOp::Fmult;
+        return isa::FloatArithmeticOp::Fmul;
     case 0b011:
         return isa::FloatArithmeticOp::Fdiv;
     default:
@@ -73,36 +78,35 @@ inline auto floatArithmeticOpFromArithCode(bits<3> v) -> FloatArithmeticOp {
     }
 }
 
-inline auto vectorArithmeticOpFromOpcode(bits<7> v) -> VectorArithmeticOp {
+inline auto vectorArithmeticOpFromOpcode(bits<7> v) -> LanewiseVectorOp {
     switch (v.inner) {
     case 0b0011111:
-        return isa::VectorArithmeticOp::Vadd;
+        return isa::LanewiseVectorOp::Add;
     case 0b0100000:
-        return isa::VectorArithmeticOp::Vsub;
+        return isa::LanewiseVectorOp::Sub;
     case 0b0100001:
-        return isa::VectorArithmeticOp::Vmult;
+        return isa::LanewiseVectorOp::Mul;
     case 0b0100010:
-        return isa::VectorArithmeticOp::Vdiv;
+        return isa::LanewiseVectorOp::Div;
     case 0b0110100:
-        return isa::VectorArithmeticOp::Vmax;
+        return isa::LanewiseVectorOp::Max;
     case 0b0110101:
-        return isa::VectorArithmeticOp::Vmin;
+        return isa::LanewiseVectorOp::Min;
     default:
         panic("invalid vector arith op");
     }
 }
 
-inline auto vectorScalarArithmeticOpFromOpcode(bits<7> v)
-    -> VectorScalarArithmeticOp {
+inline auto vectorScalarArithmeticOpFromOpcode(bits<7> v) -> VectorScalarOp {
     switch (v.inner) {
     case 0b0101001:
-        return isa::VectorScalarArithmeticOp::Vsadd;
+        return isa::VectorScalarOp::Add;
     case 0b0101010:
-        return isa::VectorScalarArithmeticOp::Vsmult;
+        return isa::VectorScalarOp::Mul;
     case 0b0101011:
-        return isa::VectorScalarArithmeticOp::Vssub;
+        return isa::VectorScalarOp::Sub;
     case 0b0101100:
-        return isa::VectorScalarArithmeticOp::Vsdiv;
+        return isa::VectorScalarOp::Div;
     default:
         panic("invalid vector scalar arith op");
     }
@@ -161,7 +165,7 @@ inline std::ostream& operator<<(std::ostream& os,
     case FloatArithmeticOp::Fsub:
         os << "fsub";
         break;
-    case FloatArithmeticOp::Fmult:
+    case FloatArithmeticOp::Fmul:
         os << "fmult";
         break;
     case FloatArithmeticOp::Fdiv:
@@ -187,44 +191,44 @@ inline std::ostream& operator<<(std::ostream& os, const isa::MatrixWriteOp& v) {
 }
 
 inline std::ostream& operator<<(std::ostream& os,
-                                const isa::VectorArithmeticOp& v) {
+                                const isa::LanewiseVectorOp& v) {
     switch (v) {
-    case VectorArithmeticOp::Vadd:
-        os << "vadd";
+    case LanewiseVectorOp::Add:
+        os << "add";
         break;
-    case VectorArithmeticOp::Vsub:
-        os << "vsub";
+    case LanewiseVectorOp::Sub:
+        os << "sub";
         break;
-    case VectorArithmeticOp::Vmult:
-        os << "vmul";
+    case LanewiseVectorOp::Mul:
+        os << "mul";
         break;
-    case VectorArithmeticOp::Vdiv:
-        os << "vdiv";
+    case LanewiseVectorOp::Div:
+        os << "div";
         break;
-    case VectorArithmeticOp::Vmax:
-        os << "vmax";
+    case LanewiseVectorOp::Max:
+        os << "max";
         break;
-    case VectorArithmeticOp::Vmin:
-        os << "vmin";
+    case LanewiseVectorOp::Min:
+        os << "min";
         break;
     }
     return os;
 }
 
 inline std::ostream& operator<<(std::ostream& os,
-                                const isa::VectorScalarArithmeticOp& v) {
+                                const isa::VectorScalarOp& v) {
     switch (v) {
-    case VectorScalarArithmeticOp::Vsadd:
-        os << "vsadd";
+    case VectorScalarOp::Add:
+        os << "add";
         break;
-    case VectorScalarArithmeticOp::Vsmult:
-        os << "vsmult";
+    case VectorScalarOp::Sub:
+        os << "sub";
         break;
-    case VectorScalarArithmeticOp::Vssub:
-        os << "vssub";
+    case VectorScalarOp::Mul:
+        os << "mul";
         break;
-    case VectorScalarArithmeticOp::Vsdiv:
-        os << "vsdiv";
+    case VectorScalarOp::Div:
+        os << "div";
         break;
     }
     return os;
@@ -238,10 +242,8 @@ struct fmt::formatter<isa::ScalarArithmeticOp> : ostream_formatter {};
 template <>
 struct fmt::formatter<isa::FloatArithmeticOp> : ostream_formatter {};
 
-template <>
-struct fmt::formatter<isa::VectorArithmeticOp> : ostream_formatter {};
+template <> struct fmt::formatter<isa::VectorScalarOp> : ostream_formatter {};
 
-template <>
-struct fmt::formatter<isa::VectorScalarArithmeticOp> : ostream_formatter {};
+template <> struct fmt::formatter<isa::LanewiseVectorOp> : ostream_formatter {};
 
 template <> struct fmt::formatter<isa::MatrixWriteOp> : ostream_formatter {};

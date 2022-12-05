@@ -16,6 +16,19 @@ void emit_arith_imm(isa::ScalarArithmeticOp op, isa::Emitter& e,
                                 i.operands[2].template asBitsImm<15>());
 }
 
+void emit_vector_lanewise(isa::LanewiseVectorOp op, isa::Emitter& e,
+                          const ast::Instruction& i) {
+    e.vectorLanewiseArith(op, i.operands[1].asRegIdx(),
+                          i.operands[2].asRegIdx(), i.operands[3].asRegIdx(),
+                          i.operands[0].asBitsImm<4>());
+}
+
+void emit_vector_scalar(isa::VectorScalarOp op, isa::Emitter& e,
+                        const ast::Instruction& i) {
+    e.vectorScalarArith(op, i.operands[1].asRegIdx(), i.operands[3].asRegIdx(),
+                        i.operands[2].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
+}
+
 void emit_flushcache(isa::CacheControlOp op, isa::Emitter& e,
                      const ast::Instruction& i) {
     e.flushcache(op);
@@ -87,6 +100,25 @@ static const std::map<
              e.scalarArithmeticNot(i.operands[0].asRegIdx(),
                                    i.operands[1].asRegIdx());
          }},
+
+        {"vadd", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Add)},
+        {"vsub", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Sub)},
+        {"vmul", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Mul)},
+        {"vdiv", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Div)},
+        {"vmax", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Max)},
+        {"vmin", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Min)},
+
+        {"vsadd", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Add)},
+        {"vssub", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Sub)},
+        {"vsmul", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Mul)},
+        {"vsdiv", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Div)},
+
+        {"vidx", [](isa::Emitter& e, const ast::Instruction& i) {
+            e.vidx(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asBitsImm<vlaneidx_t::size>());
+        }},
+        {"vsplat", [](isa::Emitter& e, const ast::Instruction& i) {
+            e.vsplat(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
+        }},
 
         {"rcsr",
          [](auto& e, const ast::Instruction& i) {

@@ -27,6 +27,13 @@
                 OperandType::VectorRegister, OperandType::VectorRegister       \
         }                                                                      \
     }
+#define MVVR(id)                                                               \
+    {                                                                          \
+        id, {                                                                  \
+            OperandType::VectorMask, OperandType::VectorRegister,              \
+                OperandType::VectorRegister, OperandType::ScalarRegister       \
+        }                                                                      \
+    }
 
 // clang-format off
 static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANTICS = {
@@ -79,7 +86,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     RRR("xor"),
     RRR("shr"),
     RRR("shl"),
-    RRR("not"),
+    {"not", {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
     {"cmp",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
@@ -89,6 +96,14 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     MVVV("vdiv"),
     MVVV("vmax"),
     MVVV("vmin"),
+
+    MVVR("vsadd"),
+    MVVR("vssub"),
+    MVVR("vsmul"),
+    MVVR("vsdiv"),
+
+    {"vidx", {OperandType::ScalarRegister, OperandType::VectorRegister, OperandType::Immediate}}, // todo
+    {"vsplat", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::ScalarRegister}},
 
     {"rcsr", {OperandType::ScalarRegister, OperandType::Immediate}},
     {"wcsr", {OperandType::Immediate,      OperandType::ScalarRegister}},
@@ -150,6 +165,7 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
                           fmt::format("operand {} to instruction `{}` has "
                                       "wrong type; expected vector mask",
                                       i, inst.mnemonic.getLexeme()));
+                    break;
                 }
                 auto val = operand.get<ast::OperandImmediate>().val;
                 if (val < 0 || val > 0b1111) {
