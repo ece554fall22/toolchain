@@ -293,36 +293,73 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     }
 
     void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->vectorRegInput(cpu, "vA", vA);
+        tracer->vectorRegInput(cpu, "vB", vB);
+
         instructions::vdot(cpu, mem, rD, vA, vB);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->vectorRegInput(cpu, "vA", vA);
+        tracer->vectorRegInput(cpu, "vB", vB);
+
         instructions::vdota(cpu, mem, rD, rA, vA, vB);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void vidx(reg_idx rD, vreg_idx vA, vlaneidx_t imm) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->vectorRegInput(cpu, "vA", vA);
+        tracer->immInput(imm.raw());
+
         instructions::vidx(cpu, mem, rD, vA, imm);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void vreduce(reg_idx rD, vreg_idx vA, vmask_t mask) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->vectorRegInput(cpu, "vA", vA);
         tracer->vectorMask(mask);
+
         instructions::vreduce(cpu, mem, rD, vA, mask);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->scalarRegInput(cpu, "rA", rA);
         tracer->vectorMask(mask);
         instructions::vsplat(cpu, mem, vD, rA, mask);
+
+        tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
     void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
                   vlaneidx_t i2, vlaneidx_t i3, vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->vectorRegInput(cpu, "vA", vA);
         tracer->vectorMask(mask);
+
         instructions::vswizzle(cpu, mem, vD, vA, i0, i1, i2, i3, mask);
+
+        tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
     void vectorScalarArithmetic(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
                                 vreg_idx vB, vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->vectorRegInput(cpu, "vB", vB);
         tracer->vectorMask(mask);
+
         switch (op) {
         case isa::VectorScalarOp::Add:
             instructions::vsadd(cpu, mem, vD, rA, vB, mask);
@@ -337,12 +374,21 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
             instructions::vsdiv(cpu, mem, vD, rA, vB, mask);
             break;
         }
+
+        tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
     void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB,
               vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->vectorRegInput(cpu, "vA", vA);
+        tracer->vectorRegInput(cpu, "vB", vB);
         tracer->vectorMask(mask);
+
         instructions::vsma(cpu, mem, vD, rA, vA, vB, mask);
+
+        tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
     void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
@@ -358,8 +404,15 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vA,
                vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+        tracer->vectorRegInput(cpu, "vA", vA);
         tracer->vectorMask(mask);
+
         instructions::vcomp(cpu, mem, vD, rA, rB, vA, mask);
+
+        tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
     void flushdirty() override { mem.flushDCacheDirty(); }
