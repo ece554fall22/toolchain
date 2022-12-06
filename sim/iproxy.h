@@ -243,12 +243,53 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
+    // -- float<->int conversions
+    void ftoi(reg_idx rD, reg_idx rA) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+
+        instructions::ftoi(cpu, mem, rD, rA);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
+    }
+
+    void itof(reg_idx rD, reg_idx rA) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+
+        instructions::itof(cpu, mem, rD, rA);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
+    }
+
     void cmp(reg_idx rA, reg_idx rB) override {
         tracer->scalarRegInput(cpu, "rA", rA);
         tracer->scalarRegInput(cpu, "rB", rB);
 
         instructions::cmp(cpu, mem, rA, rB);
 
+        tracer->flagsWriteback(cpu.f);
+    }
+
+    void cmpdec(reg_idx rD, reg_idx rA, reg_idx rB) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+
+        instructions::cmpdec(cpu, mem, rD, rA, rB);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
+        tracer->flagsWriteback(cpu.f);
+    }
+
+    void cmpinc(reg_idx rD, reg_idx rA, reg_idx rB) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+
+        instructions::cmpinc(cpu, mem, rD, rA, rB);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
         tracer->flagsWriteback(cpu.f);
     }
 
@@ -391,17 +432,6 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
-    void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
-                     vreg_idx vB) override {
-        unimplemented();
-    }
-
-    void matmul() override { unimplemented(); }
-
-    void systolicstep() override { unimplemented(); }
-
-    void readC(vreg_idx vD, s<3> idx, bool high) override { unimplemented(); }
-
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vA,
                vmask_t mask) override {
         tracer->vectorRegInput(cpu, "vD", vD);
@@ -415,6 +445,19 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
+    // -- systolic matrix stuff
+    void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
+                     vreg_idx vB) override {
+        unimplemented();
+    }
+
+    void matmul() override { unimplemented(); }
+
+    void systolicstep() override { unimplemented(); }
+
+    void readC(vreg_idx vD, s<3> idx, bool high) override { unimplemented(); }
+
+    // -- cache control
     void flushdirty() override { mem.flushDCacheDirty(); }
 
     void flushclean() override { mem.flushDCacheClean(); }
@@ -425,39 +468,13 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         mem.flushDCacheLine(cpu.r[rA] + imm._sgn_inner());
     }
 
+    // -- atomics
     void fa(reg_idx rD, reg_idx rA, s<15> imm) override { unimplemented(); }
 
     void cmpx(reg_idx rD, reg_idx rA, s<15> imm) override { unimplemented(); }
 
-    void ftoi(reg_idx rD, reg_idx rA) override {
-        tracer->scalarRegInput(cpu, "rD", rD);
-        tracer->scalarRegInput(cpu, "rA", rA);
-
-        instructions::ftoi(cpu, mem, rD, rA);
-
-        tracer->scalarRegOutput(cpu, "rD", rD);
-    }
-
-    void itof(reg_idx rD, reg_idx rA) override {
-        tracer->scalarRegInput(cpu, "rD", rD);
-        tracer->scalarRegInput(cpu, "rA", rA);
-
-        instructions::itof(cpu, mem, rD, rA);
-
-        tracer->scalarRegOutput(cpu, "rD", rD);
-    }
-
     void wcsr(s<2> csr, reg_idx rA) override { unimplemented(); }
-
     void rcsr(s<2> csr, reg_idx rA) override { unimplemented(); }
-
-    void cmpdec(reg_idx rD, reg_idx rA, reg_idx rB) override {
-        unimplemented();
-    }
-
-    void cmpinc(reg_idx rD, reg_idx rA, reg_idx rB) override {
-        unimplemented();
-    }
 
   private:
     CPUState& cpu;

@@ -133,6 +133,17 @@ void cmp(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB) {
                      (!valA.sign() && !valB.sign() && res.sign());
 }
 
+// can just view this like it's microcoded lol
+void cmpdec(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cmp(cpu, mem, rD, rA);
+    sub(cpu, mem, rD, rD, rB);
+}
+
+void cmpinc(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
+    cmp(cpu, mem, rD, rA);
+    add(cpu, mem, rD, rD, rB);
+}
+
 void not_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA) {
     cpu.r[rD] = ~cpu.r[rD];
 }
