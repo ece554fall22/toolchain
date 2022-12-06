@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include <morph/bit_cast.h>
 #include <morph/ty.h>
 #include <morph/util.h>
 #include <morph/varint.h>
@@ -10,23 +11,29 @@ void MemSystem::flushDCacheClean() {}
 void MemSystem::flushDCacheLine(uint64_t at) {}
 
 void MemSystem::write(uint64_t addr, u<32> val) {
-    //    tracer->memWrite(addr, val);
-    std::cout << "M[" << addr << "]/32 = " << val << "\n";
+    _check_addr(addr, 32);
+
+    //    std::cout << "M[" << addr << "]/32 = " << val << "\n";
+    this->mempool[addr / 4] = val.raw();
 }
 
 void MemSystem::write(uint64_t addr, u<36> val) {
-    //    tracer->memWrite(addr, val);
-    std::cout << "M[" << addr << "]/36 = " << val << "\n";
+    _check_addr(addr, 64);
+
+    //    std::cout << "M[" << addr << "]/36 = " << val << "\n";
+
+    this->mempool[0 + addr / 4] = val.slice<31, 0>().raw();
+    this->mempool[1 + addr / 4] = val.slice<35, 32>().raw();
 }
 
-// void MemSystem::write(uint64_t addr, u<64> val) {
-//     tracer->memWrite(addr, val);
-//     std::cout << "M[" << addr << "] = " << val << "\n";
-// }
-
 void MemSystem::write(uint64_t addr, f32x4 val) {
-    //    tracer->memWrite(addr, val);
-    std::cout << "M[" << addr << "] = " << val << "\n";
+    _check_addr(addr, 128);
+
+    size_t base = addr / 4;
+    this->mempool[base + 0] = bit_cast<uint32_t>(val.x());
+    this->mempool[base + 1] = bit_cast<uint32_t>(val.y());
+    this->mempool[base + 2] = bit_cast<uint32_t>(val.z());
+    this->mempool[base + 3] = bit_cast<uint32_t>(val.w());
 }
 
 auto MemSystem::read32(uint64_t addr) -> uint32_t {
@@ -47,6 +54,20 @@ auto MemSystem::read36(uint64_t addr) -> uint64_t {
     //    tracer->memRead36(addr, val);
 
     return val;
+}
+
+auto MemSystem::readVec(uint64_t addr) -> f32x4 {
+    _check_addr(addr, 128);
+
+    size_t base = addr / 4;
+    f32x4 vec{
+        bit_cast<float>(this->mempool[base + 0]),
+        bit_cast<float>(this->mempool[base + 1]),
+        bit_cast<float>(this->mempool[base + 2]),
+        bit_cast<float>(this->mempool[base + 3]),
+    };
+
+    return vec;
 }
 
 auto MemSystem::readInstruction(uint64_t addr) -> uint32_t {

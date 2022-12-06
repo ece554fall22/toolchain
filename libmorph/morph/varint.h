@@ -141,7 +141,7 @@ template <size_t N> struct u : public bits<N> {
     auto asSigned() const noexcept -> s<N> { return s<N>(*this); }
 
     /// addition of integer constants
-    u<N>& operator+=(int rhs) {
+    u<N>& operator+=(int64_t rhs) {
         this->inner += rhs;
         return *this;
     }

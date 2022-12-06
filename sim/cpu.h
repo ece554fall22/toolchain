@@ -19,6 +19,7 @@ struct MemSystem {
 
     auto read32(uint64_t addr) -> uint32_t;
     auto read36(uint64_t addr) -> uint64_t;
+    auto readVec(uint64_t addr) -> f32x4;
 
     auto readInstruction(uint64_t addr) -> uint32_t;
 

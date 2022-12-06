@@ -304,13 +304,13 @@ void vcomp(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
 // -- scalar memory instructions
 void ld32(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
-    auto val = mem.read32(addr.inner);
+    auto val = mem.read32(addr.raw());
     cpu.r[rD].inner = val;
 }
 
 void ld36(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, s<15> imm) {
     u<36> addr = cpu.r[rA] + imm;
-    auto val = mem.read36(addr.inner);
+    auto val = mem.read36(addr.raw());
     cpu.r[rD].inner = val;
 }
 
