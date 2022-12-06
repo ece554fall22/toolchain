@@ -62,7 +62,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     // BI
     void branchimm(condition_t cond, s<22> imm) override {
-        tracer->condcode(cond);
+        tracer->branchCondcode(cond);
         tracer->immInput(imm.inner);
 
         switch (cond) { FORALL_CONDS(i, imm) }
@@ -71,7 +71,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     void branchreg(condition_t cond, reg_idx rA, s<17> imm) override {
         tracer->scalarRegInput(cpu, "rA", rA);
         tracer->immInput(imm.inner);
-        tracer->condcode(cond);
+        tracer->branchCondcode(cond);
 
         switch (cond) { FORALL_CONDS(r, rA, imm) }
     }
@@ -82,7 +82,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
         instructions::lil(cpu, mem, rD, imm);
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
     void lih(reg_idx rD, s<18> imm) override {
         tracer->scalarRegInput(cpu, "rD", rD);
@@ -90,7 +90,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
         instructions::lih(cpu, mem, rD, imm);
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void ld(reg_idx rD, reg_idx rA, s<15> imm, bool b36) override {
@@ -103,7 +103,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         else
             instructions::ld32(cpu, mem, rD, rA, imm);
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void st(reg_idx rA, reg_idx rB, s<15> imm, bool b36) override {
@@ -152,7 +152,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
             panic("invalid op for immediate");
         }
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void scalarArithmeticImmediate(reg_idx rD, reg_idx rA, s<15> imm,
@@ -187,7 +187,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
             panic("invalid op for immediate");
         }
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void arithmeticNot(reg_idx rD, reg_idx rA) override {
@@ -196,26 +196,32 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
         instructions::not_(cpu, mem, rD, rA);
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void vldi(vreg_idx vD, reg_idx rA, s<11> imm, vmask_t mask) override {
+        tracer->vectorMask(mask);
         unimplemented();
     }
 
     void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) override {
+        tracer->vectorMask(mask);
         unimplemented();
     }
 
     void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) override {
+        tracer->vectorMask(mask);
         unimplemented();
     }
 
     void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, vmask_t mask) override {
+        tracer->vectorMask(mask);
         unimplemented();
     }
 
-    void cmpI(reg_idx rA, s<20> imm) override { instructions::cmpi(cpu, mem, rA, imm); }
+    void cmpI(reg_idx rA, s<20> imm) override {
+        instructions::cmpi(cpu, mem, rA, imm);
+    }
 
     void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
                          isa::FloatArithmeticOp op) override {
@@ -238,7 +244,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
             break;
         }
 
-        tracer->writebackScalarReg(cpu, "rD", rD);
+        tracer->scalarRegOutput(cpu, "rD", rD);
     }
 
     void cmp(reg_idx rA, reg_idx rB) override {
@@ -247,6 +253,11 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     void vectorArithmetic(isa::LanewiseVectorOp op, vreg_idx vD, vreg_idx vA,
                           vreg_idx vB, vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->vectorRegInput(cpu, "vA", vA);
+        tracer->vectorRegInput(cpu, "vB", vB);
+        tracer->vectorMask(mask);
+
         switch (op) {
         case isa::LanewiseVectorOp::Add:
             instructions::vadd(cpu, mem, vD, vA, vB, mask);
@@ -267,6 +278,8 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
             instructions::vmax(cpu, mem, vD, vA, vB, mask);
             break;
         }
+
+        tracer->vectorRegOutput(cpu, "vD", vD);
     }
 
     void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) override {
@@ -282,20 +295,24 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     }
 
     void vreduce(reg_idx rD, vreg_idx vA, vmask_t mask) override {
+        tracer->vectorMask(mask);
         instructions::vreduce(cpu, mem, rD, vA, mask);
     }
 
     void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask) override {
+        tracer->vectorMask(mask);
         instructions::vsplat(cpu, mem, vD, rA, mask);
     }
 
     void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
                   vlaneidx_t i2, vlaneidx_t i3, vmask_t mask) override {
+        tracer->vectorMask(mask);
         instructions::vswizzle(cpu, mem, vD, vA, i0, i1, i2, i3, mask);
     }
 
     void vectorScalarArithmetic(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
                                 vreg_idx vB, vmask_t mask) override {
+        tracer->vectorMask(mask);
         switch (op) {
         case isa::VectorScalarOp::Add:
             instructions::vsadd(cpu, mem, vD, rA, vB, mask);
@@ -314,6 +331,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     void vsma(vreg_idx vD, reg_idx rA, vreg_idx vA, vreg_idx vB,
               vmask_t mask) override {
+        tracer->vectorMask(mask);
         instructions::vsma(cpu, mem, vD, rA, vA, vB, mask);
     }
 
@@ -330,6 +348,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vA,
                vmask_t mask) override {
+        tracer->vectorMask(mask);
         instructions::vcomp(cpu, mem, vD, rA, rB, vA, mask);
     }
 

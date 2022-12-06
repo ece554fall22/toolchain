@@ -64,7 +64,7 @@ struct f32x4 {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const f32x4& v) {
-    fmt::print(os, "({}, {}, {}, {})", v.x(), v.y(), v.z(), v.w());
+    fmt::print(os, "({},{},{},{})", v.x(), v.y(), v.z(), v.w());
     return os;
 }
 template <> struct fmt::formatter<f32x4> : ostream_formatter {};

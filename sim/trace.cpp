@@ -11,6 +11,9 @@ std::ostream& operator<<(std::ostream& os, const InstructionTrace& trace) {
         os << " " << s;
     os << '\n';
 
+    if (trace.vectorMask)
+        fmt::print(os, "    vector_mask: {:#b}\n", trace.vectorMask->raw());
+
     if (trace.condcode)
         os << "    branch_condition_code: " << *trace.condcode << '\n';
 
@@ -18,7 +21,7 @@ std::ostream& operator<<(std::ostream& os, const InstructionTrace& trace) {
         os << "    scalar_writeback: " << *trace.scalarRegOutput << '\n';
 
     if (trace.vectorRegOutput)
-        os << "    scalar_writeback: " << *trace.vectorRegOutput << '\n';
+        os << "    vector_writeback: " << *trace.vectorRegOutput << '\n';
 
     os << "    asm: ";
     isa::PrintVisitor printvis(os);
