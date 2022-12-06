@@ -28,6 +28,8 @@ struct Tracer {
     virtual void immInput(int64_t imm) = 0;
     virtual void vectorMask(vmask_t mask) = 0;
     virtual void branchCondcode(condition_t cond) = 0;
+    virtual void swizzleInput(vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2,
+                              vlaneidx_t i3) = 0;
 
     virtual void scalarRegInput(CPUState& cpu, const char* name, reg_idx r) = 0;
     virtual void vectorRegInput(CPUState& cpu, const char* name,
@@ -59,6 +61,8 @@ struct NullTracer : public Tracer {
     void vectorMask(vmask_t mask) override {}
     void immInput(int64_t imm) override {}
     void branchCondcode(condition_t cond) override {}
+    void swizzleInput(vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2,
+                      vlaneidx_t i3) override {}
 
     void scalarRegInput(CPUState& cpu, const char* name, reg_idx r) override {}
     void vectorRegInput(CPUState& cpu, const char* name, vreg_idx r) override {}
@@ -131,6 +135,12 @@ struct FileTracer : public Tracer {
     }
     void vectorMask(vmask_t mask) override { itrace.vectorMask = mask; }
     void branchCondcode(condition_t cond) override { itrace.condcode = cond; }
+    void swizzleInput(vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2,
+                      vlaneidx_t i3) override {
+        itrace.inputs.push_back(fmt::format("i0={}, i1={}, i2={}, i3={}",
+                                            i0.raw(), i1.raw(), i2.raw(),
+                                            i3.raw()));
+    }
 
     // -- reg inputs
     void scalarRegInput(CPUState& cpu, const char* name,

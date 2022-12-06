@@ -427,6 +427,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
                   vlaneidx_t i2, vlaneidx_t i3, vmask_t mask) override {
         tracer->vectorRegInput(cpu, "vD", vD);
         tracer->vectorRegInput(cpu, "vA", vA);
+        tracer->swizzleInput(i0, i1, i2, i3);
         tracer->vectorMask(mask);
 
         instructions::vswizzle(cpu, mem, vD, vA, i0, i1, i2, i3, mask);
