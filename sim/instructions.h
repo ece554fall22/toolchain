@@ -344,21 +344,23 @@ void vldi(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, s<11> imm,
 
 // JMP
 void jmp(CPUState& cpu, MemSystem& mem, s<25> imm) {
-    cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(true);
 }
 
 void jal(CPUState& cpu, MemSystem& mem, s<25> imm) {
-    cpu.r[31] = cpu.pc.peekNotTaken();        // link
-    cpu.pc.addToNextPC(imm._sgn_inner() * 4); // and jump
+    cpu.r[31] = cpu.pc.peekNotTaken();         // link
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4); // and jump
+    cpu.pc.setTaken(true);
 }
 
 void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
+    cpu.pc.setTakenPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.peekNotTaken();                        // link
-    cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
+    cpu.r[31] = cpu.pc.peekNotTaken();                         // link
+    cpu.pc.setTakenPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
 /************************************************************************/
@@ -367,76 +369,76 @@ void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
 
 // BNZR
 void bnzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
-    if (!cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rA].inner + imm._sgn_inner());
+    cpu.pc.setTakenPC(cpu.r[rA].inner + imm._sgn_inner());
+    cpu.pc.setTaken(!cpu.f.zero);
 }
 
 // BEZR
 void bezr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
-    if (cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rA] + imm);
+    cpu.pc.setTakenPC(cpu.r[rA] + imm);
+    cpu.pc.setTaken(cpu.f.zero);
 }
 
 // BLZR
 void blzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
-    if (cpu.f.sign)
-        cpu.pc.setNextPC(cpu.r[rA] + imm);
+    cpu.pc.setTakenPC(cpu.r[rA] + imm);
+    cpu.pc.setTaken(cpu.f.sign);
 }
 
 // BGZR
 void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
-    if (!cpu.f.sign)
-        cpu.pc.setNextPC(cpu.r[rA] + imm);
+    cpu.pc.setTakenPC(cpu.r[rA] + imm);
+    cpu.pc.setTaken(!cpu.f.sign);
 }
 
 // BLER
 void bler(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
-    if (cpu.f.sign | cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rA] + imm);
+    cpu.pc.setTakenPC(cpu.r[rA] + imm);
+    cpu.pc.setTaken(cpu.f.sign | cpu.f.zero);
 }
 
 // BGER
 void bger(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
-    if (!cpu.f.sign | cpu.f.zero)
-        cpu.pc.setNextPC(cpu.r[rA] + imm);
+    cpu.pc.setTakenPC(cpu.r[rA] + imm);
+    cpu.pc.setTaken(!cpu.f.sign | cpu.f.zero);
 }
 
 /** Relative to current PC */
 
 // BNZI
 void bnzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
-    if (!cpu.f.zero)
-        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(!cpu.f.zero);
 }
 
 // BEZI
 void bezi(CPUState& cpu, MemSystem& mem, s<22> imm) {
-    if (cpu.f.zero)
-        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(cpu.f.zero);
 }
 
 // BLZI
 void blzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
-    if (cpu.f.sign)
-        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(cpu.f.sign);
 }
 
 // BGZI
 void bgzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
-    if (!cpu.f.sign)
-        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(!cpu.f.sign);
 }
 
 // BLEI
 void blei(CPUState& cpu, MemSystem& mem, s<22> imm) {
-    if (cpu.f.sign || cpu.f.zero)
-        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(cpu.f.sign || cpu.f.zero);
 }
 
 // BGEI
 void bgei(CPUState& cpu, MemSystem& mem, s<22> imm) {
-    if (!cpu.f.sign || cpu.f.zero)
-        cpu.pc.addToNextPC(imm._sgn_inner() * 4);
+    cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
+    cpu.pc.setTaken(!cpu.f.sign || cpu.f.zero);
 }
 
 // -- specials: cache control

@@ -169,7 +169,7 @@ struct FileTracer : public Tracer {
     void controlFlow(PC& pc) override {
         itrace.controlFlow = fmt::format(
             "taken={} taken_addr={:#x} not_taken_addr={:#x}",
-            pc.wasTaken() ? 1 : 0, pc.peekNextPC(), pc.peekNotTaken());
+            pc.wasTaken() ? 1 : 0, pc.peekTaken(), pc.peekNotTaken());
     }
 
     // -- memory transactions

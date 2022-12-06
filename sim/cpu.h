@@ -78,36 +78,41 @@ inline std::ostream& operator<<(std::ostream& os, const ConditionFlags& f) {
 }
 
 struct PC {
-    PC() : current{0}, next{0}, notTaken{0} {}
+    PC() : current{0}, taken{false}, aNotTaken{0}, aTaken{0} {}
 
     void reset() {
         current = 0;
-        next = 0;
-        notTaken = 0;
+        aNotTaken = 0;
+        aTaken = 0;
+        taken = false;
     }
 
-    void addToNextPC(int64_t offs) { next += offs; }
-
-    void setNextPC(int64_t pc) { next = pc; }
+    void addToTakenPC(int64_t offs) { aTaken += offs; }
+    void setTakenPC(int64_t a) { aTaken = a; }
+    void setTaken(bool v) { taken = v; }
 
     auto getNewPC() -> uint64_t {
-        current = next;
-        next = current + 4;
-        notTaken = next;
+        current = taken ? aTaken : aNotTaken;
+        aNotTaken = current + 4;
+        aTaken = aNotTaken; // unless jumping/branching :)
+        taken = false;
+
         return current;
     }
 
     [[nodiscard]] auto getCurrentPC() const -> uint64_t { return current; }
 
-    [[nodiscard]] auto peekNotTaken() const -> uint64_t { return notTaken; }
-    [[nodiscard]] auto peekNextPC() const -> uint64_t { return next; }
-    // little bit of a hack but. shrug
-    [[nodiscard]] auto wasTaken() const -> bool { return notTaken != next; }
+    [[nodiscard]] auto peekNotTaken() const -> uint64_t { return aNotTaken; }
+    [[nodiscard]] auto peekTaken() const -> uint64_t { return aTaken; }
+    [[nodiscard]] auto wasTaken() const -> uint64_t { return taken; }
 
   private:
     uint64_t current;
-    uint64_t next;
-    uint64_t notTaken; // basic block accounting for traces
+
+    bool taken;
+
+    uint64_t aNotTaken;
+    uint64_t aTaken;
 };
 
 struct CPUState {
