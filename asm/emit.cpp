@@ -76,7 +76,7 @@ static const std::map<std::string,
                       std::less<>>
     INSTRUCTION_EMITTERS = {
         {"nop", EMIT_NOARGS(nop)},
-        {"halt", EMIT_NOARGS(nop)},
+        {"halt", EMIT_NOARGS(halt)},
 
         {"bkpt",
          [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
