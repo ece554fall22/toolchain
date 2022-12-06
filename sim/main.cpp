@@ -98,11 +98,23 @@ int main(int argc, char* argv[]) {
                 size_t cpu_idx = std::stoi(cpukey);
                 assert(cpu_idx == 0 && "lol one cpu"); // todo
 
+                if (cpudata.contains("r")) {
+                    auto regvals = cpudata["r"];
+                    assert(regvals.is_array() && "cpu/{n}/r must be array");
+                    assert(regvals.size() == 32 &&
+                           "cpu/{n}/r must be 32 el long");
+                    size_t reg_idx = 0;
+                    for (auto& regval : regvals) {
+                        cpuState.r[reg_idx] = regval.get<int64_t>();
+                        reg_idx++;
+                    }
+                }
+
                 if (cpudata.contains("v")) {
                     auto vecvals = cpudata["v"];
-                    assert(vecvals.is_array() && "cpu/n/v must be array");
+                    assert(vecvals.is_array() && "cpu/{n}/v must be array");
                     assert(vecvals.size() == 32 &&
-                           "cpu/n/v must be 32 el long");
+                           "cpu/{n}/v must be 32 el long");
                     size_t reg_idx = 0;
                     for (auto& vec : vecvals) {
                         for (size_t lane = 0; lane < N_LANES; lane++) {

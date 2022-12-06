@@ -1,5 +1,3 @@
-// TODO(erin): replace all this manual bit twiddling
-
 #include "morph/decoder.h"
 
 using isa::InstructionVisitor;
@@ -245,7 +243,6 @@ void isa::decodeInstruction(InstructionVisitor& visit, bits<32> instr) {
         return decodeBkpt(visit, instr);
 
     default:
-        // TODO: proper except or something
         unimplemented();
         return;
     }

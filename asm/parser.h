@@ -45,8 +45,6 @@ class Parser {
     // -- error handling
     void error(const std::string& err) {
         // TODO: this is just a temporary hack
-        // std::cerr << "parse error near line " << curr().getSrcLoc()->lineno
-        //           << ": " << err << '\n';
         fmt::print(fmt::fg(fmt::color::red), "parse error near line {}: {}\n",
                    curr().getSrcLoc()->lineno, err);
         std::exit(1);

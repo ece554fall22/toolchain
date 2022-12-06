@@ -113,7 +113,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     MVVR("vsmul"),
     MVVR("vsdiv"),
 
-    {"vidx", {OperandType::ScalarRegister, OperandType::VectorRegister, OperandType::Immediate}}, // todo
+    {"vidx", {OperandType::ScalarRegister, OperandType::VectorRegister, OperandType::Immediate}},
     {"vsplat", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::ScalarRegister}},
 
     {"rcsr", {OperandType::ScalarRegister, OperandType::Immediate}},
