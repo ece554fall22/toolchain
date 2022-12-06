@@ -193,6 +193,19 @@ static const std::map<std::string,
                                    i.operands[1].asRegIdx());
          }},
 
+        {"cmp",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             e.compareReg(i.operands[0].asRegIdx(), i.operands[1].asRegIdx());
+         }},
+
+        {"cmpi",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             e.compareImm(i.operands[0].asRegIdx(),
+                          i.operands[1].asSignedImm<20>());
+         }},
+
         {"vadd", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Add)},
         {"vsub", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Sub)},
         {"vmul", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Mul)},
