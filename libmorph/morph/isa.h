@@ -166,7 +166,7 @@ inline std::ostream& operator<<(std::ostream& os,
         os << "fsub";
         break;
     case FloatArithmeticOp::Fmul:
-        os << "fmult";
+        os << "fmul";
         break;
     case FloatArithmeticOp::Fdiv:
         os << "fdiv";

@@ -90,6 +90,11 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
 
     {"cmp",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
+    RRR("fadd"),
+    RRR("fsub"),
+    RRR("fmul"),
+    RRR("fdiv"),
+
     MVVV("vadd"),
     MVVV("vsub"),
     MVVV("vmul"),

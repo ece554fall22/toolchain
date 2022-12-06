@@ -62,6 +62,12 @@ void emit_br(condition_t cond, isa::Emitter& e,
                 i.operands[1].asSignedImm<17>());
 }
 
+void emit_scalar_float(isa::FloatArithmeticOp op, isa::Emitter& e,
+                       const SymbolTable& symtab, const ast::Instruction& i) {
+    e.floatArithmetic(op, i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
+                      i.operands[2].asRegIdx());
+}
+
 // todo this is just fucked up std::bind but with a defined retn ty
 #define PARTIAL(fn, ...)                                                       \
     [](auto& e, const SymbolTable& st, const auto& i) {                        \
@@ -205,6 +211,11 @@ static const std::map<std::string,
              e.compareImm(i.operands[0].asRegIdx(),
                           i.operands[1].asSignedImm<20>());
          }},
+
+        {"fadd", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fadd)},
+        {"fsub", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fsub)},
+        {"fmul", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fmul)},
+        {"fdiv", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fdiv)},
 
         {"vadd", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Add)},
         {"vsub", PARTIAL(emit_vector_lanewise, isa::LanewiseVectorOp::Sub)},
