@@ -214,12 +214,12 @@ struct PrintVisitor : public InstructionVisitor {
 
     void vldi(vreg_idx vD, reg_idx rA, s<11> imm, vmask_t mask) override {
         fmt::print(os, "vldi {:#b}, v{}, [r{}+={:#x}]", mask.inner, vD.inner,
-                   rA.inner, imm.inner);
+                   rA.inner, imm._sgn_inner() * 0x10);
     }
 
     void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) override {
         fmt::print(os, "vldi {:#b}, [r{}+={:#x}], v{}", mask.inner, rA.inner,
-                   imm.inner, vB.inner);
+                   imm._sgn_inner() * 0x10, vB.inner);
     }
 
     void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) override {

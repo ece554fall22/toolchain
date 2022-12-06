@@ -200,10 +200,13 @@ static const std::map<std::string,
              auto memOp = i.operands[2].get<ast::OperandMemoryPostIncr>();
              assert(!memOp.base.vector); // TODO
 
-             e.loadVectorImmStride(
-                 i.operands[1].asRegIdx(), memOp.base.idx,
-                 std::get<ast::OperandImmediate>(memOp.increment).val,
-                 i.operands[0].asBitsImm<vmask_t::size>());
+             auto incr = std::get<ast::OperandImmediate>(memOp.increment);
+             assert((incr.val % 0x10) == 0 &&
+                    "vector memory immediate increment must be 0x10-aligned");
+
+             e.loadVectorImmStride(i.operands[1].asRegIdx(), memOp.base.idx,
+                                   incr.val / 0x10,
+                                   i.operands[0].asBitsImm<vmask_t::size>());
          }},
 
         {"addi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Add)},
