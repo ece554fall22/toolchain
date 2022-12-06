@@ -160,20 +160,38 @@ static const std::map<std::string,
          [](isa::Emitter& e, const SymbolTable& symtab,
             const ast::Instruction& i) {
              auto memOp = i.operands[1].get<ast::OperandMemory>();
-             assert(!memOp.increment); // TODO!
+             assert(!memOp.base.vector); // TODO
 
              e.loadScalar(false, i.operands[0].asRegIdx(), memOp.base.idx,
                           memOp.offset);
          }},
-
         {"ld36",
          [](isa::Emitter& e, const SymbolTable& symtab,
             const ast::Instruction& i) {
              auto memOp = i.operands[1].get<ast::OperandMemory>();
-             assert(!memOp.increment); // TODO!
+             assert(!memOp.base.vector); // TODO
 
              e.loadScalar(true, i.operands[0].asRegIdx(), memOp.base.idx,
                           memOp.offset);
+         }},
+
+        {"st32",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto memOp = i.operands[0].get<ast::OperandMemory>();
+             assert(!memOp.base.vector); // TODO
+
+             e.storeScalar(false, memOp.base.idx, i.operands[1].asRegIdx(),
+                           memOp.offset);
+         }},
+        {"st36",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto memOp = i.operands[0].get<ast::OperandMemory>();
+             assert(!memOp.base.vector); // TODO
+
+             e.storeScalar(true, memOp.base.idx, i.operands[1].asRegIdx(),
+                           memOp.offset);
          }},
 
         {"addi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Add)},
