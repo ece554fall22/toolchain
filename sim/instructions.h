@@ -332,9 +332,19 @@ void vldi(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, s<11> imm,
     u<36> addr = cpu.r[rA];
 
     auto val = mem.readVec(addr.raw());
-    cpu.v[rA] = val;
+    cpu.v[vD] = val;
 
-    addr += imm._sgn_inner() * 4; // in vector increments
+    addr += imm._sgn_inner() * 0x10; // in vector increments
+    cpu.r[rA] = addr;
+}
+
+void vsti(CPUState& cpu, MemSystem& mem, reg_idx rA, s<11> imm, vreg_idx vB,
+          vmask_t mask) {
+    u<36> addr = cpu.r[rA];
+
+    mem.write(addr.raw(), cpu.v[vB]);
+
+    addr += imm._sgn_inner() * 0x10; // in vector increments
     cpu.r[rA] = addr;
 }
 

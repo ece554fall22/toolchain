@@ -224,11 +224,19 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         instructions::vldi(cpu, mem, vD, rA, imm, mask);
 
         // TODO TRACE MEMORY LOL
+        tracer->scalarRegOutput(cpu, "rA", rA);
     }
 
     void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->vectorRegInput(cpu, "vB", vB);
+        tracer->immInput(imm._sgn_inner());
         tracer->vectorMask(mask);
-        unimplemented();
+
+        instructions::vsti(cpu, mem, rA, imm, vB, mask);
+
+        // TODO TRACE MEMORY LOL
+        tracer->scalarRegOutput(cpu, "rA", rA);
     }
 
     void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) override {
