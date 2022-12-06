@@ -36,6 +36,22 @@ void emit_flushcache(isa::CacheControlOp op, isa::Emitter& e,
     e.flushcache(op);
 }
 
+void emit_scalar_load(bool b36, isa::Emitter& e, const SymbolTable& symtab,
+                      const ast::Instruction& i) {
+    auto memOp = i.operands[1].get<ast::OperandMemory>();
+    assert(!memOp.base.vector); // TODO
+
+    e.loadScalar(b36, i.operands[0].asRegIdx(), memOp.base.idx, memOp.offset);
+}
+
+void emit_scalar_store(bool b36, isa::Emitter& e, const SymbolTable& symtab,
+                       const ast::Instruction& i) {
+    auto memOp = i.operands[0].get<ast::OperandMemory>();
+    assert(!memOp.base.vector); // TODO
+
+    e.storeScalar(b36, memOp.base.idx, i.operands[1].asRegIdx(), memOp.offset);
+}
+
 auto compute_offset(const isa::Emitter& e, const Symbol& symb) -> int64_t {
     int64_t offset = static_cast<int64_t>(symb.addr) - (e.getPC() + 4);
     //            fmt::print("PC={:#x}\n",e.getPC());
@@ -156,43 +172,11 @@ static const std::map<std::string,
                              i.operands[1].asSignedImm<18>());
          }},
 
-        {"ld32",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
-             auto memOp = i.operands[1].get<ast::OperandMemory>();
-             assert(!memOp.base.vector); // TODO
+        {"ld32", PARTIAL(emit_scalar_load, false)},
+        {"ld36", PARTIAL(emit_scalar_load, true)},
 
-             e.loadScalar(false, i.operands[0].asRegIdx(), memOp.base.idx,
-                          memOp.offset);
-         }},
-        {"ld36",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
-             auto memOp = i.operands[1].get<ast::OperandMemory>();
-             assert(!memOp.base.vector); // TODO
-
-             e.loadScalar(true, i.operands[0].asRegIdx(), memOp.base.idx,
-                          memOp.offset);
-         }},
-
-        {"st32",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
-             auto memOp = i.operands[0].get<ast::OperandMemory>();
-             assert(!memOp.base.vector); // TODO
-
-             e.storeScalar(false, memOp.base.idx, i.operands[1].asRegIdx(),
-                           memOp.offset);
-         }},
-        {"st36",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
-             auto memOp = i.operands[0].get<ast::OperandMemory>();
-             assert(!memOp.base.vector); // TODO
-
-             e.storeScalar(true, memOp.base.idx, i.operands[1].asRegIdx(),
-                           memOp.offset);
-         }},
+        {"st32", PARTIAL(emit_scalar_store, false)},
+        {"st36", PARTIAL(emit_scalar_store, true)},
 
         {"vldi",
          [](isa::Emitter& e, const SymbolTable& symtab,
@@ -220,6 +204,32 @@ static const std::map<std::string,
 
              e.storeVectorImmStride(memOp.base.idx, i.operands[2].asRegIdx(),
                                     incr.val / 0x10,
+                                    i.operands[0].asBitsImm<vmask_t::size>());
+         }},
+        {"vldr",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto memOp = i.operands[2].get<ast::OperandMemoryPostIncr>();
+             assert(!memOp.base.vector); // TODO
+
+             auto incr = std::get<ast::OperandRegister>(memOp.increment);
+             assert(!incr.vector); // TODO
+
+             e.loadVectorRegStride(i.operands[1].asRegIdx(), memOp.base.idx,
+                                   incr.idx,
+                                   i.operands[0].asBitsImm<vmask_t::size>());
+         }},
+        {"vstr",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto memOp = i.operands[1].get<ast::OperandMemoryPostIncr>();
+             assert(!memOp.base.vector); // TODO
+
+             auto incr = std::get<ast::OperandRegister>(memOp.increment);
+             assert(!incr.vector); // TODO
+
+             e.storeVectorRegStride(memOp.base.idx, incr.idx,
+                                    i.operands[2].asRegIdx(),
                                     i.operands[0].asBitsImm<vmask_t::size>());
          }},
 

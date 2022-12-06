@@ -323,8 +323,9 @@ auto Parser::operand_memory_postincr()
                     offset.getKind(), offset.getLexeme()));
                 return std::nullopt;
             }
+            next();
 
-            if (next().isNot(Token::Kind::R_SQUARE)) {
+            if (curr().isNot(Token::Kind::R_SQUARE)) {
                 error(fmt::format("memory operand must end with a ], not {}",
                                   curr().getKind()));
                 return std::nullopt;
@@ -337,7 +338,7 @@ auto Parser::operand_memory_postincr()
             };
         } else if (auto offsetReg = operand_register()) {
             // TODO dedupe
-            if (next().isNot(Token::Kind::R_SQUARE)) {
+            if (curr().isNot(Token::Kind::R_SQUARE)) {
                 error(fmt::format("memory operand must end with a ], not {}",
                                   curr().getKind()));
                 return std::nullopt;
