@@ -218,7 +218,7 @@ struct PrintVisitor : public InstructionVisitor {
     }
 
     void vsti(s<11> imm, reg_idx rA, vreg_idx vB, vmask_t mask) override {
-        fmt::print(os, "vldi {:#b}, [r{}+={:#x}], v{}", mask.inner, rA.inner,
+        fmt::print(os, "vsti {:#b}, [r{}+={:#x}], v{}", mask.inner, rA.inner,
                    imm._sgn_inner() * 0x10, vB.inner);
     }
 
@@ -228,7 +228,7 @@ struct PrintVisitor : public InstructionVisitor {
     }
 
     void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, vmask_t mask) override {
-        fmt::print(os, "vldr {:#b}, v{}, [r{}+=r{}]", mask.inner, rA.inner,
+        fmt::print(os, "vstr {:#b}, v{}, [r{}+=r{}]", mask.inner, rA.inner,
                    rB.inner, vA.inner);
     }
 

@@ -208,6 +208,20 @@ static const std::map<std::string,
                                    incr.val / 0x10,
                                    i.operands[0].asBitsImm<vmask_t::size>());
          }},
+        {"vsti",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto memOp = i.operands[1].get<ast::OperandMemoryPostIncr>();
+             assert(!memOp.base.vector); // TODO
+
+             auto incr = std::get<ast::OperandImmediate>(memOp.increment);
+             assert((incr.val % 0x10) == 0 &&
+                    "vector memory immediate increment must be 0x10-aligned");
+
+             e.storeVectorImmStride(memOp.base.idx, i.operands[2].asRegIdx(),
+                                    incr.val / 0x10,
+                                    i.operands[0].asBitsImm<vmask_t::size>());
+         }},
 
         {"addi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Add)},
         {"subi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Sub)},
