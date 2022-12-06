@@ -198,8 +198,7 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
                 }
                 break;
             case OperandType::Memory:
-                if (!operand.is<ast::OperandMemory>() ||
-                    operand.get<ast::OperandMemory>().increment) {
+                if (!operand.is<ast::OperandMemory>()) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
                           fmt::format("operand {} to instruction `{}` has "
                                       "wrong type; expected memory operand",
@@ -207,8 +206,7 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
                 }
                 break;
             case OperandType::VectorMemory:
-                if (!operand.is<ast::OperandMemory>() ||
-                    !operand.get<ast::OperandMemory>().increment) {
+                if (!operand.is<ast::OperandMemoryPostIncr>()) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
                           fmt::format(
                               "operand {} to instruction `{}` has "

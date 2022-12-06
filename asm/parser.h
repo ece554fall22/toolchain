@@ -37,6 +37,7 @@ class Parser {
     auto operand_register() -> std::optional<ast::OperandRegister>;
     auto operand_label() -> std::optional<ast::OperandLabel>;
     auto operand_memory() -> std::optional<ast::OperandMemory>;
+    auto operand_memory_postincr() -> std::optional<ast::OperandMemoryPostIncr>;
 
     auto directive_origin() -> std::unique_ptr<ast::OriginDirective>;
     auto directive_section() -> std::unique_ptr<ast::SectionDirective>;

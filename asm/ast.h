@@ -47,18 +47,30 @@ struct OperandLabel {
 struct OperandMemory {
     OperandRegister base;
     int64_t offset;
-    bool increment;
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const ast::OperandMemory& op) {
-        os << "Ptr { base=" << op.base << ", offset=" << op.offset
-           << ", incr=" << op.increment << " }";
+        os << "Ptr { base=" << op.base << ", offset=" << op.offset << " }";
+        return os;
+    }
+};
+
+struct OperandMemoryPostIncr {
+    OperandRegister base;
+    std::variant<OperandImmediate, OperandRegister> increment;
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ast::OperandMemoryPostIncr& op) {
+        os << "IncrPtr { base=" << op.base << ", increment=";
+        std::visit([&](auto&& x) { os << x; }, op.increment);
+        os << " }";
         return os;
     }
 };
 
 struct Operand {
-    std::variant<OperandImmediate, OperandLabel, OperandRegister, OperandMemory>
+    std::variant<OperandImmediate, OperandLabel, OperandRegister, OperandMemory,
+                 OperandMemoryPostIncr>
         inner;
 
     template <typename T> Operand(T&& ld) : inner(std::move(ld)) {}

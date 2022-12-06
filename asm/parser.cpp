@@ -205,6 +205,8 @@ auto Parser::operand() -> std::optional<ast::Operand> {
         return ast::Operand{ast::OperandImmediate{*val}};
     } else if (auto a = operand_memory()) {
         return ast::Operand{*a};
+    } else if (auto a = operand_memory_postincr()) {
+        return ast::Operand{*a};
     } else {
         return std::nullopt;
     }
@@ -253,6 +255,7 @@ auto Parser::operand_label() -> std::optional<ast::OperandLabel> {
         ::= L_SQUARE identifier PLUS_EQUALS identifier R_SQUARE
 */
 auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
+    size_t rewind_point = cursor;
     if (curr().isNot(Token::Kind::L_SQUARE))
         return std::nullopt;
     next(); // eat [
@@ -265,7 +268,7 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
 
     if (curr().is(Token::Kind::R_SQUARE)) { // early ending!
         next();                             // eat ]
-        return ast::OperandMemory{*base, 0, false};
+        return ast::OperandMemory{*base, 0};
     } else if (curr().is(Token::Kind::PLUS)) { // offset
         auto offset = next();
         if (!offset.isIntegerLiteral()) {
@@ -290,33 +293,67 @@ auto Parser::operand_memory() -> std::optional<ast::OperandMemory> {
 
         next(); // eat ]
 
-        return ast::OperandMemory{*base, *offsetVal, false};
-    } else if (curr().is(Token::Kind::PLUSEQUAL)) { // offset and postincrement
+        return ast::OperandMemory{*base, *offsetVal};
+    } else {
+        // let postincr parse branch handle it
+        cursor = rewind_point;
+        return std::nullopt;
+    }
+}
+
+auto Parser::operand_memory_postincr()
+    -> std::optional<ast::OperandMemoryPostIncr> {
+    if (curr().isNot(Token::Kind::L_SQUARE))
+        return std::nullopt;
+    next(); // eat [
+
+    auto base = operand_register();
+    if (!base) {
+        error("expected a register in memory operand");
+        return std::nullopt;
+    }
+
+    if (curr().is(Token::Kind::PLUSEQUAL)) { // offset and postincrement
         auto offset = next();
-        if (!offset.isIntegerLiteral() &&
-            offset.isNot(Token::Kind::IDENTIFIER)) {
+        if (offset.isIntegerLiteral()) {
+            auto offsetVal = parseIntegerToken(offset);
+            if (!offsetVal) {
+                error(fmt::format(
+                    "can't parse {} (`{}`) as integer literal in memory offset",
+                    offset.getKind(), offset.getLexeme()));
+                return std::nullopt;
+            }
+
+            if (next().isNot(Token::Kind::R_SQUARE)) {
+                error(fmt::format("memory operand must end with a ], not {}",
+                                  curr().getKind()));
+                return std::nullopt;
+            }
+            next(); // eat ]
+
+            return ast::OperandMemoryPostIncr{
+                *base,
+                ast::OperandImmediate{*offsetVal},
+            };
+        } else if (auto offsetReg = operand_register()) {
+            // TODO dedupe
+            if (next().isNot(Token::Kind::R_SQUARE)) {
+                error(fmt::format("memory operand must end with a ], not {}",
+                                  curr().getKind()));
+                return std::nullopt;
+            }
+            next(); // eat ]
+
+            return ast::OperandMemoryPostIncr{
+                *base,
+                *offsetReg,
+            };
+        } else {
             error(fmt::format("offset in memory addressing operand must be an "
                               "integer or register, not {}",
                               curr().getKind()));
             return std::nullopt;
         }
-        auto offsetVal = parseIntegerToken(offset);
-        if (!offsetVal) {
-            error(fmt::format(
-                "can't parse {} (`{}`) as integer literal in memory offset",
-                offset.getKind(), offset.getLexeme()));
-            return std::nullopt;
-        }
-
-        if (next().isNot(Token::Kind::R_SQUARE)) {
-            error(fmt::format("memory operand must end with a ], not {}",
-                              curr().getKind()));
-            return std::nullopt;
-        }
-
-        next(); // eat ]
-
-        return ast::OperandMemory{*base, *offsetVal, true};
     } else {
         error(fmt::format("unexpected token {}", curr().getKind()));
         return std::nullopt;
