@@ -223,7 +223,6 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
         instructions::vldi(cpu, mem, vD, rA, imm, mask);
 
-        // TODO TRACE MEMORY LOL
         tracer->scalarRegOutput(cpu, "rA", rA);
     }
 
@@ -235,18 +234,29 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
         instructions::vsti(cpu, mem, rA, imm, vB, mask);
 
-        // TODO TRACE MEMORY LOL
         tracer->scalarRegOutput(cpu, "rA", rA);
     }
 
     void vldr(vreg_idx vD, reg_idx rA, reg_idx rB, vmask_t mask) override {
+        tracer->vectorRegInput(cpu, "vD", vD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
         tracer->vectorMask(mask);
-        unimplemented();
+
+        instructions::vldr(cpu, mem, vD, rA, rB, mask);
+
+        tracer->scalarRegOutput(cpu, "rA", rA);
     }
 
     void vstr(reg_idx rA, reg_idx rB, vreg_idx vA, vmask_t mask) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+        tracer->vectorRegInput(cpu, "vA", vA);
         tracer->vectorMask(mask);
-        unimplemented();
+
+        instructions::vstr(cpu, mem, rA, rB, vA, mask);
+
+        tracer->scalarRegOutput(cpu, "rA", rA);
     }
 
     void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,

@@ -348,6 +348,29 @@ void vsti(CPUState& cpu, MemSystem& mem, reg_idx rA, s<11> imm, vreg_idx vB,
     cpu.r[rA] = addr;
 }
 
+// vldr vD, [rA+=rB]
+void vldr(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
+          vmask_t mask) {
+    u<36> addr = cpu.r[rA];
+
+    auto val = mem.readVec(addr.raw());
+    cpu.v[vD] = val;
+
+    addr += cpu.r[rB]._sgn_inner() * 0x10; // in vector increments
+    cpu.r[rA] = addr;
+}
+
+// vstr [rA+=rB], vA
+void vstr(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, vreg_idx vA,
+          vmask_t mask) {
+    u<36> addr = cpu.r[rA];
+
+    mem.write(addr.raw(), cpu.v[vA]);
+
+    addr += cpu.r[rB]._sgn_inner() * 0x10; // in vector increments
+    cpu.r[rA] = addr;
+}
+
 /************************************************************************/
 /*******************************-- JUMPS ********************************/
 /************************************************************************/

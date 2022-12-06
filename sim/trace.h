@@ -99,7 +99,7 @@ struct InstructionTrace {
 struct FileTracer : public Tracer {
     virtual ~FileTracer() = default;
 
-    FileTracer(const std::string& filename)
+    explicit FileTracer(const std::string& filename)
         : itrace{}, out(filename, std::ios::trunc) {}
 
     void begin(uint64_t pc, uint64_t ir) override {
