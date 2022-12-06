@@ -17,7 +17,7 @@
     {                                                                          \
         id, {                                                                  \
             OperandType::ScalarRegister, OperandType::ScalarRegister,          \
-                OperandType::ScalarRegister                                    \
+                ast::OperandImmediate                                          \
         }                                                                      \
     }
 #define MVVV(id)                                                               \
