@@ -6,7 +6,7 @@ json_dep     = dependency('nlohmann_json', version: '3.11.2', required: true)
 sim_inc = include_directories('.')
 sim_deps = [libmorph_dep, fmt_dep]
 
-libsim_sources = files('cpu.cpp', 'trace.cpp')
+libsim_sources = files('mem.cpp', 'trace.cpp')
 libsim = static_library(
     'libsim', libsim_sources,
     include_directories: sim_inc,

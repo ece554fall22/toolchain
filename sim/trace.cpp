@@ -29,6 +29,18 @@ std::ostream& operator<<(std::ostream& os, const InstructionTrace& trace) {
     if (trace.vectorRegOutput)
         os << "    vector_writeback: " << *trace.vectorRegOutput << '\n';
 
+    if (trace.scalarLoad)
+        os << "    scalar_load: " << *trace.scalarLoad << '\n';
+
+    if (trace.scalarStore)
+        os << "    scalar_store: " << *trace.scalarStore << '\n';
+
+    if (trace.vectorLoad)
+        os << "    vector_load: " << *trace.vectorLoad << '\n';
+
+    if (trace.vectorStore)
+        os << "    vector_store: " << *trace.vectorStore << '\n';
+
     os << "    asm: ";
     isa::PrintVisitor printvis(os);
     isa::decodeInstruction(printvis, bits<32>(trace.ir));

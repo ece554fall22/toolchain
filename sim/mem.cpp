@@ -1,8 +1,10 @@
-#include "cpu.h"
+#include "mem.h"
 #include <morph/bit_cast.h>
 #include <morph/ty.h>
 #include <morph/util.h>
 #include <morph/varint.h>
+
+#include "trace.h"
 
 // stubs because we don't simulate caches yet
 void MemSystem::flushICache() {}
@@ -12,15 +14,14 @@ void MemSystem::flushDCacheLine(uint64_t at) {}
 
 void MemSystem::write(uint64_t addr, u<32> val) {
     _check_addr(addr, 32);
+    tracer->memWrite(addr, val);
 
-    //    std::cout << "M[" << addr << "]/32 = " << val << "\n";
     this->mempool[addr / 4] = val.raw();
 }
 
 void MemSystem::write(uint64_t addr, u<36> val) {
     _check_addr(addr, 64);
-
-    //    std::cout << "M[" << addr << "]/36 = " << val << "\n";
+    tracer->memWrite(addr, val);
 
     this->mempool[0 + addr / 4] = val.slice<31, 0>().raw();
     this->mempool[1 + addr / 4] = val.slice<35, 32>().raw();
@@ -28,6 +29,7 @@ void MemSystem::write(uint64_t addr, u<36> val) {
 
 void MemSystem::write(uint64_t addr, f32x4 val) {
     _check_addr(addr, 128);
+    tracer->memWrite(addr, val);
 
     size_t base = addr / 4;
     this->mempool[base + 0] = bit_cast<uint32_t>(val.x());
@@ -40,7 +42,8 @@ auto MemSystem::read32(uint64_t addr) -> uint32_t {
     _check_addr(addr, 32);
 
     auto val = this->mempool[addr / 4];
-    //    tracer->memRead32(addr, val);
+
+    tracer->memRead32(addr, val);
     return val;
 }
 
@@ -51,8 +54,7 @@ auto MemSystem::read36(uint64_t addr) -> uint64_t {
     uint64_t val = this->mempool[addr / 4]; // lower
     val |= static_cast<uint64_t>(this->mempool[1 + addr / 4]) << 32;
 
-    //    tracer->memRead36(addr, val);
-
+    tracer->memRead36(addr, val);
     return val;
 }
 
@@ -67,6 +69,7 @@ auto MemSystem::readVec(uint64_t addr) -> f32x4 {
         bit_cast<float>(this->mempool[base + 3]),
     };
 
+    tracer->memReadVec(addr, vec);
     return vec;
 }
 

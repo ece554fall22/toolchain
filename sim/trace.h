@@ -46,6 +46,7 @@ struct Tracer {
     virtual void memWrite(uint64_t addr, f32x4 val) = 0;
     virtual void memRead32(uint64_t addr, uint32_t val) = 0;
     virtual void memRead36(uint64_t addr, uint64_t val) = 0;
+    virtual void memReadVec(uint64_t addr, f32x4 val) = 0;
 };
 
 struct NullTracer : public Tracer {
@@ -74,23 +75,8 @@ struct NullTracer : public Tracer {
     void memWrite(uint64_t addr, f32x4 val) override {}
     void memRead32(uint64_t addr, uint32_t val) override {}
     void memRead36(uint64_t addr, uint64_t val) override {}
+    void memReadVec(uint64_t addr, f32x4 val) override {}
 };
-
-// struct PreExReg {
-//     enum class Slot {
-//         rA,
-//         rB,
-//         rD,
-//         vA,
-//         vB,
-//         vD,
-//     };
-//
-//     Slot slot;
-//     bool vector;
-//     uint32_t idx;
-//     std::variant<u<36>, f32x4> val;
-// };
 
 struct InstructionTrace {
     uint64_t pc;
@@ -103,6 +89,8 @@ struct InstructionTrace {
     std::optional<condition_t> branchConditionCode;
     std::optional<ConditionFlags> flagsWriteback;
     std::optional<std::string> controlFlow;
+
+    std::optional<std::string> scalarLoad, scalarStore, vectorLoad, vectorStore;
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const InstructionTrace& trace);
@@ -125,6 +113,11 @@ struct FileTracer : public Tracer {
         itrace.branchConditionCode.reset();
         itrace.flagsWriteback.reset();
         itrace.controlFlow.reset();
+
+        itrace.scalarLoad.reset();
+        itrace.scalarStore.reset();
+        itrace.vectorLoad.reset();
+        itrace.vectorStore.reset();
     }
 
     void end() override {
@@ -174,26 +167,27 @@ struct FileTracer : public Tracer {
 
     // -- memory transactions
     void memWrite(uint64_t addr, u<32> val) override {
-        //        itrace.scalarMemWrite = fmt::format("32 : {} = {}", addr,
-        //        val.inner);
+        itrace.scalarStore = fmt::format("32 : {:#x} = {:#x}", addr, val.raw());
     }
 
     void memWrite(uint64_t addr, u<36> val) override {
-        //        itrace.scalarMemWrite = fmt::format("36 : {} = {}", addr,
-        //        val.inner);
+        itrace.scalarStore = fmt::format("36 : {:#x} = {:#x}", addr, val.raw());
     }
 
     void memWrite(uint64_t addr, f32x4 val) override {
-        //        itrace.vectorMemWrite = fmt::format("M[{}] = {}", addr,
-        //        val.inner);
+        itrace.vectorStore = fmt::format("{:#x} = {}", addr, val);
     }
 
     void memRead32(uint64_t addr, uint32_t val) override {
-        //        itrace.scalarMemRead = fmt::format("32 : {} = {}", addr, val);
+        itrace.scalarLoad = fmt::format("32 : {:#x} = {:#x}", addr, val);
     }
 
     void memRead36(uint64_t addr, uint64_t val) override {
-        //        itrace.scalarMemRead = fmt::format("36 : {} = {}", addr, val);
+        itrace.scalarLoad = fmt::format("36 : {:#x} = {:#x}", addr, val);
+    }
+
+    void memReadVec(uint64_t addr, f32x4 val) override {
+        itrace.vectorLoad = fmt::format("{:#x} = {}", addr, val);
     }
 
   protected:

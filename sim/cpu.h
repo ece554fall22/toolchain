@@ -9,31 +9,7 @@
 #include <morph/ty.h>
 #include <morph/varint.h>
 
-struct MemSystem {
-    explicit MemSystem(size_t size) : mempool(size, 0) {}
-
-    void write(uint64_t addr, u<32> val);
-    void write(uint64_t addr, u<36> val);
-    //    void write(uint64_t addr, u<64> val);
-    void write(uint64_t addr, f32x4 val);
-
-    auto read32(uint64_t addr) -> uint32_t;
-    auto read36(uint64_t addr) -> uint64_t;
-    auto readVec(uint64_t addr) -> f32x4;
-
-    auto readInstruction(uint64_t addr) -> uint32_t;
-
-    void flushICache();
-    void flushDCacheDirty();
-    void flushDCacheClean();
-    void flushDCacheLine(uint64_t at);
-
-    // private:
-    void _check_addr(uint64_t addr, uint32_t alignTo) const;
-
-    std::vector<uint32_t> mempool;
-    //    std::shared_ptr<Tracer> tracer;
-};
+#include "mem.h"
 
 struct ScalarRegisterFile {
     using Reg = u<36>;

@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     }
 
     CPUState cpuState;
-    MemSystem mem(1024 /* 1k */);
+    MemSystem mem(1024 /* 1k */, tracer);
     CPUInstructionProxy iproxy(cpuState, mem, tracer);
     isa::PrintVisitor printvis(std::cout);
 
