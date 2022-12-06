@@ -82,7 +82,7 @@ void add(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 
 // SUB
 void sub(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
-    cpu.r[rD] = (cpu.r[rA].asSigned() + cpu.r[rB].asSigned()).asUnsigned();
+    cpu.r[rD] = (cpu.r[rA].asSigned() - cpu.r[rB].asSigned()).asUnsigned();
 }
 
 // MUL
