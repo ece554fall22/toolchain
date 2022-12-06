@@ -326,6 +326,18 @@ void st36(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, s<15> imm) {
     mem.write(addr, val);
 }
 
+// -- vector memory instructions
+void vldi(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, s<11> imm,
+          vmask_t mask) {
+    u<36> addr = cpu.r[rA];
+
+    auto val = mem.readVec(addr.raw());
+    cpu.v[rA] = val;
+
+    addr += imm._sgn_inner() * 4; // in vector increments
+    cpu.r[rA] = addr;
+}
+
 /************************************************************************/
 /*******************************-- JUMPS ********************************/
 /************************************************************************/
