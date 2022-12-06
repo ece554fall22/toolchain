@@ -19,7 +19,7 @@ using json = nlohmann::json;
 volatile std::sig_atomic_t signal_flag = 0;
 void handle_sigint(int signal) { signal_flag = signal; }
 
-int main(int argc, char* argv[]) {
+auto parseArgs(int argc, char* argv[]) -> argparse::ArgumentParser {
     argparse::ArgumentParser ap("sim");
 
     ap.add_argument("memory");
@@ -42,6 +42,27 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
+    return ap;
+}
+
+void loadMemoryImage(MemSystem& dest, const std::string& path) {
+    if (!std::filesystem::is_regular_file(path)) {
+        fmt::print(stderr, "[!] `{}` is not a file\n", path);
+        exit(1);
+    }
+    std::ifstream fBin(path, std::ios::binary);
+    if (!fBin.is_open()) {
+        fmt::print(stderr, "[!] can't open `{}`\n", path);
+        exit(1);
+    }
+    // WARNING WARNING TODO(erin): only works on little-endian architectures
+    fBin.read(reinterpret_cast<char*>(dest.mempool.data()),
+              dest.mempool.size() * 4);
+}
+
+int main(int argc, char* argv[]) {
+    auto ap = parseArgs(argc, argv);
+
     std::signal(SIGINT, handle_sigint);
 
     std::shared_ptr<Tracer> tracer = nullptr;
@@ -56,21 +77,7 @@ int main(int argc, char* argv[]) {
     CPUInstructionProxy iproxy(cpuState, mem, tracer);
     isa::PrintVisitor printvis(std::cout);
 
-    {
-        auto path = ap.get<std::string>("memory");
-        if (!std::filesystem::is_regular_file(path)) {
-            fmt::print(stderr, "[!] `{}` is not a file\n", path);
-            exit(1);
-        }
-        std::ifstream fBin(path, std::ios::binary);
-        if (!fBin.is_open()) {
-            fmt::print(stderr, "[!] can't open `{}`\n", path);
-            exit(1);
-        }
-        // WARNING WARNING TODO(erin): only works on little-endian architectures
-        fBin.read(reinterpret_cast<char*>(mem.mempool.data()),
-                  mem.mempool.size() * 4);
-    }
+    loadMemoryImage(mem, ap.get<std::string>("memory"));
 
     {
         auto path = ap.present<std::string>("--init-state");

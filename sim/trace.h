@@ -25,9 +25,6 @@ struct Tracer {
      */
     virtual void end() = 0;
 
-    //    virtual void rA(reg_idx rA) = 0;
-    //    virtual void rB(reg_idx rB) = 0;
-    //    virtual void rD(reg_idx rD) = 0;
     virtual void immInput(int64_t imm) = 0;
     virtual void vectorMask(vmask_t mask) = 0;
     virtual void branchCondcode(condition_t cond) = 0;
@@ -42,6 +39,7 @@ struct Tracer {
                                  vreg_idx r) = 0;
 
     virtual void flagsWriteback(ConditionFlags flags) = 0;
+    virtual void controlFlow(PC& pc) = 0;
 
     virtual void memWrite(uint64_t addr, u<32> val) = 0;
     virtual void memWrite(uint64_t addr, u<36> val) = 0;
@@ -69,6 +67,7 @@ struct NullTracer : public Tracer {
     }
 
     void flagsWriteback(ConditionFlags flags) override {}
+    void controlFlow(PC& pc) override {}
 
     void memWrite(uint64_t addr, u<32> val) override {}
     void memWrite(uint64_t addr, u<36> val) override {}
@@ -103,6 +102,7 @@ struct InstructionTrace {
     std::optional<vmask_t> vectorMask;
     std::optional<condition_t> branchConditionCode;
     std::optional<ConditionFlags> flagsWriteback;
+    std::optional<std::string> controlFlow;
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const InstructionTrace& trace);
@@ -124,6 +124,7 @@ struct FileTracer : public Tracer {
         itrace.vectorMask.reset();
         itrace.branchConditionCode.reset();
         itrace.flagsWriteback.reset();
+        itrace.controlFlow.reset();
     }
 
     void end() override {
@@ -164,6 +165,11 @@ struct FileTracer : public Tracer {
 
     void flagsWriteback(ConditionFlags flags) override {
         itrace.flagsWriteback = flags;
+    }
+    void controlFlow(PC& pc) override {
+        itrace.controlFlow = fmt::format(
+            "taken={} taken_addr={:#x} not_taken_addr={:#x}",
+            pc.wasTaken() ? 1 : 0, pc.peekNextPC(), pc.peekNotTaken());
     }
 
     // -- memory transactions

@@ -43,8 +43,18 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     }
 
     // J
-    void jmp(s<25> imm) override { instructions::jmp(cpu, mem, imm); }
-    void jal(s<25> imm) override { instructions::jal(cpu, mem, imm); }
+    void jmp(s<25> imm) override {
+        tracer->immInput(imm._sgn_inner());
+
+        instructions::jmp(cpu, mem, imm);
+    }
+    void jal(s<25> imm) override {
+        tracer->immInput(imm._sgn_inner());
+
+        instructions::jal(cpu, mem, imm);
+
+        tracer->scalarRegOutput(cpu, "rD", 31);
+    }
 
     // JR
     void jmpr(reg_idx rA, s<20> imm) override {
@@ -58,6 +68,8 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         tracer->immInput(imm._sgn_inner());
 
         instructions::jalr(cpu, mem, rA, imm);
+
+        tracer->scalarRegOutput(cpu, "rD", 31);
     }
 
     // BI
@@ -66,6 +78,8 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         tracer->immInput(imm.inner);
 
         switch (cond) { FORALL_CONDS(i, imm) }
+
+        tracer->controlFlow(cpu.pc);
     }
     // BR
     void branchreg(condition_t cond, reg_idx rA, s<17> imm) override {
@@ -74,6 +88,8 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         tracer->branchCondcode(cond);
 
         switch (cond) { FORALL_CONDS(r, rA, imm) }
+
+        tracer->controlFlow(cpu.pc);
     }
 
     void lil(reg_idx rD, s<18> imm) override {
