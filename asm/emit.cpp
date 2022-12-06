@@ -46,7 +46,17 @@ auto compute_offset(const isa::Emitter& e, const Symbol& symb) -> int64_t {
     return offset;
 }
 
-void emit_br(condition_t cond, isa::Emitter& e, const SymbolTable& symtab,
+void emit_bi(condition_t cond, isa::Emitter& e, const SymbolTable& symtab,
+             const ast::Instruction& i) {
+    auto symb =
+        symtab.get(i.operands[0].get<ast::OperandLabel>().label.getLexeme());
+    assert(symb.has_value() && "undef symbol uh oh"); // TODO
+    auto offset = compute_offset(e, *symb);
+    e.branchImm(cond, offset);
+}
+
+void emit_br(condition_t cond, isa::Emitter& e,
+             [[maybe_unused]] const SymbolTable& symtab,
              const ast::Instruction& i) {
     e.branchReg(cond, i.operands[0].asRegIdx(),
                 i.operands[1].asSignedImm<17>());
@@ -112,6 +122,13 @@ static const std::map<std::string,
 
              e.jumpRegRel(i.operands[0].asRegIdx(), s<20>(offset), true);
          }},
+
+        {"bnzi", PARTIAL(emit_bi, condition_t::nz)},
+        {"bezi", PARTIAL(emit_bi, condition_t::ez)},
+        {"blzi", PARTIAL(emit_bi, condition_t::lz)},
+        {"bgzi", PARTIAL(emit_bi, condition_t::gz)},
+        {"blei", PARTIAL(emit_bi, condition_t::le)},
+        {"bgei", PARTIAL(emit_bi, condition_t::ge)},
 
         {"bnzr", PARTIAL(emit_br, condition_t::nz)},
         {"bezr", PARTIAL(emit_br, condition_t::ez)},
