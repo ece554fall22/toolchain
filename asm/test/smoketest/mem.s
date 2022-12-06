@@ -3,3 +3,8 @@ lih r1, 0x0
 
 ld32 r2, [r1]
 ld32 r2, [r1+0x4]
+
+lil r3, 0xaaaa
+lih r3, 0xaaaa
+st32 [r1+0x4], r3
+st36 [r1+0x8], r3

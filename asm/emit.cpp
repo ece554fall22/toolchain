@@ -194,6 +194,18 @@ static const std::map<std::string,
                            memOp.offset);
          }},
 
+        {"vldi",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto memOp = i.operands[2].get<ast::OperandMemoryPostIncr>();
+             assert(!memOp.base.vector); // TODO
+
+             e.loadVectorImmStride(
+                 i.operands[1].asRegIdx(), memOp.base.idx,
+                 std::get<ast::OperandImmediate>(memOp.increment).val,
+                 i.operands[0].asBitsImm<vmask_t::size>());
+         }},
+
         {"addi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Add)},
         {"subi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::Sub)},
         {"andi", PARTIAL(emit_arith_imm, isa::ScalarArithmeticOp::And)},

@@ -68,6 +68,12 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"st32", {OperandType::Memory,         OperandType::ScalarRegister}},
     {"st36", {OperandType::Memory,         OperandType::ScalarRegister}},
 
+    {"vldi", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::VectorMemory}},
+    {"vsti", {OperandType::VectorMask, OperandType::VectorMemory,   OperandType::VectorRegister}},
+    {"vldr", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::VectorMemory}},
+    {"vstr", {OperandType::VectorMask, OperandType::VectorMemory,   OperandType::VectorRegister}},
+
+
     RRI("addi"),
     RRI("subi"),
     RRI("andi"),
