@@ -295,9 +295,8 @@ struct PrintVisitor : public InstructionVisitor {
 
     void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
                   vlaneidx_t i2, vlaneidx_t i3, vmask_t mask) override {
-        fmt::print(os, "vswizzle {:#b}, v{}, v{}, {:#b}, {:#b}, {:#b}, {:#b}",
-                   mask.inner, vD.inner, vA.inner, i0.inner, i1.inner, i2.inner,
-                   i3.inner);
+        fmt::print(os, "vswizzle {:#b}, v{}, v{}, {}, {}, {}, {}", mask.inner,
+                   vD.inner, vA.inner, i0.inner, i1.inner, i2.inner, i3.inner);
     }
 
     void vectorScalarArithmetic(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,

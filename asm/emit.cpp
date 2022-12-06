@@ -299,6 +299,20 @@ static const std::map<std::string,
                       i.operands[0].asBitsImm<vmask_t::size>());
          }},
 
+        {"vswizzle",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             auto mask = i.operands[0].asBitsImm<vmask_t::size>();
+             auto vD = i.operands[1].asRegIdx();
+             auto vA = i.operands[2].asRegIdx();
+             auto i0 = i.operands[3].asBitsImm<vlaneidx_t::size>();
+             auto i1 = i.operands[4].asBitsImm<vlaneidx_t::size>();
+             auto i2 = i.operands[5].asBitsImm<vlaneidx_t::size>();
+             auto i3 = i.operands[6].asBitsImm<vlaneidx_t::size>();
+
+             e.vswizzle(vD, vA, i0, i1, i2, i3, mask);
+         }},
+
         {"rcsr",
          [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.csr(isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),

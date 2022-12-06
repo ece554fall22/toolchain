@@ -137,9 +137,8 @@ struct FileTracer : public Tracer {
     void branchCondcode(condition_t cond) override { itrace.condcode = cond; }
     void swizzleInput(vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2,
                       vlaneidx_t i3) override {
-        itrace.inputs.push_back(fmt::format("i0={}, i1={}, i2={}, i3={}",
-                                            i0.raw(), i1.raw(), i2.raw(),
-                                            i3.raw()));
+        itrace.inputs.push_back(fmt::format("i0={} i1={} i2={} i3={}", i0.raw(),
+                                            i1.raw(), i2.raw(), i3.raw()));
     }
 
     // -- reg inputs
