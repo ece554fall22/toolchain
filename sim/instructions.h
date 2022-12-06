@@ -336,7 +336,7 @@ void jmp(CPUState& cpu, MemSystem& mem, s<25> imm) {
 }
 
 void jal(CPUState& cpu, MemSystem& mem, s<25> imm) {
-    cpu.r[31] = cpu.pc.getCurrentPC();        // link
+    cpu.r[31] = cpu.pc.peekNotTaken();        // link
     cpu.pc.addToNextPC(imm._sgn_inner() * 4); // and jump
 }
 
@@ -345,7 +345,7 @@ void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
 }
 
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
-    cpu.r[31] = cpu.pc.getCurrentPC();                        // link
+    cpu.r[31] = cpu.pc.peekNotTaken();                        // link
     cpu.pc.setNextPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
 }
 
