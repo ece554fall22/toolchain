@@ -30,21 +30,24 @@ struct Tracer {
     //    virtual void rD(reg_idx rD) = 0;
     virtual void immInput(int64_t imm) = 0;
     virtual void vectorMask(vmask_t mask) = 0;
+    virtual void branchCondcode(condition_t cond) = 0;
+
     virtual void scalarRegInput(CPUState& cpu, const char* name, reg_idx r) = 0;
     virtual void vectorRegInput(CPUState& cpu, const char* name,
                                 vreg_idx r) = 0;
+
     virtual void scalarRegOutput(CPUState& cpu, const char* name,
                                  reg_idx r) = 0;
     virtual void vectorRegOutput(CPUState& cpu, const char* name,
                                  vreg_idx r) = 0;
+
+    virtual void flagsWriteback(ConditionFlags flags) = 0;
 
     virtual void memWrite(uint64_t addr, u<32> val) = 0;
     virtual void memWrite(uint64_t addr, u<36> val) = 0;
     virtual void memWrite(uint64_t addr, f32x4 val) = 0;
     virtual void memRead32(uint64_t addr, uint32_t val) = 0;
     virtual void memRead36(uint64_t addr, uint64_t val) = 0;
-
-    virtual void branchCondcode(condition_t cond) = 0;
 };
 
 struct NullTracer : public Tracer {
@@ -54,28 +57,24 @@ struct NullTracer : public Tracer {
 
     void end() override {}
 
+    void vectorMask(vmask_t mask) override {}
+    void immInput(int64_t imm) override {}
+    void branchCondcode(condition_t cond) override {}
+
     void scalarRegInput(CPUState& cpu, const char* name, reg_idx r) override {}
     void vectorRegInput(CPUState& cpu, const char* name, vreg_idx r) override {}
 
     void scalarRegOutput(CPUState& cpu, const char* name, reg_idx r) override {}
-
     void vectorRegOutput(CPUState& cpu, const char* name, vreg_idx r) override {
     }
 
-    void vectorMask(vmask_t mask) override {}
-    void immInput(int64_t imm) override {}
+    void flagsWriteback(ConditionFlags flags) override {}
 
     void memWrite(uint64_t addr, u<32> val) override {}
-
     void memWrite(uint64_t addr, u<36> val) override {}
-
     void memWrite(uint64_t addr, f32x4 val) override {}
-
     void memRead32(uint64_t addr, uint32_t val) override {}
-
     void memRead36(uint64_t addr, uint64_t val) override {}
-
-    void branchCondcode(condition_t cond) override {}
 };
 
 // struct PreExReg {
@@ -103,6 +102,7 @@ struct InstructionTrace {
     std::optional<std::string> vectorRegOutput;
     std::optional<vmask_t> vectorMask;
     std::optional<condition_t> branchConditionCode;
+    std::optional<ConditionFlags> flagsWriteback;
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const InstructionTrace& trace);
@@ -123,6 +123,7 @@ struct FileTracer : public Tracer {
         itrace.condcode.reset();
         itrace.vectorMask.reset();
         itrace.branchConditionCode.reset();
+        itrace.flagsWriteback.reset();
     }
 
     void end() override {
@@ -130,6 +131,14 @@ struct FileTracer : public Tracer {
         out.flush();
     }
 
+    // -- const inputs
+    void immInput(int64_t imm) override {
+        itrace.inputs.push_back(fmt::format("imm={}", imm));
+    }
+    void vectorMask(vmask_t mask) override { itrace.vectorMask = mask; }
+    void branchCondcode(condition_t cond) override { itrace.condcode = cond; }
+
+    // -- reg inputs
     void scalarRegInput(CPUState& cpu, const char* name,
                         reg_idx ridx) override {
         itrace.inputs.push_back(
@@ -141,23 +150,23 @@ struct FileTracer : public Tracer {
             fmt::format("{}=v{}={}", name, vidx.inner, cpu.v[vidx]));
     }
 
+    // -- writeback
     void scalarRegOutput(CPUState& cpu, const char* name,
                          reg_idx ridx) override {
         itrace.scalarRegOutput = fmt::format("{}=r{}={:#x}", name, ridx.inner,
                                              cpu.r[ridx], cpu.r[ridx].raw());
     }
-
     void vectorRegOutput(CPUState& cpu, const char* name,
                          vreg_idx vidx) override {
         itrace.vectorRegOutput = fmt::format("{}=v{}={}", name, vidx.inner,
                                              cpu.v[vidx], cpu.v[vidx]);
     }
 
-    void immInput(int64_t imm) override {
-        itrace.inputs.push_back(fmt::format("imm={}", imm));
+    void flagsWriteback(ConditionFlags flags) override {
+        itrace.flagsWriteback = flags;
     }
-    void vectorMask(vmask_t mask) override { itrace.vectorMask = mask; }
 
+    // -- memory transactions
     void memWrite(uint64_t addr, u<32> val) override {
         //        itrace.scalarMemWrite = fmt::format("32 : {} = {}", addr,
         //        val.inner);
@@ -180,8 +189,6 @@ struct FileTracer : public Tracer {
     void memRead36(uint64_t addr, uint64_t val) override {
         //        itrace.scalarMemRead = fmt::format("36 : {} = {}", addr, val);
     }
-
-    void branchCondcode(condition_t cond) override { itrace.condcode = cond; }
 
   protected:
     InstructionTrace itrace;

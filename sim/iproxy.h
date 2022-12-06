@@ -219,10 +219,6 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
         unimplemented();
     }
 
-    void cmpI(reg_idx rA, s<20> imm) override {
-        instructions::cmpi(cpu, mem, rA, imm);
-    }
-
     void floatArithmetic(reg_idx rD, reg_idx rA, reg_idx rB,
                          isa::FloatArithmeticOp op) override {
         tracer->scalarRegInput(cpu, "rD", rD);
@@ -248,7 +244,21 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     }
 
     void cmp(reg_idx rA, reg_idx rB) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->scalarRegInput(cpu, "rB", rB);
+
         instructions::cmp(cpu, mem, rA, rB);
+
+        tracer->flagsWriteback(cpu.f);
+    }
+
+    void cmpI(reg_idx rA, s<20> imm) override {
+        tracer->scalarRegInput(cpu, "rA", rA);
+        tracer->immInput(imm._sgn_inner());
+
+        instructions::cmpi(cpu, mem, rA, imm);
+
+        tracer->flagsWriteback(cpu.f);
     }
 
     void vectorArithmetic(isa::LanewiseVectorOp op, vreg_idx vD, vreg_idx vA,
@@ -366,9 +376,23 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
 
     void cmpx(reg_idx rD, reg_idx rA, s<15> imm) override { unimplemented(); }
 
-    void ftoi(reg_idx rD, reg_idx rA) override { unimplemented(); }
+    void ftoi(reg_idx rD, reg_idx rA) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
 
-    void itof(reg_idx rD, reg_idx rA) override { unimplemented(); }
+        instructions::ftoi(cpu, mem, rD, rA);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
+    }
+
+    void itof(reg_idx rD, reg_idx rA) override {
+        tracer->scalarRegInput(cpu, "rD", rD);
+        tracer->scalarRegInput(cpu, "rA", rA);
+
+        instructions::itof(cpu, mem, rD, rA);
+
+        tracer->scalarRegOutput(cpu, "rD", rD);
+    }
 
     void wcsr(s<2> csr, reg_idx rA) override { unimplemented(); }
 

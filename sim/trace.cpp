@@ -17,6 +17,9 @@ std::ostream& operator<<(std::ostream& os, const InstructionTrace& trace) {
     if (trace.condcode)
         os << "    branch_condition_code: " << *trace.condcode << '\n';
 
+    if (trace.flagsWriteback)
+        os << "    flag_writeback: " << *trace.flagsWriteback << '\n';
+
     if (trace.scalarRegOutput)
         os << "    scalar_writeback: " << *trace.scalarRegOutput << '\n';
 
