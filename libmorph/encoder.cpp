@@ -327,26 +327,23 @@ void isa::Emitter::vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD,
     append(instr);
 }
 
-void isa::Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask) {
+void isa::Emitter::vdot(reg_idx rD, vreg_idx vA, vreg_idx vB) {
     uint32_t instr = 0b0100011 << 25;
 
     instr |= rD.inner << 20;
     instr |= vA.inner << 15;
     instr |= vB.inner << 10;
-    instr |= mask.inner;
 
     append(instr);
 }
 
-void isa::Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB,
-                         vmask_t mask) {
+void isa::Emitter::vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB) {
     uint32_t instr = 0b0100100 << 25;
 
     instr |= rD.inner << 20;
     instr |= rA.inner << 15;
     instr |= vA.inner << 10;
     instr |= vB.inner << 5;
-    instr |= mask.inner;
 
     append(instr);
 }
@@ -361,11 +358,12 @@ void isa::Emitter::vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx) {
     append(instr);
 }
 
-void isa::Emitter::vreduce(reg_idx rD, vreg_idx vA) {
+void isa::Emitter::vreduce(reg_idx rD, vreg_idx vA, vmask_t mask) {
     uint32_t instr = 0b0100110 << 25;
 
     instr |= rD.inner << 20;
     instr |= vA.inner << 15;
+    instr |= mask.raw();
 
     append(instr);
 }

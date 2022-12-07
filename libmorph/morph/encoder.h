@@ -58,10 +58,10 @@ class Emitter {
                              vreg_idx vB, vmask_t mask);
     void vectorScalarArith(isa::VectorScalarOp op, vreg_idx vD, reg_idx rA,
                            vreg_idx vB, vmask_t mask);
-    void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB, vmask_t mask);
-    void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB, vmask_t mask);
+    void vdot(reg_idx rD, vreg_idx vA, vreg_idx vB);
+    void vdota(reg_idx rD, reg_idx rA, vreg_idx vA, vreg_idx vB);
     void vidx(reg_idx rD, vreg_idx vA, vlaneidx_t idx);
-    void vreduce(reg_idx rD, vreg_idx vA);
+    void vreduce(reg_idx rD, vreg_idx vA, vmask_t mask);
     void vsplat(vreg_idx vD, reg_idx rA, vmask_t mask);
     void vswizzle(vreg_idx vD, vreg_idx vA, vlaneidx_t i0, vlaneidx_t i1,
                   vlaneidx_t i2, vlaneidx_t i3, vmask_t mask);

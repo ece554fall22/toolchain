@@ -313,6 +313,23 @@ static const std::map<std::string,
              e.vswizzle(vD, vA, i0, i1, i2, i3, mask);
          }},
 
+        {"vreduce",
+         [](isa::Emitter& e, const SymbolTable& symtab,
+            const ast::Instruction& i) {
+             e.vreduce(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
+                       i.operands[2].asBitsImm<vmask_t::size>());
+         }},
+
+        {"vdot", [](isa::Emitter& e, const SymbolTable& symtab,
+                    const ast::Instruction& i) {
+            e.vdot(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx());
+        }},
+
+        {"vdota", [](isa::Emitter& e, const SymbolTable& symtab,
+                    const ast::Instruction& i) {
+            e.vdota(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[3].asRegIdx());
+        }},
+
         {"rcsr",
          [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.csr(isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),
