@@ -33,6 +33,11 @@ auto parseArgs(int argc, char* argv[]) -> argparse::ArgumentParser {
               "(NOT a formal trace format!)")
         .default_value(false)
         .implicit_value(true);
+    ap.add_argument("--mem-size")
+        .help("size of emulated memory space, as # of 32-bit words. must be a "
+              "multiple of 128 bits. default is 1MiB")
+        .default_value<size_t>((1 << 20) / 4) // 1MiB
+        .scan<'d', size_t>();
 
     try {
         ap.parse_args(argc, argv);
@@ -116,7 +121,13 @@ int main(int argc, char* argv[]) {
     }
 
     CPUState cpuState;
-    MemSystem mem(1024 /* 1k */, tracer);
+    size_t memSize = ap.get<size_t>("--mem-size");
+    if ((memSize % (128 / 4)) != 0) {
+        std::cerr
+            << "[!] memory size must be a multiple of 128 bits (16 bytes)\n";
+        exit(1);
+    }
+    MemSystem mem(memSize, tracer);
     CPUInstructionProxy iproxy(cpuState, mem, tracer);
     isa::PrintVisitor printvis(std::cout);
 
