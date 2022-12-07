@@ -356,7 +356,7 @@ void vldr(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
     auto val = mem.readVec(addr.raw());
     cpu.v[vD] = val;
 
-    addr += cpu.r[rB]._sgn_inner() * 0x10; // in vector increments
+    addr += cpu.r[rB]._sgn_inner();
     cpu.r[rA] = addr;
 }
 
@@ -367,7 +367,7 @@ void vstr(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB, vreg_idx vA,
 
     mem.write(addr.raw(), cpu.v[vA]);
 
-    addr += cpu.r[rB]._sgn_inner() * 0x10; // in vector increments
+    addr += cpu.r[rB]._sgn_inner();
     cpu.r[rA] = addr;
 }
 
