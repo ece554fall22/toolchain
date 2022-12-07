@@ -88,7 +88,7 @@ class Emitter {
 
     // specials
     void flushcache(isa::CacheControlOp op);
-    void flushline(u<25> imm);
+    void flushline(reg_idx rA, s<20> imm);
     void csr(isa::CsrOp op, reg_idx rA, u<2> csrNum);
     void concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, reg_idx rB,
                      u<15> imm);

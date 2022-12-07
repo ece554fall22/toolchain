@@ -327,6 +327,9 @@ static const std::map<std::string,
          PARTIAL(emit_flushcache, isa::CacheControlOp::Flushdirty)},
         {"flushclean",
          PARTIAL(emit_flushcache, isa::CacheControlOp::Flushclean)},
+        {"flushline", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.flushline(i.operands[0].asRegIdx(), i.operands[1].asSignedImm<20>());
+         }},
 };
 
 void EmissionPass::enter(const ast::Instruction& inst, size_t depth) {

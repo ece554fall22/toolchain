@@ -569,13 +569,14 @@ void isa::Emitter::flushcache(isa::CacheControlOp op) {
     append(instr);
 }
 
-void isa::Emitter::flushline(u<25> imm) {
+void isa::Emitter::flushline(reg_idx rA, s<20> imm) {
     uint32_t instr = 0b1000000 << 25;
 
-    auto immHigh = (imm.raw() >> 15) & BITFILL(10);
+    auto immHigh = (imm.raw() >> 15) & BITFILL(5);
     auto immLow = imm.raw() & BITFILL(15);
     instr |= immLow;
-    instr |= (immHigh << 15);
+    instr |= rA.raw() << 15;
+    instr |= (immHigh << 20);
 
     append(instr);
 }
