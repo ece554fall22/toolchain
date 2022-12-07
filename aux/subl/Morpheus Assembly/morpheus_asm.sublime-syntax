@@ -1,0 +1,107 @@
+%YAML 1.2
+---
+name: Morpheus assembly
+file_extensions: [s]
+scope: source.morpheus
+
+variables:
+  num_hex: '(?:[[:xdigit:]][[:xdigit:]_]*)'
+  num_bin: '(?:[01][01_]*)'
+  ident:   '(?:[[:alnum:]_?][[:alnum:]_$#@~.?]*)'
+
+
+contexts:
+  prototype:
+    - include: comments
+
+  main:
+    - include: mnemonics
+    - include: registers
+    - include: immediate
+    - include: literals
+    - include: identifiers
+
+  literals:
+    - include: integers
+
+  integers:
+    - match: '(?i)\b0x{{num_hex}}'
+      scope: constant.numeric.integer.hex
+    - match: '(?i)\b0b{{num_bin}}'
+      scope: constant.numeric.integer.bin
+
+  # immediate:
+  #   - match: '(?i)(?<=[\s,])\#0x{{num_hex}}\b'
+  #     scope: constant.numeric.immediate.integer.hex
+
+  registers:
+    - match: '(?i)\br(?:[0-9]|[1-2][0-9]|31)\b'
+      scope: constant.language.register.general-purpose
+    - match: '(?i)\bv(?:[0-9]|[1-2][0-9]|31)\.[0-3]\b'
+      scope: constant.language.register.vector.subset
+    - match: '(?i)\bv(?:[0-9]|[1-2][0-9]|31)\b'
+      scope: constant.language.register.vector
+    - match: '(?i)\bsp\b'
+      scope: constant.language.register.stack
+    - match: '(?i)\blr\b'
+      scope: constant.language.register.stack
+
+  mnemonics:
+    - match: '(?i)\b(?:halt)\b'
+      scope: keyword.operator.word.metacontrol
+    - match: '(?i)\b(?:nop)\b'
+      scope: keyword.operator.word.control.nop
+    - match: '(?i)\b(?:jmp|jal)r?\b'
+      scope: keyword.operator.word.control.jump
+    - match: '(?i)\bb(?:nz|ez|lz|gz|le|ge)[ir]?\b'
+      scope: keyword.operator.word.control.branch-conditional
+    - match: '(?i)\bli[hl]\b'
+      scope: keyword.operator.word.load.immediate
+    - match: '(?i)\bld(?:32|36)\b'
+      scope: keyword.operator.word.load.memory
+    - match: '(?i)\bst(?:32|36)\b'
+      scope: keyword.operator.word.store.memory
+    - match: '(?i)\bvld[ir]?\b'
+      scope: keyword.operator.word.vector.load.memory
+    - match: '(?i)\bvst[ir]?\b'
+      scope: keyword.operator.word.vector.load.memory
+    - match: '(?i)\b(?:add|sub|and|or|xor|shl|shr)i\b'
+      scope: keyword.operator.word.math.scalar.int.immediate
+    - match: '(?i)\b(?:add|sub|and|or|xor|shl|shr|mul|not)\b'
+      scope: keyword.operator.word.math.scalar.int.register
+    - match: '(?i)\bf(?:add|sub|mul|div)\b'
+      scope: keyword.operator.word.math.scalar.float
+    - match: '(?i)\bcmpi?\b'
+      scope: keyword.operator.word.math.compare
+
+  identifiers:
+    - match: '(?:(\.)?|\b)({{ident}})(?:(\:)?|\b)'
+      captures:
+        1: punctuation.separator storage.modifier.label.local
+        2: entity.name.function.morpheus.label
+        3: punctuation.separator.morpheus
+
+  # strings:
+  #   # Strings begin and end with quotes, and use backslashes as an escape
+  #   # character.
+  #   - match: '"'
+  #     scope: punctuation.definition.string.begin.example-c
+  #     push: inside_string
+
+  # inside_string:
+  #   - meta_include_prototype: false
+  #   - meta_scope: string.quoted.double.example-c
+  #   - match: '\.'
+  #     scope: constant.character.escape.example-c
+  #   - match: '"'
+  #     scope: punctuation.definition.string.end.example-c
+  #     pop: true
+
+  comments:
+    - match: ';'
+      scope: punctuation.definition.comment.morpheus
+      push:
+        # This is an anonymous context push for brevity.
+        - meta_scope: comment.line.semicolon.example-c
+        - match: $\n?
+          pop: true
