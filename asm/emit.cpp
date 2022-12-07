@@ -106,8 +106,7 @@ static const std::map<std::string,
          }},
 
         {"jmp",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto symb = symtab.get(
                  i.operands[0].get<ast::OperandLabel>().label.getLexeme());
              assert(symb.has_value() && "undef symbol uh oh"); // TODO
@@ -116,8 +115,7 @@ static const std::map<std::string,
          }},
 
         {"jal",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto symb = symtab.get(
                  i.operands[0].get<ast::OperandLabel>().label.getLexeme());
              assert(symb.has_value() && "undef symbol uh oh"); // TODO
@@ -126,8 +124,7 @@ static const std::map<std::string,
          }},
 
         {"jmpr",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto offset = i.operands[1].get<ast::OperandImmediate>().val;
              assert((offset % 4) == 0 && "alignment"); // TODO!
              offset /= 4;                              // scale for offset imm
@@ -136,8 +133,7 @@ static const std::map<std::string,
          }},
 
         {"jalr",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto offset = i.operands[1].get<ast::OperandImmediate>().val;
              assert((offset % 4) == 0 && "alignment"); // TODO!
              offset /= 4;                              // scale for offset imm
@@ -160,14 +156,12 @@ static const std::map<std::string,
         {"bger", PARTIAL(emit_br, condition_t::ge)},
 
         {"lil",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.loadImmediate(false, i.operands[0].asRegIdx(),
                              i.operands[1].asSignedImm<18>());
          }},
         {"lih",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.loadImmediate(true, i.operands[0].asRegIdx(),
                              i.operands[1].asSignedImm<18>());
          }},
@@ -179,8 +173,7 @@ static const std::map<std::string,
         {"st36", PARTIAL(emit_scalar_store, true)},
 
         {"vldi",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto memOp = i.operands[2].get<ast::OperandMemoryPostIncr>();
              assert(!memOp.base.vector); // TODO
 
@@ -193,8 +186,7 @@ static const std::map<std::string,
                                    i.operands[0].asBitsImm<vmask_t::size>());
          }},
         {"vsti",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto memOp = i.operands[1].get<ast::OperandMemoryPostIncr>();
              assert(!memOp.base.vector); // TODO
 
@@ -207,8 +199,7 @@ static const std::map<std::string,
                                     i.operands[0].asBitsImm<vmask_t::size>());
          }},
         {"vldr",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto memOp = i.operands[2].get<ast::OperandMemoryPostIncr>();
              assert(!memOp.base.vector); // TODO
 
@@ -220,8 +211,7 @@ static const std::map<std::string,
                                    i.operands[0].asBitsImm<vmask_t::size>());
          }},
         {"vstr",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto memOp = i.operands[1].get<ast::OperandMemoryPostIncr>();
              assert(!memOp.base.vector); // TODO
 
@@ -250,21 +240,18 @@ static const std::map<std::string,
         {"shr", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shr)},
         {"shl", PARTIAL(emit_arith, isa::ScalarArithmeticOp::Shl)},
         {"not",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.scalarArithmeticNot(i.operands[0].asRegIdx(),
                                    i.operands[1].asRegIdx());
          }},
 
         {"cmp",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.compareReg(i.operands[0].asRegIdx(), i.operands[1].asRegIdx());
          }},
 
         {"cmpi",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.compareImm(i.operands[0].asRegIdx(),
                           i.operands[1].asSignedImm<20>());
          }},
@@ -287,21 +274,18 @@ static const std::map<std::string,
         {"vsdiv", PARTIAL(emit_vector_scalar, isa::VectorScalarOp::Div)},
 
         {"vidx",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.vidx(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
                     i.operands[2].asBitsImm<vlaneidx_t::size>());
          }},
         {"vsplat",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.vsplat(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(),
                       i.operands[0].asBitsImm<vmask_t::size>());
          }},
 
         {"vswizzle",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
              auto mask = i.operands[0].asBitsImm<vmask_t::size>();
              auto vD = i.operands[1].asRegIdx();
              auto vA = i.operands[2].asRegIdx();
@@ -314,20 +298,21 @@ static const std::map<std::string,
          }},
 
         {"vreduce",
-         [](isa::Emitter& e, const SymbolTable& symtab,
-            const ast::Instruction& i) {
-             e.vreduce(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
-                       i.operands[2].asBitsImm<vmask_t::size>());
+         [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+             e.vreduce(i.operands[0].asRegIdx(), i.operands[2].asRegIdx(),
+                       i.operands[1].asBitsImm<vmask_t::size>());
          }},
 
-        {"vdot", [](isa::Emitter& e, const SymbolTable& symtab,
-                    const ast::Instruction& i) {
+        {"vdot", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
             e.vdot(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx());
         }},
 
-        {"vdota", [](isa::Emitter& e, const SymbolTable& symtab,
-                    const ast::Instruction& i) {
+        {"vdota", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
             e.vdota(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[3].asRegIdx());
+        }},
+
+        {"vsma", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.vsma(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[3].asRegIdx(), i.operands[4].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
         }},
 
         {"rcsr",
