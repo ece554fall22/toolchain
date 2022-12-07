@@ -9,6 +9,7 @@
 #include <morph/util.h>
 
 #include "cpu.h"
+#include "debugger.h"
 #include "instructions.h"
 #include "trace.h"
 
@@ -28,18 +29,17 @@
 class CPUInstructionProxy : public isa::InstructionVisitor {
   public:
     ~CPUInstructionProxy() override = default;
-    CPUInstructionProxy(CPUState& cpu, MemSystem& mem,
+    CPUInstructionProxy(CPUState& cpu, MemSystem& mem, Debugger& dbg,
                         std::shared_ptr<Tracer> tracer)
-        : cpu{cpu}, mem{mem}, tracer{tracer} {}
+        : cpu{cpu}, mem{mem}, dbg{dbg}, tracer{tracer} {}
 
     // misc
     void nop() override { instructions::nop(cpu, mem); }
     void halt() override { instructions::halt(cpu, mem); }
     void bkpt(bits<25> signal) override {
-        fmt::print(
-            "\n\nBREAKPOINT BREAKPOINT : {:#x} : BREAKPOINT BREAKPOINT\n\n",
-            signal.inner);
-        cpu.dump();
+        fmt::print("{:#x}: breaking at BKPT (signaled {:#x})\n",
+                   cpu.pc.getCurrentPC(), signal.inner);
+        dbg.hitBreakpoint();
     }
 
     // J
@@ -520,5 +520,6 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
   private:
     CPUState& cpu;
     MemSystem& mem;
+    Debugger& dbg;
     std::shared_ptr<Tracer> tracer;
 };

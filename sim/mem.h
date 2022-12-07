@@ -11,6 +11,8 @@ struct MemSystem {
     MemSystem(size_t size, std::shared_ptr<Tracer> tracer)
         : mempool(size, 0), tracer{tracer} {}
 
+    auto size() const -> uint64_t;
+
     void write(uint64_t addr, u<32> val);
     void write(uint64_t addr, u<36> val);
     void write(uint64_t addr, f32x4 val);

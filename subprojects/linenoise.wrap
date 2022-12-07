@@ -1,0 +1,9 @@
+[wrap-git]
+url = https://github.com/antirez/linenoise
+revision = 97d2850af13c339369093b78abe5265845d78220
+depth = 1
+
+patch_directory = linenoise
+
+[provide]
+linenoise = linenoise_dep

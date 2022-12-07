@@ -88,3 +88,5 @@ void MemSystem::_check_addr(uint64_t addr, uint32_t alignTo) const {
     if (addr > mempool.size())
         panic("access past end of emulated memory");
 }
+
+auto MemSystem::size() const -> uint64_t { return mempool.size() * 4; }

@@ -12,6 +12,7 @@
 #include <morph/util.h>
 
 #include "cpu.h"
+#include "debugger.h"
 #include "iproxy.h"
 
 using json = nlohmann::json;
@@ -128,7 +129,8 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     MemSystem mem(memSize, tracer);
-    CPUInstructionProxy iproxy(cpuState, mem, tracer);
+    Debugger debugger(cpuState, mem);
+    CPUInstructionProxy iproxy(cpuState, mem, debugger, tracer);
     isa::PrintVisitor printvis(std::cout);
 
     loadMemoryImage(mem, ap.get<std::string>("memory"));
@@ -154,6 +156,7 @@ int main(int argc, char* argv[]) {
         isa::decodeInstruction(iproxy, bits<32>(ir));
 
         tracer->end();
+        debugger.tick();
 
         if (signal_flag == SIGINT) {
             fmt::print(fmt::fg(fmt::color::cyan),
