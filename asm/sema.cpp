@@ -1,10 +1,12 @@
 #include "sema.h"
 
 #include <functional>
+#include <iostream>
 #include <map>
 #include <string>
 
-#include <iostream>
+#include <fmt/core.h>
+#include <fmt/ostream.h>
 
 #define RRR(id)                                                                \
     {                                                                          \
@@ -68,10 +70,10 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"st32", {OperandType::Memory,         OperandType::ScalarRegister}},
     {"st36", {OperandType::Memory,         OperandType::ScalarRegister}},
 
-    {"vldi", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::VectorMemory}},
-    {"vsti", {OperandType::VectorMask, OperandType::VectorMemory,   OperandType::VectorRegister}},
-    {"vldr", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::VectorMemory}},
-    {"vstr", {OperandType::VectorMask, OperandType::VectorMemory,   OperandType::VectorRegister}},
+    {"vldi", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::VectorMemoryImmIncr}},
+    {"vsti", {OperandType::VectorMask, OperandType::VectorMemoryImmIncr,   OperandType::VectorRegister}},
+    {"vldr", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::VectorMemoryRegIncr}},
+    {"vstr", {OperandType::VectorMask, OperandType::VectorMemoryRegIncr,   OperandType::VectorRegister}},
 
 
     RRI("addi"),
@@ -216,13 +218,26 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
                                       i, inst.mnemonic.getLexeme()));
                 }
                 break;
-            case OperandType::VectorMemory:
-                if (!operand.is<ast::OperandMemoryPostIncr>()) {
+            case OperandType::VectorMemoryImmIncr:
+                if (!operand.is<ast::OperandMemoryPostIncr>() ||
+                    !std::holds_alternative<ast::OperandImmediate>(
+                        operand.get<ast::OperandMemoryPostIncr>().increment)) {
                     error(inst.mnemonic.getSrcLoc()->lineno,
-                          fmt::format(
-                              "operand {} to instruction `{}` has "
-                              "wrong type; expected vector memory operand",
-                              i, inst.mnemonic.getLexeme()));
+                          fmt::format("operand {} to instruction `{}` has "
+                                      "wrong type; expected vector memory "
+                                      "operand w/ immediate increment",
+                                      i, inst.mnemonic.getLexeme()));
+                }
+                break;
+            case OperandType::VectorMemoryRegIncr:
+                if (!operand.is<ast::OperandMemoryPostIncr>() ||
+                    !std::holds_alternative<ast::OperandRegister>(
+                        operand.get<ast::OperandMemoryPostIncr>().increment)) {
+                    error(inst.mnemonic.getSrcLoc()->lineno,
+                          fmt::format("operand {} to instruction `{}` has "
+                                      "wrong type; expected vector memory "
+                                      "operand w/ register increment",
+                                      i, inst.mnemonic.getLexeme()));
                 }
                 break;
             }
@@ -233,5 +248,86 @@ void SemanticsPass::enter(const ast::Instruction& inst, size_t depth) {
         error(inst.mnemonic.getSrcLoc()->lineno,
               fmt::format("unrecognized instruction mnemonic `{}`",
                           inst.mnemonic.getLexeme()));
+    }
+}
+
+void SemanticsPass::dumpSemanticsTable(std::ostream& os) {
+    for (auto& [mnemonic, args] : SEMANTICS) {
+        os << "---- " << mnemonic << " ----\n";
+        os << "  semantics: " << mnemonic << " ";
+        size_t n_args = args.size();
+        for (size_t i = 0; i < n_args; i++) {
+            switch (args[i]) {
+            case OperandType::ScalarRegister:
+                os << "scalar";
+                break;
+            case OperandType::VectorRegister:
+                os << "vector";
+                break;
+            case OperandType::VectorMask:
+                os << "mask";
+                break;
+            case OperandType::Immediate:
+                os << "imm";
+                break;
+            case OperandType::Label:
+                os << "lbl";
+                break;
+            case OperandType::Memory:
+                os << "mem";
+                break;
+            case OperandType::VectorMemoryImmIncr:
+                os << "vmem+=imm";
+                break;
+            case OperandType::VectorMemoryRegIncr:
+                os << "vmem+=reg";
+                break;
+            }
+
+            if (i < n_args - 1)
+                os << ", ";
+        }
+        os << "\n";
+
+        os << "  example:   " << mnemonic << " ";
+        size_t reg_stub = 0;
+        for (size_t i = 0; i < n_args; i++) {
+            switch (args[i]) {
+            case OperandType::ScalarRegister:
+                fmt::print(os, "r{}", reg_stub);
+                reg_stub++;
+                break;
+            case OperandType::VectorRegister:
+                fmt::print(os, "v{}", reg_stub);
+                reg_stub++;
+                break;
+            case OperandType::VectorMask:
+                os << "0b0101";
+                break;
+            case OperandType::Immediate:
+                os << "0x20";
+                break;
+            case OperandType::Label:
+                os << "someLabel";
+                break;
+            case OperandType::Memory:
+                fmt::print(os, "[r{}+0x10]", reg_stub);
+                reg_stub++;
+                break;
+            case OperandType::VectorMemoryImmIncr:
+                fmt::print(os, "[r{}+=0x10]", reg_stub);
+                reg_stub++;
+                break;
+            case OperandType::VectorMemoryRegIncr:
+                fmt::print(os, "[r{}+=r{}]", reg_stub, reg_stub + 1);
+                reg_stub += 2;
+                break;
+            }
+
+            if (i < n_args - 1)
+                os << ", ";
+        }
+
+        os << "\n\n";
     }
 }

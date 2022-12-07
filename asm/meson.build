@@ -5,3 +5,7 @@ json_dep     = dependency('nlohmann_json', required: true)
 asm_sources = files('main.cpp', 'lexer.cpp', 'parser.cpp', 'sema.cpp', 'emit.cpp', 'symtab.cpp')
 asm_exe = executable('asm', asm_sources,
                      dependencies: [argparse_dep, fmt_dep, libmorph_dep])
+
+dumpinstrs_sources = files('dumpinstrs.cpp', 'sema.cpp')
+dumpinstrs_exe = executable('dumpinstrs', dumpinstrs_sources,
+                            dependencies: [libmorph_dep])

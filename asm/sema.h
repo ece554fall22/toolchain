@@ -19,7 +19,8 @@ enum class OperandType {
     Immediate,
     Label,
     Memory,
-    VectorMemory,
+    VectorMemoryImmIncr,
+    VectorMemoryRegIncr,
 };
 
 class SemanticsPass {
@@ -34,6 +35,8 @@ class SemanticsPass {
     [[nodiscard]] const std::vector<SemanticsError>& getErrors() const {
         return errors;
     }
+
+    static void dumpSemanticsTable(std::ostream& os);
 
   private:
     std::vector<SemanticsError> errors;

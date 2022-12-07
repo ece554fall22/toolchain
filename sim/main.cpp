@@ -60,6 +60,49 @@ void loadMemoryImage(MemSystem& dest, const std::string& path) {
               dest.mempool.size() * 4);
 }
 
+void initState(CPUState& cpuState, const std::string& path) {
+    if (!std::filesystem::is_regular_file(path)) {
+        fmt::print(stderr, "[!] `{}` is not a file\n", path);
+        exit(1);
+    }
+
+    std::ifstream fInit(path);
+    if (!fInit.is_open()) {
+        fmt::print(stderr, "[!] can't open `{}`\n", path);
+        exit(1);
+    }
+
+    json data = json::parse(fInit, nullptr, true, true);
+    for (auto& [cpukey, cpudata] : data.at("cpus").items()) {
+        size_t cpu_idx = std::stoi(cpukey);
+        assert(cpu_idx == 0 && "lol one cpu"); // todo
+
+        if (cpudata.contains("r")) {
+            auto regvals = cpudata["r"];
+            assert(regvals.is_array() && "cpu/{n}/r must be array");
+            assert(regvals.size() == 32 && "cpu/{n}/r must be 32 el long");
+            size_t reg_idx = 0;
+            for (auto& regval : regvals) {
+                cpuState.r[reg_idx] = regval.get<int64_t>();
+                reg_idx++;
+            }
+        }
+
+        if (cpudata.contains("v")) {
+            auto vecvals = cpudata["v"];
+            assert(vecvals.is_array() && "cpu/{n}/v must be array");
+            assert(vecvals.size() == 32 && "cpu/{n}/v must be 32 el long");
+            size_t reg_idx = 0;
+            for (auto& vec : vecvals) {
+                for (size_t lane = 0; lane < N_LANES; lane++) {
+                    cpuState.v[reg_idx][lane] = vec.at(lane).get<float>();
+                }
+                reg_idx++;
+            }
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     auto ap = parseArgs(argc, argv);
 
@@ -79,60 +122,9 @@ int main(int argc, char* argv[]) {
 
     loadMemoryImage(mem, ap.get<std::string>("memory"));
 
-    {
-        auto path = ap.present<std::string>("--init-state");
-        if (path) {
-            if (!std::filesystem::is_regular_file(*path)) {
-                fmt::print(stderr, "[!] `{}` is not a file\n", *path);
-                exit(1);
-            }
-
-            std::ifstream fInit(*path);
-            if (!fInit.is_open()) {
-                fmt::print(stderr, "[!] can't open `{}`\n", *path);
-                exit(1);
-            }
-
-            json data = json::parse(fInit, nullptr, true, true);
-            for (auto& [cpukey, cpudata] : data.at("cpus").items()) {
-                size_t cpu_idx = std::stoi(cpukey);
-                assert(cpu_idx == 0 && "lol one cpu"); // todo
-
-                if (cpudata.contains("r")) {
-                    auto regvals = cpudata["r"];
-                    assert(regvals.is_array() && "cpu/{n}/r must be array");
-                    assert(regvals.size() == 32 &&
-                           "cpu/{n}/r must be 32 el long");
-                    size_t reg_idx = 0;
-                    for (auto& regval : regvals) {
-                        cpuState.r[reg_idx] = regval.get<int64_t>();
-                        reg_idx++;
-                    }
-                }
-
-                if (cpudata.contains("v")) {
-                    auto vecvals = cpudata["v"];
-                    assert(vecvals.is_array() && "cpu/{n}/v must be array");
-                    assert(vecvals.size() == 32 &&
-                           "cpu/{n}/v must be 32 el long");
-                    size_t reg_idx = 0;
-                    for (auto& vec : vecvals) {
-                        for (size_t lane = 0; lane < N_LANES; lane++) {
-                            cpuState.v[reg_idx][lane] =
-                                vec.at(lane).get<float>();
-                        }
-                        reg_idx++;
-                    }
-                }
-            }
-        }
+    if (auto path = ap.present<std::string>("--init-state")) {
+        initState(cpuState, *path);
     }
-
-    // fmt::print("dumping 0 page:\n");
-    // for (size_t i = 0; i < 32; i++) {
-    //     fmt::print("{:#x}: {:#x}\n", i, mem.mempool[i]);
-    // }
-    // fmt::print("\n");
 
     while (!cpuState.isHalted()) {
         auto pc = cpuState.pc.getNewPC();
