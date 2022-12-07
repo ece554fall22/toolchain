@@ -389,11 +389,13 @@ void jal(CPUState& cpu, MemSystem& mem, s<25> imm) {
 
 void jmpr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
     cpu.pc.setTakenPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
+    cpu.pc.setTaken(true);
 }
 
 void jalr(CPUState& cpu, MemSystem& mem, reg_idx rT, s<20> imm) {
     cpu.r[31] = cpu.pc.peekNotTaken();                         // link
     cpu.pc.setTakenPC(cpu.r[rT].inner + imm._sgn_inner() * 4); // and jump
+    cpu.pc.setTaken(true);
 }
 
 /************************************************************************/
