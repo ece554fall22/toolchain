@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cpu.h"
+#include <Eigen/Dense>
 #include <morph/varint.h>
 // arbitrarily sized bitfields
 // u<bits>
@@ -482,45 +483,45 @@ void bgei(CPUState& cpu, MemSystem& mem, s<22> imm) {
 
 /**
  * Write the rows of A
- * Assuming vA holds the higher bits and vB the lower bits of 
+ * Assuming vA holds the higher bits and vB the lower bits of
  * Memory
- * 
+ *
  * Note: Data is also written from the zeroth row (which is at the
  * to like in standard matrices)
-*/
-void writeA(CPUState& cpu, vreg_idx vA, vreg_idx vB){
+ */
+void writeA(CPUState& cpu, vreg_idx vA, vreg_idx vB) {
     size_t row = cpu.matUnit.getAPos();
     for (size_t i = 0; i < 4; i++)
         cpu.matUnit.A(row, i) = cpu.v[vA][i];
     for (size_t i = 0; i < 4; i++)
         cpu.matUnit.A(row, i) = cpu.v[vA][i];
-    
+
     // got to next row next time
     cpu.matUnit.incrementAPos();
 }
 
 /**
  * Write the rows of B
- * Assuming vA holds the higher bits and vB the lower bits of 
+ * Assuming vA holds the higher bits and vB the lower bits of
  * Memory
- * 
+ *
  * Note: Data is also written from the zeroth row (which is at the
  * to like in standard matrices)
-*/
-void writeB(CPUState& cpu, vreg_idx vA, vreg_idx vB){
+ */
+void writeB(CPUState& cpu, vreg_idx vA, vreg_idx vB) {
     size_t row = cpu.matUnit.getBPos();
     for (size_t i = 0; i < 4; i++)
         cpu.matUnit.B(row, i) = cpu.v[vA][i];
     for (size_t i = 0; i < 4; i++)
         cpu.matUnit.B(row, i) = cpu.v[vB][i];
-    
+
     // got to next row next time
     cpu.matUnit.incrementBPos();
 }
 
 // Matrix Multiply unit
-void matmul(CPUState& cpu){
-    cpu.matUnit.C.noalias() += cpu.matUnit.A *  cpu.matUnit.B;
+void matmul(CPUState& cpu) {
+    cpu.matUnit.C.noalias() += cpu.matUnit.A * cpu.matUnit.B;
 }
 
 // -- specials: cache control

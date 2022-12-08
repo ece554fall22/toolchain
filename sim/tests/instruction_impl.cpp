@@ -1,5 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
+#include <Eigen/Dense>
 
 #include "cpu.h"
 #include "instructions.h"
@@ -56,25 +57,59 @@ TEST_CASE("vector arithmetic") {
     }
 }
 
-
-// Note: The tests here are not up to date with the branch specifically working on the vector unit and
+// Note: The tests here are not up to date with the branch specifically working
+// on the vector unit and
 //      other tests (ndubuisi/instructions) so be careful merging
 
 TEST_CASE("Matrix Multiply Unit") {
     CPUState cpuState;
     vreg_idx vA;
     vreg_idx vB;
+    size_t vA_idx;
+    size_t vB_idx;
 
     SUBCASE("test1") {
+        vA_idx = 7;
+        vB_idx = 3;
+        f32x4 vA = {7.92275497e+29, -6.80173178e+14, -5.23570978e+26,
+                    -2.56092934e+14}; // va
+        f32x4 vB = {4.34680438e-02, 1.99914452e+38, -8.63642572e+31,
+                    2.16317983e+35}; // vb
         // directly inject our test vectors
-        cpuState.v[1] = {0.3, 0.4, 0.5, 0.6};
-        cpuState.v[2] = {0.7, 0.8, 0.9, 1.0};
+        cpuState.v[vA_idx] = vA;
+        cpuState.v[vB_idx] = vB;
 
-        instructions::writeA(cpuState, /*vA*/ 7, /*vB*/ 3);
+        // Fill up array
+        for (int i = 0; i < cpuState.matUnit.MAT_SIZE; i++) {
+            instructions::writeA(cpuState, /*vA*/ vA_idx, /*vB*/ vB_idx);
+            instructions::writeB(cpuState, /*vA*/ vA_idx, /*vB*/ vB_idx);
+        }
 
-        CHECK(cpuState.v[3][0] == doctest::Approx(0.21));
-        CHECK(cpuState.v[3][1] == doctest::Approx(0));
-        CHECK(cpuState.v[3][2] == doctest::Approx(0.45));
-        CHECK(cpuState.v[3][3] == doctest::Approx(0));
+        // Initialize
+        using Matrix8f = Eigen::Matrix<float, 8, 8>;
+        Matrix8f A = Matrix8f::Zero();
+        Matrix8f B = Matrix8f::Zero();
+        Matrix8f C = Matrix8f::Zero();
+
+        // Compute matrix multiplication
+        instructions::matmul(cpuState);
+
+        // Compute to compare
+        for (int row = 0; row < cpuState.matUnit.MAT_SIZE; row++) {
+            for (size_t i = 0; i < 4; i++) {
+                A(row, i) = vA[i];
+                B(row, i) = vB[i];
+            }
+            for (size_t i = 0; i < 4; i++) {
+                A(row, i + 4) = vB[i];
+                B(row, i + 4) = vB[i];
+            }
+        }
+
+        // Compute perf test matrix
+        C.noalias() += A * B;
+
+        // Check that C is computed correctly
+        CHECK(C.isApprox(cpuState.matUnit.C));
     }
 }

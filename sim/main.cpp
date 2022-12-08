@@ -3,11 +3,11 @@
 #include <fstream>
 #include <iostream>
 
+#include <Eigen/Dense>
 #include <argparse/argparse.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
-#include <Eigen/Dense>
 
 #include <morph/decoder.h>
 #include <morph/util.h>

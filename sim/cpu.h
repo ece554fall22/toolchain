@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <array>
 #include <fmt/core.h>
 #include <iomanip>
@@ -94,7 +95,7 @@ struct PC {
 struct MatrixUnit {
     using Matrix8f = Eigen::Matrix<float, 8, 8>;
     static constexpr size_t MAT_SIZE = 8;
-    
+
     Matrix8f A = Matrix8f::Zero();
     Matrix8f B = Matrix8f::Zero();
     Matrix8f C = Matrix8f::Zero();
@@ -108,15 +109,15 @@ struct MatrixUnit {
     MatrixUnit() : C{} {}
 
     // Increment postion for next write
-    void incrementAPos(){ A_pos = (A_pos + 1) % MAT_SIZE; }
-    void incrementBPos(){ B_pos = (B_pos + 1) % MAT_SIZE; }
-    void incrementCPos(){ C_pos = (C_pos + 1) % MAT_SIZE; }
+    void incrementAPos() { A_pos = (A_pos + 1) % MAT_SIZE; }
+    void incrementBPos() { B_pos = (B_pos + 1) % MAT_SIZE; }
+    void incrementCPos() { C_pos = (C_pos + 1) % MAT_SIZE; }
 
     // Get current position
     // Increment postion for next write
-    size_t getAPos(){ return A_pos;}
-    size_t getBPos(){ return B_pos; }
-    size_t getCPos(){ return C_pos; }
+    size_t getAPos() { return A_pos; }
+    size_t getBPos() { return B_pos; }
+    size_t getCPos() { return C_pos; }
 };
 
 struct CPUState {
