@@ -30,12 +30,13 @@ class Debugger {
     void cmd_help(Command& cmd);
     void cmd_registers_scalar(Command& command);
     void cmd_registers_vector(Command& command);
+    void cmd_registers_mat(Command& command);
     void cmd_list(Command& command);
     void cmd_flags(Command& command);
-    void cmd_m32(Command& cmd);
-    void cmd_m36(Command& cmd);
-    void cmd_f32(Command& cmd);
-    void cmd_vec(Command& cmd);
+    void cmd_mr32(Command& cmd);
+    void cmd_mr36(Command& cmd);
+    void cmd_mrf32(Command& cmd);
+    void cmd_mrvec(Command& cmd);
 
     bool enabled;
 };
