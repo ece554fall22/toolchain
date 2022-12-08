@@ -64,7 +64,31 @@ void Debugger::tick() {
     enabled = false;
 }
 
-void Debugger::hitBreakpoint() { enabled = true; }
+void dumpatpc(MemSystem& mem, uint64_t breakpc) {
+    isa::PrintVisitor printvis(std::cout);
+
+    constexpr uint64_t BAND = 1;
+    auto loPc = std::max(breakpc - BAND * 4, (uint64_t)0);
+    auto hiPc = std::min(breakpc + BAND * 4, mem.size());
+    for (uint32_t pc = loPc; pc < hiPc + 4; pc += 4) {
+        if (pc == breakpc)
+            std::cout << "-> ";
+        else
+            std::cout << "   ";
+        fmt::print("{:#x}: ", pc);
+        auto ir = bits<32>(mem.readInstruction(pc));
+        isa::decodeInstruction(printvis, ir);
+        std::cout << '\n';
+    }
+}
+
+void Debugger::hitBreakpoint(bits<25> signal) {
+    fmt::print("{:#x}: breaking at BKPT (signaled {:#x})\n",
+               cpu.pc.getCurrentPC(), signal.inner);
+    dumpatpc(mem, cpu.pc.getCurrentPC());
+
+    enabled = true;
+}
 
 void Debugger::dispatch(Command& cmd) {
     if (cmd.name == "help" || cmd.name == "h") {
@@ -137,22 +161,8 @@ void Debugger::cmd_registers_mat(Command& command) {
 }
 
 void Debugger::cmd_list(Command& command) {
-    isa::PrintVisitor printvis(std::cout);
     auto breakpc = cpu.pc.getCurrentPC();
-
-    constexpr uint64_t BAND = 1;
-    auto loPc = std::max(breakpc - BAND * 4, (uint64_t)0);
-    auto hiPc = std::min(breakpc + BAND * 4, mem.size());
-    for (uint32_t pc = loPc; pc < hiPc + 4; pc += 4) {
-        if (pc == breakpc)
-            std::cout << "-> ";
-        else
-            std::cout << "   ";
-        fmt::print("{:#x}: ", pc);
-        auto ir = bits<32>(mem.readInstruction(pc));
-        isa::decodeInstruction(printvis, ir);
-        std::cout << '\n';
-    }
+    dumpatpc(mem, breakpc);
 }
 
 void Debugger::cmd_flags(Command& command) {

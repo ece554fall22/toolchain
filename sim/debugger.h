@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <morph/varint.h>
+
 struct CPUState;
 struct MemSystem;
 
@@ -18,7 +20,7 @@ class Debugger {
         : cpu(cpu), mem(mem), enabled(false) {}
 
     void tick();
-    void hitBreakpoint();
+    void hitBreakpoint(bits<25> signal);
 
   private:
     CPUState& cpu;

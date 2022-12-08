@@ -36,11 +36,7 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     // misc
     void nop() override { instructions::nop(cpu, mem); }
     void halt() override { instructions::halt(cpu, mem); }
-    void bkpt(bits<25> signal) override {
-        fmt::print("{:#x}: breaking at BKPT (signaled {:#x})\n",
-                   cpu.pc.getCurrentPC(), signal.inner);
-        dbg.hitBreakpoint();
-    }
+    void bkpt(bits<25> signal) override { dbg.hitBreakpoint(signal); }
 
     // J
     void jmp(s<25> imm) override {
