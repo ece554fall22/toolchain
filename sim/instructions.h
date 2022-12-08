@@ -421,25 +421,25 @@ void bezr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
 // BLZR
 void blzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     cpu.pc.setTakenPC(cpu.r[rA] + imm);
-    cpu.pc.setTaken(cpu.f.sign);
+    cpu.pc.setTaken(cpu.f.sign ^ cpu.f.overflow);
 }
 
 // BGZR
 void bgzr(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     cpu.pc.setTakenPC(cpu.r[rA] + imm);
-    cpu.pc.setTaken(!cpu.f.sign);
+    cpu.pc.setTaken(!(cpu.f.sign ^ cpu.f.overflow) & !cpu.f.zero);
 }
 
 // BLER
 void bler(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     cpu.pc.setTakenPC(cpu.r[rA] + imm);
-    cpu.pc.setTaken(cpu.f.sign | cpu.f.zero);
+    cpu.pc.setTaken((cpu.f.sign ^ cpu.f.overflow) || cpu.f.zero);
 }
 
 // BGER
 void bger(CPUState& cpu, MemSystem& mem, reg_idx rA, s<17> imm) {
     cpu.pc.setTakenPC(cpu.r[rA] + imm);
-    cpu.pc.setTaken(!cpu.f.sign | cpu.f.zero);
+    cpu.pc.setTaken(!(cpu.f.sign || cpu.f.overflow));
 }
 
 /** Relative to current PC */
@@ -459,25 +459,25 @@ void bezi(CPUState& cpu, MemSystem& mem, s<22> imm) {
 // BLZI
 void blzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
     cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
-    cpu.pc.setTaken(cpu.f.sign);
+    cpu.pc.setTaken(cpu.f.sign ^ cpu.f.overflow);
 }
 
 // BGZI
 void bgzi(CPUState& cpu, MemSystem& mem, s<22> imm) {
     cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
-    cpu.pc.setTaken(!cpu.f.sign);
+    cpu.pc.setTaken(!(cpu.f.sign ^ cpu.f.overflow) & !cpu.f.zero);
 }
 
 // BLEI
 void blei(CPUState& cpu, MemSystem& mem, s<22> imm) {
     cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
-    cpu.pc.setTaken(cpu.f.sign || cpu.f.zero);
+    cpu.pc.setTaken((cpu.f.sign ^ cpu.f.overflow) || cpu.f.zero);
 }
 
 // BGEI
 void bgei(CPUState& cpu, MemSystem& mem, s<22> imm) {
     cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
-    cpu.pc.setTaken(!cpu.f.sign || cpu.f.zero);
+    cpu.pc.setTaken(!(cpu.f.sign || cpu.f.overflow));
 }
 
 // -- specials: cache control
