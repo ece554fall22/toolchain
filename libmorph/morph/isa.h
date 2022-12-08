@@ -114,7 +114,7 @@ inline auto vectorScalarArithmeticOpFromOpcode(bits<7> v) -> VectorScalarOp {
 
 inline auto matrixWriteOpFromOpcode(bits<7> v) -> MatrixWriteOp {
     switch (v.inner) {
-    case 0b0101100:
+    case 0b0101110:
         return isa::MatrixWriteOp::WriteA;
     case 0b0101111:
         return isa::MatrixWriteOp::WriteB;

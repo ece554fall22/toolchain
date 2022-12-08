@@ -126,6 +126,12 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"rcsr", {OperandType::ScalarRegister, OperandType::Immediate}},
     {"wcsr", {OperandType::Immediate,      OperandType::ScalarRegister}},
 
+    {"writeA", {OperandType::VectorRegister, OperandType::VectorRegister, OperandType::Immediate}},
+    {"writeB", {OperandType::VectorRegister, OperandType::VectorRegister, OperandType::Immediate}},
+    {"writeC", {OperandType::VectorRegister, OperandType::VectorRegister, OperandType::Immediate}},
+    {"readC", {OperandType::VectorRegister, OperandType::Immediate, OperandType::Immediate}},
+    {"systolicstep", {}},
+
     {"flushicache", {}},
     {"flushdirty", {}},
     {"flushclean", {}},

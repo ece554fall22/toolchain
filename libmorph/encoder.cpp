@@ -75,26 +75,6 @@ uint32_t floatArithmeticOpToArithCode(FloatArithmeticOp op) {
     }
 }
 
-uint32_t matrixMultiplyOpToAOpcode(MatrixMultiplyOp op) {
-    switch (op) {
-    case MatrixMultiplyOp::WriteA:
-        return 0b0101110;
-    case MatrixMultiplyOp::WriteB:
-        return 0b0101111;
-    case MatrixMultiplyOp::WriteC:
-        return 0b0110000;
-    case MatrixMultiplyOp::Matmul:
-        return 0b0110001;
-    case MatrixMultiplyOp::ReadC:
-        return 0b0110010;
-    case MatrixMultiplyOp::Systolicstep:
-        return 0b0110011;
-    default:
-        panic("unsupported matrix multiply op");
-        return 0;
-    }
-}
-
 uint32_t cacheControlOpcode(CacheControlOp op) {
     switch (op) {
     case CacheControlOp::Flushdirty:
@@ -420,35 +400,40 @@ void isa::Emitter::vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
     append(instr);
 }
 
-// matmul, writea, writeb, writec, readc, systolicstep
-void isa::Emitter::matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD,
-                                  vreg_idx vA, vreg_idx vB, u<3> idx,
-                                  bool high) {
-
+void Emitter::matrixWrite(isa::MatrixWriteOp op, vreg_idx vA, vreg_idx vB,
+                          u<3> row) {
     uint32_t instr = 0;
 
-    uint32_t opcode = matrixMultiplyOpToAOpcode(op);
-    instr |= (opcode << 25);
-
     switch (op) {
-    case MatrixMultiplyOp::Matmul:
-    case MatrixMultiplyOp::Systolicstep:
+    case MatrixWriteOp::WriteA:
+        instr |= 0b0101110 << 25;
         break;
-    case MatrixMultiplyOp::ReadC:
-        instr |= (vD.inner << 20);
-        instr |= ((idx.inner & 0b111) << 17);
-        if (high)
-            instr |= (1 << 16);
-    case MatrixMultiplyOp::WriteA:
-    case MatrixMultiplyOp::WriteB:
-    case MatrixMultiplyOp::WriteC:
-        instr |= ((idx.inner & 0b111) << 20);
-        instr |= (vA.inner << 15);
-        instr |= (vB.inner << 10);
-    default:
-        panic("unsupported vector arith op");
-        return;
+    case MatrixWriteOp::WriteB:
+        instr |= 0b0101111 << 25;
+        break;
+    case MatrixWriteOp::WriteC:
+        instr |= 0b0110000 << 25;
+        break;
     }
+
+    instr |= row.raw() << 20;
+    instr |= vA.raw() << 15;
+    instr |= vB.raw() << 10;
+
+    append(instr);
+}
+
+void isa::Emitter::systolicStep() { append(0b0110011 << 25); }
+
+void isa::Emitter::matmul() { append(0b0110001 << 25); }
+
+void isa::Emitter::readC(vreg_idx vD, u<3> row, bool high) {
+    uint32_t instr = 0b0110010 << 25;
+
+    instr |= (vD.inner << 20);
+    instr |= (row.raw() << 17);
+    if (high)
+        instr |= 1 << 16;
 
     append(instr);
 }
