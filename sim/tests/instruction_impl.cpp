@@ -55,3 +55,26 @@ TEST_CASE("vector arithmetic") {
         CHECK(cpuState.v[3][3] == doctest::Approx(0));
     }
 }
+
+
+// Note: The tests here are not up to date with the branch specifically working on the vector unit and
+//      other tests (ndubuisi/instructions) so be careful merging
+
+TEST_CASE("Matrix Multiply Unit") {
+    CPUState cpuState;
+    vreg_idx vA;
+    vreg_idx vB;
+
+    SUBCASE("test1") {
+        // directly inject our test vectors
+        cpuState.v[1] = {0.3, 0.4, 0.5, 0.6};
+        cpuState.v[2] = {0.7, 0.8, 0.9, 1.0};
+
+        instructions::writeA(cpuState, /*vA*/ 7, /*vB*/ 3);
+
+        CHECK(cpuState.v[3][0] == doctest::Approx(0.21));
+        CHECK(cpuState.v[3][1] == doctest::Approx(0));
+        CHECK(cpuState.v[3][2] == doctest::Approx(0.45));
+        CHECK(cpuState.v[3][3] == doctest::Approx(0));
+    }
+}
