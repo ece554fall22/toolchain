@@ -339,6 +339,12 @@ static const std::map<std::string,
                    u<2>(i.operands[1].get<ast::OperandImmediate>().val));
          }},
 
+        {"wcsr",
+        [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.csr(isa::CsrOp::Wcsr, i.operands[1].asRegIdx(),
+                  u<2>(i.operands[0].get<ast::OperandImmediate>().val));
+        }},
+
         {"writeA", PARTIAL(emit_mat_write, isa::MatrixWriteOp::WriteA)},
         {"writeB", PARTIAL(emit_mat_write, isa::MatrixWriteOp::WriteB)},
         {"writeC", PARTIAL(emit_mat_write, isa::MatrixWriteOp::WriteC)},
