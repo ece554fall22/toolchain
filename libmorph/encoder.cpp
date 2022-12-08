@@ -211,7 +211,7 @@ void isa::Emitter::compareReg(reg_idx rA, reg_idx rB) {
 }
 
 void isa::Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD,
-                                    reg_idx rA) {
+                                    reg_idx rA, reg_idx rB) {
     uint32_t instr = 0b1000000 << 25;
     switch (dir) {
     case CmpMutateDirection::Increment:
@@ -222,8 +222,9 @@ void isa::Emitter::compareAndMutate(CmpMutateDirection dir, reg_idx rD,
         break;
     }
 
-    instr |= rD.inner << 20;
-    instr |= rA.inner << 15;
+    instr |= rD.raw() << 20;
+    instr |= rA.raw() << 15;
+    instr |= rB.raw() << 10;
 
     append(instr);
 }

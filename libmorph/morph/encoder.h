@@ -39,7 +39,8 @@ class Emitter {
 
     void compareImm(reg_idx rA, s<20> imm);
     void compareReg(reg_idx rA, reg_idx rB);
-    void compareAndMutate(isa::CmpMutateDirection dir, reg_idx rD, reg_idx rA);
+    void compareAndMutate(isa::CmpMutateDirection dir, reg_idx rD, reg_idx rA,
+                          reg_idx rB);
 
     // scalar float arithmetic
     void floatArithmetic(isa::FloatArithmeticOp op, reg_idx rD, reg_idx rA,

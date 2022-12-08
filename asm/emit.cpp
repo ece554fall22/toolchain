@@ -262,6 +262,13 @@ static const std::map<std::string,
                           i.operands[1].asSignedImm<20>());
          }},
 
+        {"cmpdec", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.compareAndMutate(isa::CmpMutateDirection::Decrement, i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx());
+        }},
+        {"cmpinc", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.compareAndMutate(isa::CmpMutateDirection::Increment, i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx());
+        }},
+
         {"fadd", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fadd)},
         {"fsub", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fsub)},
         {"fmul", PARTIAL(emit_scalar_float, isa::FloatArithmeticOp::Fmul)},

@@ -97,6 +97,8 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"not", {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
     {"cmp",  {OperandType::ScalarRegister, OperandType::ScalarRegister}},
+    RRR("cmpdec"),
+    RRR("cmpinc"),
 
     RRR("fadd"),
     RRR("fsub"),
