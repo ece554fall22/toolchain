@@ -33,10 +33,8 @@ class Debugger {
     void cmd_registers_mat(Command& command);
     void cmd_list(Command& command);
     void cmd_flags(Command& command);
-    void cmd_mr32(Command& cmd);
-    void cmd_mr36(Command& cmd);
-    void cmd_mrf32(Command& cmd);
-    void cmd_mrvec(Command& cmd);
+    void cmd_mr(Command& cmd);
+    void cmd_mx(Command& cmd);
 
     bool enabled;
 };

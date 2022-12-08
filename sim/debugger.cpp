@@ -82,14 +82,12 @@ void Debugger::dispatch(Command& cmd) {
     } else if (cmd.name == "c") {
         enabled = false;
         return;
-    } else if (cmd.name == "mr/32") {
-        return cmd_mr32(cmd);
-    } else if (cmd.name == "mr/36") {
-        return cmd_mr36(cmd);
-    } else if (cmd.name == "mr/f32") {
-        return cmd_mrf32(cmd);
-    } else if (cmd.name == "mr/vec") {
-        return cmd_mrvec(cmd);
+    } else if (cmd.name == "mr/32" || cmd.name == "mr/36" ||
+               cmd.name == "mr/f32" || cmd.name == "mr/vec") {
+        return cmd_mr(cmd);
+    } else if (cmd.name == "mx/32" || cmd.name == "mx/36" ||
+               cmd.name == "mx/f32" || cmd.name == "mx/vec") {
+        return cmd_mx(cmd);
     } else {
         std::cerr << "command " << cmd.name << " was not recognized.\n";
     }
@@ -97,18 +95,22 @@ void Debugger::dispatch(Command& cmd) {
 
 void Debugger::cmd_help(Command& cmd) {
     std::cout << "debugger help\n"
-                 "-------------\n"
-                 " l           : show current PC and instruction\n"
-                 " f(lags)     : dump flags\n"
-                 " r           : dump scalar registers\n"
-                 " v           : dump vector registers\n"
-                 " mat         : dump matrix registers in systolic core\n"
-                 " mr/32  addr : dump 32-bit value at addr\n"
-                 " mr/36  addr : dump 36-bit value at addr\n"
-                 " mr/f32 addr : dump float  value at addr\n"
-                 " mr/vec addr : dump vector value at addr\n"
-                 " c (or ^D)   : continue execution\n"
-                 " h(elp)      : print this message\n\n";
+                 "--------------------------------------------------\n"
+                 " l               : show current PC and instruction\n"
+                 " f(lags)         : dump flags\n"
+                 " r               : dump scalar registers\n"
+                 " v               : dump vector registers\n"
+                 " mat             : dump matrix registers in systolic core\n"
+                 " mr/32  addr     : dump 32-bit value at addr\n"
+                 " mr/36  addr     : dump 36-bit value at addr\n"
+                 " mr/f32 addr     : dump float  value at addr\n"
+                 " mr/vec addr     : dump vector value at addr\n"
+                 " mx/32  addr len : dump len 32-bit values at addr\n"
+                 " mx/36  addr len : dump len 36-bit values at addr\n"
+                 " mx/f32 addr len : dump len float  values at addr\n"
+                 " mx/vec addr len : dump len vector values at addr\n"
+                 " c (or ^D)       : continue execution\n"
+                 " h(elp)          : print this message\n\n";
 }
 
 void Debugger::cmd_registers_scalar(Command& command) {
@@ -157,13 +159,11 @@ void Debugger::cmd_flags(Command& command) {
     std::cout << "flags: " << cpu.f << "\n\n";
 }
 
-auto parse_mem_operand(Command& cmd) -> std::optional<uint64_t> {
-    if (cmd.args.size() != 1) {
-        fmt::print(std::cerr, "usage: {} [address]\n", cmd.name);
+auto parse_addr(std::vector<std::string>& args) -> std::optional<uint64_t> {
+    if (args.empty())
         return std::nullopt;
-    }
 
-    auto sAddr = std::string_view(cmd.args[0]);
+    auto sAddr = std::string_view(args[0]);
 
     std::from_chars_result res{};
     uint64_t val;
@@ -176,6 +176,7 @@ auto parse_mem_operand(Command& cmd) -> std::optional<uint64_t> {
             std::from_chars(sAddr.data(), sAddr.data() + sAddr.size(), val, 10);
     }
 
+    args.erase(args.begin());
     if (res.ec == std::errc{} && res.ptr == (sAddr.data() + sAddr.size())) {
         return val;
     } else {
@@ -183,30 +184,73 @@ auto parse_mem_operand(Command& cmd) -> std::optional<uint64_t> {
     }
 }
 
-void Debugger::cmd_mr32(Command& cmd) {
-    if (auto addr = parse_mem_operand(cmd)) {
-        uint32_t val = mem.read32(*addr);
-        fmt::print("{:#011x} : {:#010x}\n", *addr, val);
+void Debugger::cmd_mr(Command& cmd) {
+    std::string_view n{cmd.name};
+    std::vector<std::string> argstack{cmd.args};
+
+    n.remove_prefix(3); // strip 'mr/'
+
+    if (auto addr = parse_addr(argstack)) {
+        if (n == "32") {
+            uint32_t val = mem.read32(*addr);
+            fmt::print("{:#011x} : {:#010x}\n", *addr, val);
+        } else if (n == "36") {
+            uint32_t val = mem.read32(*addr);
+            fmt::print("{:#011x} : {:#010x}\n", *addr, val);
+        } else if (n == "f32") {
+            uint32_t val = mem.read32(*addr);
+            fmt::print("{:#011x} : {}\n", *addr, bit_cast<float>(val));
+        } else if (n == "vec") {
+            f32x4 vec = mem.readVec(*addr);
+            fmt::print("{:#011x} : {}\n", *addr, vec);
+        } else {
+            panic();
+        }
+    } else {
+        fmt::print(std::cerr, "usage: {} <address>\n", cmd.name);
     }
 }
 
-void Debugger::cmd_mr36(Command& cmd) {
-    if (auto addr = parse_mem_operand(cmd)) {
-        uint32_t val = mem.read36(*addr);
-        fmt::print("{:#011x} : {:#011x}\n", *addr, val);
-    }
-}
+void Debugger::cmd_mx(Command& cmd) {
+    std::string_view n{cmd.name};
+    std::vector<std::string> argstack{cmd.args};
 
-void Debugger::cmd_mrf32(Command& cmd) {
-    if (auto addr = parse_mem_operand(cmd)) {
-        uint32_t val = mem.read32(*addr);
-        fmt::print("{:#011x} : {}\n", *addr, bit_cast<float>(val));
-    }
-}
+    n.remove_prefix(3); // strip 'mx/'
 
-void Debugger::cmd_mrvec(Command& cmd) {
-    if (auto addr = parse_mem_operand(cmd)) {
-        f32x4 vec = mem.readVec(*addr);
-        fmt::print("{:#011x} : {}\n", *addr, vec);
+    auto addr = parse_addr(argstack);
+    auto len = parse_addr(argstack);
+
+    uint64_t stride;
+    if (n == "32" || n == "f32") {
+        stride = 4; // 32 bits
+    } else if (n == "36") {
+        stride = 8; // 64 bits
+    } else if (n == "vec") {
+        stride = 16; // 128 bits
+    } else {
+        panic();
+    }
+
+    if (addr && len) {
+        for (uint64_t ptr = *addr; ptr < *addr + (*len) * stride;
+             ptr += stride) {
+            if (n == "32") {
+                uint32_t val = mem.read32(ptr);
+                fmt::print("{:#011x} : {:#010x}\n", ptr, val);
+            } else if (n == "36") {
+                uint32_t val = mem.read32(ptr);
+                fmt::print("{:#011x} : {:#010x}\n", ptr, val);
+            } else if (n == "f32") {
+                uint32_t val = mem.read32(ptr);
+                fmt::print("{:#011x} : {}\n", ptr, bit_cast<float>(val));
+            } else if (n == "vec") {
+                f32x4 vec = mem.readVec(ptr);
+                fmt::print("{:#011x} : {}\n", ptr, vec);
+            } else {
+                panic();
+            }
+        }
+    } else {
+        fmt::print(std::cerr, "usage: {} <address> <len>\n", cmd.name);
     }
 }
