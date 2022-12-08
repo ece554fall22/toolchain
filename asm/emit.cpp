@@ -363,6 +363,13 @@ static const std::map<std::string,
             e.floatIntConv(isa::FloatIntConversionOp::Itof, i.operands[0].asRegIdx(), i.operands[1].asRegIdx());
         }},
 
+        {"cmpx", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.fa(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asBitsImm<15>());
+        }},
+        {"fa", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.cmpx(i.operands[0].asRegIdx(), i.operands[1].asRegIdx(), i.operands[2].asRegIdx());
+        }},
+
         {"flushicache",
          PARTIAL(emit_flushcache, isa::CacheControlOp::Flushicache)},
         {"flushdirty",

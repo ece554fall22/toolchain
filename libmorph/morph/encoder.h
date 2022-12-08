@@ -12,7 +12,6 @@ namespace isa {
 enum class CacheControlOp { Flushdirty, Flushclean, Flushicache };
 enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
-enum class ConcurrencyOp { Fa, Cmpx };
 enum class CmpMutateDirection { Increment, Decrement };
 
 class Emitter {
@@ -88,8 +87,8 @@ class Emitter {
     void flushcache(isa::CacheControlOp op);
     void flushline(reg_idx rA, s<20> imm);
     void csr(isa::CsrOp op, reg_idx rA, u<2> csrNum);
-    void concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA, reg_idx rB,
-                     u<15> imm);
+    void cmpx(reg_idx rD, reg_idx rA, reg_idx rB);
+    void fa(reg_idx rD, reg_idx rA, u<15> imm);
 
     auto getData() -> const auto& { return this->data; }
     auto getPC() const -> uint64_t { return this->currentPC; }

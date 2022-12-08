@@ -143,6 +143,9 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"ftoi", {OperandType::ScalarRegister, OperandType::ScalarRegister}},
     {"itof", {OperandType::ScalarRegister, OperandType::ScalarRegister}},
 
+    RRR("cmpx"),
+    RRI("fa"),
+
     // pseudos
     {"lda",  {OperandType::ScalarRegister, OperandType::Label}},
 

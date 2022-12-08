@@ -606,25 +606,47 @@ void isa::Emitter::floatIntConv(isa::FloatIntConversionOp op, reg_idx rD,
 }
 
 // fa, cmpx
-void isa::Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
-                               reg_idx rB, u<15> imm) {
+// void isa::Emitter::concurrency(isa::ConcurrencyOp op, reg_idx rD, reg_idx rA,
+//                               reg_idx rB, u<15> imm) {
+//
+//    uint32_t instr = 0;
+//
+//    if (op == ConcurrencyOp::Fa) {
+//        instr |= (0b0111011 << 25);
+//        instr |= (rD.inner << 20);
+//        instr |= (rA.inner << 15);
+//        instr |= imm.raw() & BITFILL(15);
+//    } else if (op == ConcurrencyOp::Cmpx) {
+//        instr |= (0b0111100 << 25);
+//        instr |= (rD.inner << 20);
+//        instr |= (rA.inner << 15);
+//        instr |= (rB.inner << 10);
+//    } else {
+//        panic("unsupported concurrency op");
+//        return;
+//    }
+//
+//    append(instr);
+//}
+
+void isa::Emitter::fa(reg_idx rD, reg_idx rA, u<15> imm) {
+    uint32_t instr = 0;
+
+    instr |= (0b0111011 << 25);
+    instr |= (rD.inner << 20);
+    instr |= (rA.inner << 15);
+    instr |= imm.raw() & BITFILL(15);
+
+    append(instr);
+}
+void isa::Emitter::cmpx(reg_idx rD, reg_idx rA, reg_idx rB) {
 
     uint32_t instr = 0;
 
-    if (op == ConcurrencyOp::Fa) {
-        instr |= (0b0111011 << 25);
-        instr |= (rD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= imm.raw() & BITFILL(15);
-    } else if (op == ConcurrencyOp::Cmpx) {
-        instr |= (0b0111100 << 25);
-        instr |= (rD.inner << 20);
-        instr |= (rA.inner << 15);
-        instr |= (rB.inner << 10);
-    } else {
-        panic("unsupported concurrency op");
-        return;
-    }
+    instr |= (0b0111100 << 25);
+    instr |= (rD.inner << 20);
+    instr |= (rA.inner << 15);
+    instr |= (rB.inner << 10);
 
     append(instr);
 }
