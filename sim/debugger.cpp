@@ -75,19 +75,21 @@ void Debugger::dispatch(Command& cmd) {
         return cmd_registers_scalar(cmd);
     } else if (cmd.name == "v") {
         return cmd_registers_vector(cmd);
+    } else if (cmd.name == "mat") {
+        return cmd_registers_mat(cmd);
     } else if (cmd.name == "flags" || cmd.name == "f") {
         return cmd_flags(cmd);
     } else if (cmd.name == "c") {
         enabled = false;
         return;
     } else if (cmd.name == "mr/32") {
-        return cmd_m32(cmd);
+        return cmd_mr32(cmd);
     } else if (cmd.name == "mr/36") {
-        return cmd_m36(cmd);
+        return cmd_mr36(cmd);
     } else if (cmd.name == "mr/f32") {
-        return cmd_f32(cmd);
+        return cmd_mrf32(cmd);
     } else if (cmd.name == "mr/vec") {
-        return cmd_vec(cmd);
+        return cmd_mrvec(cmd);
     } else {
         std::cerr << "command " << cmd.name << " was not recognized.\n";
     }
@@ -100,6 +102,7 @@ void Debugger::cmd_help(Command& cmd) {
                  " f(lags)     : dump flags\n"
                  " r           : dump scalar registers\n"
                  " v           : dump vector registers\n"
+                 " mat         : dump matrix registers in systolic core\n"
                  " mr/32  addr : dump 32-bit value at addr\n"
                  " mr/36  addr : dump 36-bit value at addr\n"
                  " mr/f32 addr : dump float  value at addr\n"
@@ -122,6 +125,13 @@ void Debugger::cmd_registers_vector(Command& command) {
         std::cout << std::setw(4) << fmt::format("v{}", i) << ": " << reg
                   << '\n';
     }
+}
+
+void Debugger::cmd_registers_mat(Command& command) {
+    Eigen::IOFormat f(Eigen::StreamPrecision, 0, " ", "\n", "  ");
+    std::cout << "A:\n" << cpu.matUnit.A.format(f) << "\n";
+    std::cout << "B:\n" << cpu.matUnit.B.format(f) << "\n";
+    std::cout << "C:\n" << cpu.matUnit.C.format(f) << "\n";
 }
 
 void Debugger::cmd_list(Command& command) {
@@ -173,28 +183,28 @@ auto parse_mem_operand(Command& cmd) -> std::optional<uint64_t> {
     }
 }
 
-void Debugger::cmd_m32(Command& cmd) {
+void Debugger::cmd_mr32(Command& cmd) {
     if (auto addr = parse_mem_operand(cmd)) {
         uint32_t val = mem.read32(*addr);
         fmt::print("{:#011x} : {:#010x}\n", *addr, val);
     }
 }
 
-void Debugger::cmd_m36(Command& cmd) {
+void Debugger::cmd_mr36(Command& cmd) {
     if (auto addr = parse_mem_operand(cmd)) {
         uint32_t val = mem.read36(*addr);
         fmt::print("{:#011x} : {:#011x}\n", *addr, val);
     }
 }
 
-void Debugger::cmd_f32(Command& cmd) {
+void Debugger::cmd_mrf32(Command& cmd) {
     if (auto addr = parse_mem_operand(cmd)) {
         uint32_t val = mem.read32(*addr);
         fmt::print("{:#011x} : {}\n", *addr, bit_cast<float>(val));
     }
 }
 
-void Debugger::cmd_vec(Command& cmd) {
+void Debugger::cmd_mrvec(Command& cmd) {
     if (auto addr = parse_mem_operand(cmd)) {
         f32x4 vec = mem.readVec(*addr);
         fmt::print("{:#011x} : {}\n", *addr, vec);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cpu.h"
+#include <Eigen/Dense>
 #include <morph/varint.h>
 // arbitrarily sized bitfields
 // u<bits>
@@ -478,6 +479,66 @@ void blei(CPUState& cpu, MemSystem& mem, s<22> imm) {
 void bgei(CPUState& cpu, MemSystem& mem, s<22> imm) {
     cpu.pc.addToTakenPC(imm._sgn_inner() * 4);
     cpu.pc.setTaken(!(cpu.f.sign || cpu.f.overflow));
+}
+
+void _cpuWriteToMatrix(CPUState& cpu, MatrixUnit::Matrix& mat, vreg_idx vA,
+                       vreg_idx vB, u<3> row) {
+    for (size_t i = 0; i < 4; i++)
+        mat(row.raw(), i) = cpu.v[vA][i];
+    for (size_t i = 0; i < 4; i++)
+        mat(row.raw(), i + 4) = cpu.v[vB][i];
+}
+
+/**
+ * Write the rows of A
+ * Assuming vA holds the higher bits and vB the lower bits of
+ * Memory
+ *
+ * Note: Data is also written from the zeroth row (which is at the
+ * to like in standard matrices)
+ */
+void writeA(CPUState& cpu, MemSystem& mem, vreg_idx vA, vreg_idx vB, u<3> row) {
+    _cpuWriteToMatrix(cpu, cpu.matUnit.A, vA, vB, row);
+}
+
+/**
+ * Write the rows of B
+ * Assuming vA holds the higher bits and vB the lower bits of
+ * Memory
+ *
+ * Note: Data is also written from the zeroth row (which is at the
+ * to like in standard matrices)
+ */
+void writeB(CPUState& cpu, MemSystem& mem, vreg_idx vA, vreg_idx vB, u<3> row) {
+    _cpuWriteToMatrix(cpu, cpu.matUnit.B, vA, vB, row);
+}
+
+void writeC(CPUState& cpu, MemSystem& mem, vreg_idx vA, vreg_idx vB, u<3> row) {
+    _cpuWriteToMatrix(cpu, cpu.matUnit.C, vA, vB, row);
+}
+
+// Matrix Multiply unit
+void matmul(CPUState& cpu, MemSystem& mem) {
+    cpu.matUnit.C.noalias() += cpu.matUnit.A * cpu.matUnit.B;
+}
+
+void systolicStep(CPUState& cpu, MemSystem& mem) {
+    cpu.matUnit.systolicCycleCt += 1;
+    if (cpu.matUnit.systolicCycleCt >= MatrixUnit::SYSTOLIC_CYCLES) {
+        cpu.matUnit.systolicCycleCt = 0;
+        matmul(cpu, mem);
+    }
+}
+
+void readC(CPUState& cpu, MemSystem& mem, vreg_idx vD, u<3> row, bool hi) {
+    size_t offs = 0;
+    if (hi) {
+        offs += 4;
+    }
+
+    for (size_t i = 0; i < 4; i++) {
+        cpu.v[vD][i] = cpu.matUnit.C(row.raw(), offs + i);
+    }
 }
 
 // -- specials: cache control

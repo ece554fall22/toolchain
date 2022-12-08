@@ -84,6 +84,12 @@ void emit_scalar_float(isa::FloatArithmeticOp op, isa::Emitter& e,
                       i.operands[2].asRegIdx());
 }
 
+void emit_mat_write(isa::MatrixWriteOp op, isa::Emitter& e,
+                    const SymbolTable& symtab, const ast::Instruction& i) {
+    e.matrixWrite(op, i.operands[0].asRegIdx(), i.operands[1].asRegIdx(),
+                  i.operands[2].asBitsImm<3>());
+}
+
 // todo this is just fucked up std::bind but with a defined retn ty
 #define PARTIAL(fn, ...)                                                       \
     [](auto& e, const SymbolTable& st, const auto& i) {                        \
@@ -320,6 +326,16 @@ static const std::map<std::string,
              e.csr(isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),
                    u<2>(i.operands[1].get<ast::OperandImmediate>().val));
          }},
+
+        {"writeA", PARTIAL(emit_mat_write, isa::MatrixWriteOp::WriteA)},
+        {"writeB", PARTIAL(emit_mat_write, isa::MatrixWriteOp::WriteB)},
+        {"writeC", PARTIAL(emit_mat_write, isa::MatrixWriteOp::WriteC)},
+        {"readC", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.readC(i.operands[0].asRegIdx(), i.operands[1].asBitsImm<3>(), i.operands[2].asBitsImm<1>().raw() != 0);
+        }},
+        {"systolicstep", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+           e.systolicStep();
+        }},
 
         {"flushicache",
          PARTIAL(emit_flushcache, isa::CacheControlOp::Flushicache)},

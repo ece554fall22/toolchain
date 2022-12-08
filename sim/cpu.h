@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <array>
 #include <fmt/core.h>
 #include <iomanip>
@@ -91,12 +92,29 @@ struct PC {
     uint64_t aTaken;
 };
 
+struct MatrixUnit {
+    static constexpr size_t MAT_SIZE = 8;
+    using Matrix = Eigen::Matrix<float, MAT_SIZE, MAT_SIZE>;
+    static constexpr size_t SYSTOLIC_CYCLES = 22;
+
+    MatrixUnit()
+        : A{Matrix::Zero()}, B{Matrix::Zero()}, C{Matrix::Zero()},
+          systolicCycleCt{0} {}
+
+    Matrix A;
+    Matrix B;
+    Matrix C;
+
+    size_t systolicCycleCt;
+};
+
 struct CPUState {
     CPUState() : r{}, v{}, f{}, pc{}, halted{false} {}
 
     ScalarRegisterFile r;
     VectorRegisterFile v;
     ConditionFlags f;
+    MatrixUnit matUnit;
 
     PC pc;
 

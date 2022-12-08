@@ -3,9 +3,10 @@ fmt_dep       = dependency('fmt', required: true)
 doctest_dep   = dependency('doctest', required: true)
 json_dep      = dependency('nlohmann_json', version: '3.11.2', required: true)
 linenoise_dep = dependency('linenoise', required: true)
+eigen_dep    = dependency('eigen3', required: true)
 
 sim_inc = include_directories('.')
-sim_deps = [libmorph_dep, fmt_dep, linenoise_dep]
+sim_deps = [libmorph_dep, fmt_dep, eigen_dep, linenoise_dep]
 
 libsim_sources = files('mem.cpp', 'trace.cpp', 'debugger.cpp')
 libsim = static_library(

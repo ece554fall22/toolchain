@@ -9,14 +9,6 @@
 #include "varint.h"
 
 namespace isa {
-enum class MatrixMultiplyOp {
-    WriteA,
-    WriteB,
-    WriteC,
-    Matmul,
-    ReadC,
-    Systolicstep
-};
 enum class CacheControlOp { Flushdirty, Flushclean, Flushicache };
 enum class CsrOp { Wcsr, Rcsr };
 enum class FloatIntConversionOp { Ftoi, Itof };
@@ -69,8 +61,13 @@ class Emitter {
     void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB, vmask_t mask);
 
     // matrix extensions
-    void matrixMultiply(isa::MatrixMultiplyOp op, vreg_idx vD, vreg_idx vA,
-                        vreg_idx vB, u<3> idx, bool high);
+    void matrixWrite(isa::MatrixWriteOp op, vreg_idx vA, vreg_idx vB, u<3> row);
+    /**
+     * @deprecated not used in processor
+     */
+    void matmul();
+    void systolicStep();
+    void readC(vreg_idx vD, u<3> row, bool high);
 
     // memory transfer
     void loadImmediate(bool high, reg_idx rD, bits<18> imm);
