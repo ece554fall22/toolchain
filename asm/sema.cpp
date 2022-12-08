@@ -122,6 +122,7 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"vdot", {OperandType::ScalarRegister, OperandType::VectorRegister, OperandType::VectorRegister}},
     {"vdota", {OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::VectorRegister, OperandType::VectorRegister}},
     {"vsma", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::ScalarRegister, OperandType::VectorRegister, OperandType::VectorRegister}},
+    {"vcomp", {OperandType::VectorMask, OperandType::VectorRegister, OperandType::ScalarRegister, OperandType::ScalarRegister, OperandType::VectorRegister}},
 
     {"rcsr", {OperandType::ScalarRegister, OperandType::Immediate}},
     {"wcsr", {OperandType::Immediate,      OperandType::ScalarRegister}},

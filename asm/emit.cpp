@@ -321,6 +321,11 @@ static const std::map<std::string,
             e.vsma(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[3].asRegIdx(), i.operands[4].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
         }},
 
+        // vcomp mask vd, ra, rb, vc
+        {"vcomp", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.vcomp(i.operands[1].asRegIdx(), i.operands[2].asRegIdx(), i.operands[3].asRegIdx(),i.operands[4].asRegIdx(), i.operands[0].asBitsImm<vmask_t::size>());
+        }},
+
         {"rcsr",
          [](auto& e, const SymbolTable& symtab, const ast::Instruction& i) {
              e.csr(isa::CsrOp::Rcsr, i.operands[0].asRegIdx(),
