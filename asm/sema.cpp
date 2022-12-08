@@ -137,6 +137,9 @@ static const std::map<std::string, std::vector<OperandType>, std::less<>> SEMANT
     {"flushclean", {}},
     {"flushline", {OperandType::ScalarRegister, OperandType::Immediate}},
 
+    {"ftoi", {OperandType::ScalarRegister, OperandType::ScalarRegister}},
+    {"itof", {OperandType::ScalarRegister, OperandType::ScalarRegister}},
+
     // pseudos
     {"lda",  {OperandType::ScalarRegister, OperandType::Label}},
 

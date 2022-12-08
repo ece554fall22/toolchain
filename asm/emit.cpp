@@ -337,6 +337,14 @@ static const std::map<std::string,
            e.systolicStep();
         }},
 
+        {"ftoi", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.floatIntConv(isa::FloatIntConversionOp::Ftoi, i.operands[0].asRegIdx(), i.operands[1].asRegIdx());
+        }},
+
+        {"itof", [](isa::Emitter& e, const SymbolTable& symtab, const ast::Instruction& i) {
+            e.floatIntConv(isa::FloatIntConversionOp::Itof, i.operands[0].asRegIdx(), i.operands[1].asRegIdx());
+        }},
+
         {"flushicache",
          PARTIAL(emit_flushcache, isa::CacheControlOp::Flushicache)},
         {"flushdirty",
