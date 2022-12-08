@@ -1,5 +1,6 @@
 #pragma once
 
+#include <csignal>
 #include <optional>
 #include <string>
 #include <vector>
@@ -16,11 +17,14 @@ struct Command {
 
 class Debugger {
   public:
-    Debugger(CPUState& cpu, MemSystem& mem)
-        : cpu(cpu), mem(mem), enabled(false) {}
+    Debugger(CPUState& cpu, MemSystem& mem, bool& quitting)
+        : enabled(false), cpu(cpu), mem(mem), quitting(quitting) {}
 
     void tick();
     void hitBreakpoint(bits<25> signal);
+    void simHaltedByUser();
+
+    bool enabled;
 
   private:
     CPUState& cpu;
@@ -38,5 +42,5 @@ class Debugger {
     void cmd_mr(Command& cmd);
     void cmd_mx(Command& cmd);
 
-    bool enabled;
+    bool& quitting;
 };

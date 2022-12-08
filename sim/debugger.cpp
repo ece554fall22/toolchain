@@ -58,10 +58,14 @@ void Debugger::tick() {
     while (enabled) {
         if (auto command = getcmd()) {
             dispatch(*command);
-        } else
+        }
+
+        // ^C. fuck linenoise
+        if (linenoiseInterrupted() != 0) {
+            quitting = true;
             break;
+        }
     }
-    enabled = false;
 }
 
 void dumpatpc(MemSystem& mem, uint64_t breakpc) {
@@ -90,6 +94,11 @@ void Debugger::hitBreakpoint(bits<25> signal) {
     enabled = true;
 }
 
+void Debugger::simHaltedByUser() {
+    dumpatpc(mem, cpu.pc.getCurrentPC());
+    enabled = true;
+}
+
 void Debugger::dispatch(Command& cmd) {
     if (cmd.name == "help" || cmd.name == "h") {
         return cmd_help(cmd);
@@ -105,6 +114,10 @@ void Debugger::dispatch(Command& cmd) {
         return cmd_flags(cmd);
     } else if (cmd.name == "c") {
         enabled = false;
+        return;
+    } else if (cmd.name == "q") {
+        enabled = false;
+        quitting = true;
         return;
     } else if (cmd.name == "mr/32" || cmd.name == "mr/36" ||
                cmd.name == "mr/f32" || cmd.name == "mr/vec") {
@@ -134,6 +147,7 @@ void Debugger::cmd_help(Command& cmd) {
                  " mx/f32 addr len : dump len float  values at addr\n"
                  " mx/vec addr len : dump len vector values at addr\n"
                  " c (or ^D)       : continue execution\n"
+                 " q (or ^C)       : quit the program\n"
                  " h(elp)          : print this message\n\n";
 }
 

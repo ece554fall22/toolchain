@@ -129,8 +129,9 @@ int main(int argc, char* argv[]) {
             << "[!] memory size must be a multiple of 128 bits (16 bytes)\n";
         exit(1);
     }
+    bool quitting;
     MemSystem mem(memSize, tracer);
-    Debugger debugger(cpuState, mem);
+    Debugger debugger(cpuState, mem, quitting);
     CPUInstructionProxy iproxy(cpuState, mem, debugger, tracer);
     isa::PrintVisitor printvis(std::cout);
 
@@ -157,14 +158,18 @@ int main(int argc, char* argv[]) {
         isa::decodeInstruction(iproxy, bits<32>(ir));
 
         tracer->end();
+        if (signal_flag == SIGINT) {
+            fmt::print(" simulation stopped by SIGINT\n");
+            signal_flag = 0;
+            debugger.simHaltedByUser();
+        }
         debugger.tick();
 
-        if (signal_flag == SIGINT) {
-            fmt::print(fmt::fg(fmt::color::cyan),
-                       " simulation halted by SIGINT\n");
-            cpuState.halt();
+        if (quitting) {
+            cpuState.dump();
+            break;
         }
     }
 
-    cpuState.dump();
+    return 0;
 }
