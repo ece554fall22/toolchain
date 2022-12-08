@@ -63,6 +63,8 @@ TEST_CASE("vector arithmetic") {
 
 TEST_CASE("Matrix Multiply Unit") {
     CPUState cpuState;
+    MemSystem mem(16);
+
     vreg_idx vA;
     vreg_idx vB;
     size_t vA_idx;
@@ -71,34 +73,26 @@ TEST_CASE("Matrix Multiply Unit") {
     SUBCASE("test1") {
         vA_idx = 7;
         vB_idx = 3;
-        f32x4 vA = {7.92275497e+29, -6.80173178e+14, -5.23570978e+26,
-                    -2.56092934e+14}; // va
-        f32x4 vB = {4.34680438e-02, 1.99914452e+38, -8.63642572e+31,
-                    2.16317983e+35}; // vb
+        f32x4 vA = {7.92275497, -6.80173178, -5.23570978, -2.56092934}; // va
+        f32x4 vB = {4.34680438, 1.99914452, -8.63642572, 2.16317983};   // vb
         // directly inject our test vectors
         cpuState.v[vA_idx] = vA;
         cpuState.v[vB_idx] = vB;
 
+        MatrixUnit::Matrix A = MatrixUnit::Matrix::Zero();
+        MatrixUnit::Matrix B = MatrixUnit::Matrix::Zero();
+        MatrixUnit::Matrix C = MatrixUnit::Matrix::Zero();
+
         // Fill up array
-        for (int i = 0; i < cpuState.matUnit.MAT_SIZE; i++) {
-            instructions::writeA(cpuState, /*vA*/ vA_idx, /*vB*/ vB_idx);
-            instructions::writeB(cpuState, /*vA*/ vA_idx, /*vB*/ vB_idx);
-        }
-
-        // Initialize
-        using Matrix8f = Eigen::Matrix<float, 8, 8>;
-        Matrix8f A = Matrix8f::Zero();
-        Matrix8f B = Matrix8f::Zero();
-        Matrix8f C = Matrix8f::Zero();
-
-        // Compute matrix multiplication
-        instructions::matmul(cpuState);
-
-        // Compute to compare
         for (int row = 0; row < cpuState.matUnit.MAT_SIZE; row++) {
+            instructions::writeA(cpuState, mem, /*vA*/ vA_idx, /*vB*/ vB_idx,
+                                 row);
+            instructions::writeB(cpuState, mem, /*vA*/ vA_idx, /*vB*/ vB_idx,
+                                 row);
+
             for (size_t i = 0; i < 4; i++) {
                 A(row, i) = vA[i];
-                B(row, i) = vB[i];
+                B(row, i) = vA[i];
             }
             for (size_t i = 0; i < 4; i++) {
                 A(row, i + 4) = vB[i];
@@ -106,6 +100,12 @@ TEST_CASE("Matrix Multiply Unit") {
             }
         }
 
+        // check that loaded state is correct
+        CHECK(A.isApprox(cpuState.matUnit.A));
+        CHECK(B.isApprox(cpuState.matUnit.B));
+
+        // Compute matrix multiplication
+        instructions::matmul(cpuState, mem);
         // Compute perf test matrix
         C.noalias() += A * B;
 
