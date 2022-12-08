@@ -95,7 +95,7 @@ struct PC {
 struct MatrixUnit {
     static constexpr size_t MAT_SIZE = 8;
     using Matrix = Eigen::Matrix<float, MAT_SIZE, MAT_SIZE>;
-    static constexpr size_t SYSTOLIC_CYCLES = 22;
+    static constexpr size_t SYSTOLIC_CYCLES = 24;
 
     MatrixUnit()
         : A{Matrix::Zero()}, B{Matrix::Zero()}, C{Matrix::Zero()},
