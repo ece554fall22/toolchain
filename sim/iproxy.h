@@ -487,16 +487,28 @@ class CPUInstructionProxy : public isa::InstructionVisitor {
     }
 
     // -- systolic matrix stuff
-    void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
+    void matrixWrite(isa::MatrixWriteOp op, u<3> row, vreg_idx vA,
                      vreg_idx vB) override {
-        unimplemented();
+        switch (op) {
+        case isa::MatrixWriteOp::WriteA:
+            instructions::writeA(cpu, mem, vA, vB, row);
+            break;
+        case isa::MatrixWriteOp::WriteB:
+            instructions::writeB(cpu, mem, vA, vB, row);
+            break;
+        case isa::MatrixWriteOp::WriteC:
+            instructions::writeC(cpu, mem, vA, vB, row);
+            break;
+        }
     }
 
     void matmul() override { unimplemented(); }
 
-    void systolicstep() override { unimplemented(); }
+    void systolicstep() override { instructions::systolicStep(cpu, mem); }
 
-    void readC(vreg_idx vD, s<3> idx, bool high) override { unimplemented(); }
+    void readC(vreg_idx vD, u<3> row, bool high) override {
+        instructions::readC(cpu, mem, vD, row, high);
+    }
 
     // -- cache control
     void flushdirty() override { mem.flushDCacheDirty(); }

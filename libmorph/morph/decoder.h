@@ -107,7 +107,7 @@ struct InstructionVisitor {
                       vmask_t mask) = 0;
 
     // Matrix write ops
-    virtual void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
+    virtual void matrixWrite(isa::MatrixWriteOp op, u<3> idx, vreg_idx vA,
                              vreg_idx vB) = 0;
 
     // Matmul
@@ -117,7 +117,7 @@ struct InstructionVisitor {
     virtual void systolicstep() = 0;
 
     // ReadC
-    virtual void readC(vreg_idx vD, s<3> idx, bool high) = 0;
+    virtual void readC(vreg_idx vD, u<3> idx, bool high) = 0;
 
     // Vcomp
     virtual void vcomp(vreg_idx vD, reg_idx rA, reg_idx rB, vreg_idx vB,
@@ -311,7 +311,7 @@ struct PrintVisitor : public InstructionVisitor {
                    vA.inner, vB.inner, mask.inner);
     }
 
-    void matrixWrite(isa::MatrixWriteOp op, s<3> idx, vreg_idx vA,
+    void matrixWrite(isa::MatrixWriteOp op, u<3> idx, vreg_idx vA,
                      vreg_idx vB) override {
         fmt::print(os, "{}, {:#x}, v{}, v{}", op, idx.inner, vA.inner,
                    vB.inner);
@@ -321,7 +321,7 @@ struct PrintVisitor : public InstructionVisitor {
 
     void systolicstep() override { fmt::print(os, "systolicstep"); }
 
-    void readC(vreg_idx vD, s<3> idx, bool high) override {
+    void readC(vreg_idx vD, u<3> idx, bool high) override {
         fmt::print(os, "readC {}, {:#b}, v{}", high ? 1 : 0, idx.inner,
                    vD.inner);
     }
