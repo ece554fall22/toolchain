@@ -194,25 +194,27 @@ template <typename F> inline void _lane_apply(vmask_t mask, F fn) {
 #define VEC_BINOP(mnemonic, infixop)                                           \
     void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,     \
                   vreg_idx vB, vmask_t mask) {                                 \
-        _lane_apply(mask, [&](auto i) {                                        \
-            cpu.v[vD][i] = cpu.v[vA][i] infixop cpu.v[vB][i];                  \
-        });                                                                    \
+        auto valA = cpu.v[vA];                                                 \
+        auto valB = cpu.v[vB];                                                 \
+        _lane_apply(mask,                                                      \
+                    [&](auto i) { cpu.v[vD][i] = valA[i] infixop valB[i]; });  \
     }
 
 #define VEC_VS_BINOP(mnemonic, infixop)                                        \
     void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA,      \
                   vreg_idx vB, vmask_t mask) {                                 \
         auto val = bits2float(cpu.r[rA].slice<31, 0>());                       \
-        _lane_apply(mask,                                                      \
-                    [&](auto i) { cpu.v[vD][i] = cpu.v[vB][i] infixop val; }); \
+        auto vec = cpu.v[vB];                                                  \
+        _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = vec[i] infixop val; }); \
     }
 
 #define VEC_EXTREMA(mnemonic, chooser)                                         \
     void mnemonic(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,     \
                   vreg_idx vB, vmask_t mask) {                                 \
-        _lane_apply(mask, [&](auto i) {                                        \
-            cpu.v[vD][i] = chooser(cpu.v[vA][i], cpu.v[vB][i]);                \
-        });                                                                    \
+        auto valA = cpu.v[vA];                                                 \
+        auto valB = cpu.v[vB];                                                 \
+        _lane_apply(                                                           \
+            mask, [&](auto i) { cpu.v[vD][i] = chooser(valA[i], valB[i]); });  \
     }
 
 VEC_BINOP(vadd, +);
@@ -280,16 +282,18 @@ void vswizzle(CPUState& cpu, MemSystem& mem, vreg_idx vD, vreg_idx vA,
               vlaneidx_t i0, vlaneidx_t i1, vlaneidx_t i2, vlaneidx_t i3,
               vmask_t mask) {
     vlaneidx_t idxs[4] = {i0, i1, i2, i3};
-    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = cpu.v[vA][idxs[i].inner]; });
+    auto valA = cpu.v[vA];
+    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = valA[idxs[i].inner]; });
 }
 
 void vsma(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, vreg_idx vA,
           vreg_idx vB, vmask_t mask) {
     float factor = bits2float(cpu.r[rA].slice<31, 0>());
 
-    _lane_apply(mask, [&](auto i) {
-        cpu.v[vD][i] = cpu.v[vA][i] * factor + cpu.v[vB][i];
-    });
+    auto valA = cpu.v[vA];
+    auto valB = cpu.v[vB];
+    _lane_apply(mask,
+                [&](auto i) { cpu.v[vD][i] = valA[i] * factor + valB[i]; });
 }
 
 void vcomp(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
@@ -297,8 +301,8 @@ void vcomp(CPUState& cpu, MemSystem& mem, vreg_idx vD, reg_idx rA, reg_idx rB,
     float a = bits2float(cpu.r[rA].slice<31, 0>());
     float b = bits2float(cpu.r[rB].slice<31, 0>());
 
-    _lane_apply(mask,
-                [&](auto i) { cpu.v[vD][i] = (cpu.v[vB][i] > 0.f) ? a : b; });
+    auto valB = cpu.v[vB];
+    _lane_apply(mask, [&](auto i) { cpu.v[vD][i] = (valB[i] > 0.f) ? a : b; });
 }
 
 // -- scalar memory instructions
