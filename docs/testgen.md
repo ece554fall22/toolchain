@@ -15,5 +15,5 @@ it dumps its assembly output on stdout, so just run it like
 then you can assemble and simulate it to generate a trace `scalar-foo.trace`:
 ```sh
 ./builddir/asm/asm -o scalar-foo.bin scalar-foo.s
-./builddir/sim/sim --trace scalar-foo.trace scalar-foo.s
+./builddir/sim/sim --trace scalar-foo.trace scalar-foo.bin
 ```
