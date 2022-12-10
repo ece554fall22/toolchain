@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
         .default_value(false)
         .implicit_value(true);
 
-    ap.add_argument("sources").nargs(argparse::nargs_pattern::at_least_one);
+    ap.add_argument("source");
 
     try {
         ap.parse_args(argc, argv);
@@ -46,12 +46,12 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
-    auto inputs = ap.get<std::vector<std::string>>("sources");
+    auto input = ap.get<std::string>("source");
 
     std::ifstream f;
-    f.open(inputs[0]);
+    f.open(input);
     if (!f.is_open()) {
-        std::cerr << "[!] cant open " << inputs[0] << std::endl;
+        std::cerr << "[!] cant open " << input << std::endl;
         std::exit(1);
     }
     f.seekg(0, std::ios::end);
