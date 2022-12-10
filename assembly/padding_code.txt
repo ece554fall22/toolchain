@@ -1,0 +1,200 @@
+; Setup mem
+
+; Setup Regs
+;lil r1, 0x0000
+;lil r2, 0x0200
+;lil r3, 0x0004
+;lil r4, 0x0001
+
+; Call padmatrix
+;bkpt 0x01
+;jal padMatrix
+;bkpt 0x06
+
+;halt
+;halt
+
+;; Used for all convolutions that aren't pointwise convolutions
+;; pads 1 layer of 0's around the x and y of the matrices
+;; Moves the input and output as the program writes
+; r1 = input_data start location
+; r2 = output_data write location
+; r3 = width of input data (x_len and y_len)
+; r4 = number of filters (z_len)
+padMatrix:
+	; Push onto stack
+	subi r30, r30, 0x58
+	st36 [r30+0x00], r1
+	st36 [r30+0x08], r2
+	st36 [r30+0x10], r3
+	st36 [r30+0x18], r4
+	st36 [r30+0x20], r5
+	st36 [r30+0x28], r6 
+	st36 [r30+0x30], r7
+	st36 [r30+0x38], r8
+	st36 [r30+0x40], r9
+	st36 [r30+0x48], r10
+	st36 [r30+0x50], r31
+	
+	lih r10, 0x00000	; Load 0 into a reg for padding
+	lil r10, 0x00000
+	vsplat 0b1111, v2, r10	; load 0s into v2 vector register
+	
+	lih r7, 0x00000		; Set up z loop var
+	lil r7, 0x00000
+	
+	; Get the number of floats to push to array (ceil to nearest 4)
+	addi r9, r3, 0x05	; (r3 + 2 + 3) >> 2 << 2
+	shri r9, r9, 0x02
+	shli r9, r9, 0x02
+	
+	; Used when getting inputs
+	addi r11, r3, 0x03	; (r3 + 3) >> 2 << 2
+	shri r11, r11, 0x02
+	shli r11, r11, 0x02
+	
+	;; For loop z layer starts
+	padding_z_loop_start:
+		
+		lih r6, 0x00000		; init y loop var = 0
+		lil r6, 0x00000
+		
+		;; Add full row of 0's at start array
+		lih r5, 0x00000		; init zero loop var = 0
+		lil r5, 0x00000
+		padding_zero_loop_one_start:
+			; Write zero vector to dest
+			vsti 0b1111, [r2+=0x00], v2
+			addi r2, r2, 0x10
+		addi r5, r5, 0x04
+		cmp r5, r9		; (r5 - r9 < 0)
+		blzi padding_zero_loop_one_start
+		
+		;; For loop y layer starts
+		padding_y_loop_start:
+			
+			lih r5, 0x00000		; init x loop var = 0
+			lil r5, 0x00000
+			
+			lih r17, 0x0000		; Initialize start of row to be 0
+			lil r17, 0x0000
+			
+			padding_x_loop_start:
+				
+				; Pull vector: start + ((x val) + (ceil x len) * (y val) + (ceil x len) * (y len) * (z val)) * 0x04
+				; Address: r1 + (r5 + r9 * r6 + r9 * r3 * r7) << 0x02
+				mul r12, r11, r6			; r12=r9*r6 (row offset)
+				mul r13, r11, r3
+				mul r13, r13, r7		; r13=r9*r3*r7 (depth offset)
+				add r14, r5, r12
+				add r14, r14, r13
+				shli r14, r14, 0x02		; (r5 + r9 * r6 + r9 * r3 * r7) << 0x02
+				add r20, r1, r14
+				vldi 0b1111, v1, [r20+=0x00]
+				
+				; Shift reg values right 1 (store V1.3 into reg)
+				vidx r16, v1, 3
+				vswizzle 0b1111, v1, v1, 0, 0, 1, 2
+				
+				; Write to prev reg val into V1.0
+				vsplat 0b0001, v1, r17
+				
+				; Write to destination (destination increments as written to)
+				vsti 0b1111, [r2+=0x00], v1
+				addi r2, r2, 0x10
+				
+				; new reg val into old reg val
+				and r17, r16, r16
+				
+			; X loop branch conditionals (r5 - r9 < 4)
+			addi r5, r5, 0x04
+			addi r20, r5, 0x04
+			cmp r20, r9
+			blzi padding_x_loop_start
+			
+			;; Write last vector 
+			; Pull vector
+			mul r12, r9, r6			; r12=r9*r6
+			mul r13, r9, r3
+			mul r13, r13, r7		; r13=r9*r3*r7
+			add r14, r5, r12
+			add r14, r14, r13
+			shli r14, r14, 0x02		; (r5 + r9 * r6 + r9 * r3 * r7) << 0x02
+			add r20, r1, r14
+			vldi 0b1111, v1, [r20+=0x00]
+			
+			; Check number of remaining vals (width + 1) - (padded # floats - 4)
+			; # left = r3 - r9 + 5
+			sub r21, r3, r9
+			addi r21, r21, 0x05			; Between 0-3
+			
+			; If 0, then write whole vector of 0's (we have r10 = 0)
+			cmpi r21, 0x00
+			bgzi padding_one
+			vsplat 0b1111, v1, r10		; vector of zeros
+			jmp padding_end_of_row
+			
+			; If 1, then write V1.0=r17, V1.234=0
+			padding_one:
+				cmpi r21, 0x01
+				bgzi padding_two
+				vsplat 0b0001, v1, r17
+				vsplat 0b1110, v1, r10
+				jmp padding_end_of_row
+				
+			; If 2, then write V1.0=r17, V1.1 <- V1.0, V1.23 = 0
+			padding_two:
+				cmpi r21, 0x02
+				bgzi padding_three
+				vswizzle 0b1111, v1, v1, 0, 0, 1, 2
+				vsplat 0b0001, v1, r17
+				vsplat 0b1100, v1, r10
+				jmp padding_end_of_row
+			
+			; If 3, then write V1.0=r17, V1.1 <- V1.0, V1.2 <- V1.1, V1.3 = 0
+			padding_three:
+				vswizzle 0b1111, v1, v1, 0, 0, 1, 2
+				vsplat 0b0001, v1, r17
+				vsplat 0b1100, v1, r10
+				
+			padding_end_of_row:
+				vsti 0b1111, [r2+=0x00], v1
+				addi r2, r2, 0x10
+				
+		; Y loop branch conditionals (r6 - r3 < 0)
+		addi r6, r6, 0x01
+		cmp r6, r3
+		blzi padding_y_loop_start
+		
+		;; Add full row of 0's at end array
+		lih r5, 0x00000		; init zero loop var = 0
+		lil r5, 0x00000
+		padding_zero_loop_two_start:
+			; Write zero vector to dest
+			vsti 0b1111, [r2+=0x00], v2
+			addi r2, r2, 0x10
+		addi r5, r5, 0x04
+		cmp r5, r9		; (r5 - r9 < 0)
+		blzi padding_zero_loop_two_start
+		
+	; Z loop branch conditionals (r7 - r4 < 0)
+	addi r7, r7, 0x01
+	cmp r7, r4
+	blzi padding_z_loop_start
+
+; Pop stack
+ld36 r1, [r30+0x00]
+ld36 r2, [r30+0x08]
+ld36 r3, [r30+0x10]
+ld36 r4, [r30+0x18]
+ld36 r5, [r30+0x20]
+ld36 r6, [r30+0x28]
+ld36 r7, [r30+0x30]
+ld36 r8, [r30+0x38]
+ld36 r9, [r30+0x40]
+ld36 r10, [r30+0x48]
+ld36 r31, [r30+0x50]
+ld36 r31, [r30+0x50]
+addi r30, r30, 0x58
+jmpr r31, 0x00
+halt
