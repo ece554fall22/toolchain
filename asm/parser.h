@@ -41,6 +41,7 @@ class Parser {
 
     auto directive_origin() -> std::unique_ptr<ast::OriginDirective>;
     auto directive_section() -> std::unique_ptr<ast::SectionDirective>;
+    auto directive_line() -> std::unique_ptr<ast::LineDirective>;
 
     // -- error handling
     void error(const std::string& err) {

@@ -136,10 +136,17 @@ struct SectionDirective {
     void visit(auto& v, size_t depth) { v.enter(*this, depth); }
 };
 
+struct LineDirective {
+    LineDirective() {}
+
+    void visit(auto& v, size_t depth) { v.enter(*this, depth); }
+};
+
 struct Unit {
     std::variant<std::unique_ptr<LabelDecl>, std::unique_ptr<Instruction>,
                  std::unique_ptr<OriginDirective>,
-                 std::unique_ptr<SectionDirective>>
+                 std::unique_ptr<SectionDirective>,
+                 std::unique_ptr<LineDirective>>
         inner;
 
     template <typename T>
@@ -239,5 +246,9 @@ class ASTPrintVisitor {
         wtr << "SectionDirective {\n";
         indent(depth + 1);
         wtr << "." << d.name.getLexeme() << "\n";
+    }
+
+    void enter(const ast::LineDirective& d, size_t depth) {
+        wtr << "LineDirective {}\n";
     }
 };

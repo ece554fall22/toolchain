@@ -50,6 +50,8 @@ auto Parser::unit() -> std::unique_ptr<ast::Unit> {
         return std::make_unique<ast::Unit>(std::move(d));
     } else if (auto d = directive_section()) {
         return std::make_unique<ast::Unit>(std::move(d));
+    } else if (auto d = directive_line()) {
+        return std::make_unique<ast::Unit>(std::move(d));
     } else {
         error(fmt::format("unknown construct beginning with {} (`{}`)",
                           curr().getKind(), curr().getLexeme()));
@@ -115,6 +117,28 @@ auto Parser::directive_section() -> std::unique_ptr<ast::SectionDirective> {
     next(); // eat ident
 
     return std::make_unique<ast::SectionDirective>(name);
+}
+
+/* directive-line
+        ::= % 'line' ...
+*/
+auto Parser::directive_line() -> std::unique_ptr<ast::LineDirective> {
+    if (curr().isNot(Token::Kind::PERCENT))
+        return nullptr;
+
+    auto directive = peek();
+    if (directive.isNot(Token::Kind::IDENTIFIER) ||
+        std::string(directive.getLexeme()) != "line") {
+        return nullptr;
+    }
+
+    next(); // eat `line`
+
+    while (!curr().isEndOfLine()) {
+        next();
+    }
+
+    return std::make_unique<ast::LineDirective>();
 }
 
 /*
