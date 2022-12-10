@@ -1,0 +1,259 @@
+; r1 = input_data A start location, should be arranged column wise
+; r2 = input_data B start_location, should be arranged row wise
+; r3 = output_data write location
+; r4 = size of filter (9 or 27) = (cols in A) and (rows in B)
+; r5 = # of rows in A
+; r6 = # of cols in B
+
+
+
+matmulmodule:
+
+	;; Set up zero registers
+	lih r20, 0x0000						; init i loop var = 0
+	lil r20, 0x0000
+
+	mul r15, r4, 0x04					; offset rows for A
+	mul r16, r6, 0x04					; offset rows for B
+	mul r17, r4, 0x04					; offset rows for C
+
+	;; Set up loop i loop var
+	lih r7, 0x0000						; init i loop var = 0
+	lil r7, 0x0000
+
+	;; For loop1 for populating output
+	loop1:
+		;; Set up loop j loop var
+		lih r8, 0x0000					; init j loop var = 0
+		lil r8, 0x0000
+
+		;; For loop1.1
+		loop1.1:
+
+			;; Sending row c
+			vsplat 0b1111, v1, r20
+
+			writeC v1, v1, 0b000
+			writeC v1, v1, 0b001
+			writeC v1, v1, 0b010
+			writeC v1, v1, 0b011
+			writeC v1, v1, 0b100
+			writeC v1, v1, 0b101
+			writeC v1, v1, 0b110
+			writeC v1, v1, 0b111
+				
+
+			;; Set up loop k loop var
+			lih r9, 0x0000				; init k loop var = 0
+			lil r9, 0x0000
+			
+			;; Sending row A
+			send_row_A:
+
+				lih r10, 0x0000			; init ii = 0
+				lil r10, 0x0000
+
+				multi r13, r9, 0x04		; start col for A adjusting for offset, col number = k
+				add r11, r7, r10		; row number = (i+ii)
+				mult r12, r11, r15		; start row for A adjusting for offset
+
+				add r14, r12, r13		; start location = row + col				
+				vldi 0b1111 v1, [r14+=0x00] 	; Getting first four elements of vector A
+				vldi 0b1111 v2, [r14+=0x10]	; Getting second four elements of vector A
+				writeA v1, v2, 0b000		; Writing #0 vector of A
+				
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi 0b1111 v1, [r14+=0x00] 	; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b001		; Writing #1 vector of A
+
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b010		; Writing #2 vector of A
+
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b011		; Writing #3 vector of A
+
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b100		; Writing #4 vector of A
+
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b101		; Writing #5 vector of A
+
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b110		; Writing #6 vector of A
+
+				addi r12, r12, r15		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector A
+				vldi v2, r14, 0x10		; Getting second four elements of vector A
+				writeA v1, v2, 0b111		; Writing #7 vector of A
+
+			;; Sending row B
+			send_row_B:
+
+				lih r10, 0x00000		; init ii = 0
+				lil r10, 0x00000
+
+				multi r13, r8, 0x04		; start col for B adjusting for offset, col number = j
+				add r11, r9, r10		; row number = (k+ii)
+				mult r12, r11, r16		; start row for B adjusting for offset
+
+				add r14, r12, r13		; start location = row + col				
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b000		; Writing #0 vector of B
+				
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b001		; Writing #1 vector of B
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b010		; Writing #2 vector of B
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b011		; Writing #3 vector of B
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b100		; Writing #4 vector of B
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b101		; Writing #5 vector of B
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b110		; Writing #6 vector of B
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				vldi v1, r14, 0x00 		; Getting first four elements of vector B
+				vldi v2, r14, 0x10		; Getting second four elements of vector B
+				writeB v1, v2, 0b111		; Writing #7 vector of B
+
+			start_mult:
+				matmul				; start systolic array multiplication
+				
+			
+			store_in_C:
+				
+				lih r10, 0x0000			; init ii = 0
+				lil r10, 0x0000
+
+				multi r13, r8, 0x04		; start col for A adjusting for offset, col number = j
+				add r11, r7, r10		; row number = (i+ii)
+				mult r12, r11, r16		; start row for C adjusting for offset
+
+				add r14, r12, r13		; start location = row + col	
+				readc v1, 0x00, 0x00		; low bits of row 0
+				readc v2, 0x01, 0x00		; high bits of row 0
+				vsti v1, r14, 0x00		; store lower bits of row 0
+				vsti v2, r14, 0x10		; store higher bits of row 0
+				
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x01		; low bits of row 1
+				readc v2, 0x01, 0x01		; high bits of row 1
+				vsti v1, r14, 0x00		; store lower bits of row 1
+				vsti v2, r14, 0x10		; store higher bits of row 1
+
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x02		; low bits of row 2
+				readc v2, 0x01, 0x02		; high bits of row 2
+				vsti v1, r14, 0x00		; store lower bits of row 2
+				vsti v2, r14, 0x10		; store higher bits of row 2
+				
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x03		; low bits of row 3
+				readc v2, 0x01, 0x03		; high bits of row 3
+				vsti v1, r14, 0x00		; store lower bits of row 3
+				vsti v2, r14, 0x10		; store higher bits of row 3
+				
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x04		; low bits of row 4
+				readc v2, 0x01, 0x04		; high bits of row 4
+				vsti v1, r14, 0x00		; store lower bits of row 4
+				vsti v2, r14, 0x10		; store higher bits of row 4
+					
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x05		; low bits of row 5
+				readc v2, 0x01, 0x05		; high bits of row 5
+				vsti v1, r14, 0x00		; store lower bits of row 5
+				vsti v2, r14, 0x10		; store higher bits of row 5
+				
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x06		; low bits of row 6
+				readc v2, 0x01, 0x06		; high bits of row 6
+				vsti v1, r14, 0x00		; store lower bits of row 6
+				vsti v2, r14, 0x10		; store higher bits of row 6
+				
+				addi r12, r12, r16		; Go to next row with offset
+				add r14, r12, r13		; start location = row + col
+				readc v1, 0x00, 0x07		; low bits of row 7
+				readc v2, 0x01, 0x07		; high bits of row 7
+				vsti v1, r14, 0x00		; store lower bits of row 7
+				vsti v2, r14, 0x10		; store higher bits of row 7
+			
+				addi r9, r9, 0x08		; update loop var k
+				subi r20, r5, r9		
+				bgei send_row_A
+			
+
+			addi r8, r8, 0x08			; update loop var j
+			subi r20, r5, r8			; using cols of A as rows of output hence r5
+			bgei loop1.1
+
+
+		addi r7, r7, 0x08				; update loop var i
+		subi r20, r6, r7				; using rows of B as cols of output hence r4
+		bgei loop1
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+		
