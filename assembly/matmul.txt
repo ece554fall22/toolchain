@@ -561,7 +561,7 @@ matmulmodule:
 					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
 
 			end_of_store_in_C:
-				bkpt 0x0010	
+				; bkpt 0x0010	
 			
 
 			addi r8, r8, 0x08			; update loop var j
