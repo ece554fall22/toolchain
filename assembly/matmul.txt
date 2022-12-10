@@ -1,0 +1,574 @@
+; r1 = input_data A start location, should be arranged column wise
+; r2 = input_data B start_location, should be arranged row wise
+; r3 = output_data write location
+; r4 = size of filter (9 or 27) = (cols in A) and (rows in B)
+; r5 = # of rows in A
+; r6 = # of cols in B
+
+matmulmodule:
+
+
+	;; FLOAT SIZE 0x04
+	lih r19, 0x0000						
+	lil r19, 0x0004
+
+	mul r15, r21, r19					; offset rows for A
+	mul r16, r22, r19					; offset rows for B
+	mul r17, r22, r19					; offset rows for C
+
+	;; Set up loop i loop var
+	lih r7, 0x0000						; init i loop var = 0
+	lil r7, 0x0000
+
+	;; For loop1 for populating output
+	loop_one:
+		;; Set up loop j loop var
+		lih r8, 0x0000					; init j loop var = 0
+		lil r8, 0x0000
+
+		;; For loop1.1
+		loop_two:
+
+			;; Set up zero registers
+			lih r20, 0x0000						
+			lil r20, 0x0000
+
+			;; Sending row c
+			vsplat 0b1111, v1, r20
+
+			writeC v1, v1, 0b000
+			writeC v1, v1, 0b001
+			writeC v1, v1, 0b010
+			writeC v1, v1, 0b011
+			writeC v1, v1, 0b100
+			writeC v1, v1, 0b101
+			writeC v1, v1, 0b110
+			writeC v1, v1, 0b111
+				
+
+			;; Set up loop k loop var
+			lih r9, 0x0000				; init k loop var = 0
+			lil r9, 0x0000
+			
+			;; Sending 8 rows of A
+			send_row_A:
+
+				lih r10, 0x0000			; init ii = 0
+				lil r10, 0x0000
+
+				mul r13, r9, r19		; start col for A adjusting for offset, col number = k
+				add r11, r7, r10		; row number = (i+ii)
+				mul r12, r11, r15		; start row for A adjusting for offset
+
+				addi r18,  r7, 0x01		; i + 1 => row 
+				cmp r18, r5			; if (i+1)- rows in A > 0
+				bgzi send_A0			; send 0 vector
+		
+				send_true_A0:
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A				
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b000		; Writing #0 vector of A
+					jmp send_true_A1
+
+				send_A0:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b000
+				
+				send_true_A1:
+					addi r18,  r7, 0x02		; i + 2 => row 
+					cmp r18, r5			; if (i+2)- rows in A > 0
+					bgzi send_A1			; send 0 vector
+				
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b001		; Writing #1 vector of A
+					jmp send_true_A2
+
+
+				send_A1:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b001
+
+				send_true_A2:
+					addi r18,  r7, 0x03		; i + 3 => row 
+					cmp r18, r5			; if (i+3)- rows in A > 0
+					bgzi send_A2			; send 0 vector
+
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b010		; Writing #2 vector of A
+					jmp send_true_A3
+
+
+				send_A2:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b010
+
+
+				send_true_A3:
+					addi r18,  r7, 0x04		; i + 4 => row 
+					cmp r18, r5			; if (i+4)- rows in A > 0
+					bgzi send_A3			; send 0 vector
+
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b011		; Writing #3 vector of A
+					jmp send_true_A4
+
+
+				send_A3:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b011
+
+
+				send_true_A4:
+					addi r18,  r7, 0x05		; i + 5 => row 
+					cmp r18, r5			; if (i+5)- rows in A > 0
+					bgzi send_A4			; send 0 vector
+
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b100		; Writing #4 vector of A
+					jmp send_true_A5
+
+
+				send_A4:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b100
+
+				send_true_A5:
+					addi r18,  r7, 0x06		; i + 6 => row 
+					cmp r18, r5			; if (i+6)- rows in A < 0
+					bgzi send_A5			; send 0 vector
+
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b101		; Writing #5 vector of A
+					jmp send_true_A6
+
+
+				send_A5:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b101
+
+				send_true_A6:
+					addi r18,  r7, 0x07		; i + 7 => row 
+					cmp r18, r5			; if (i+7)- rows in A > 0
+					bgzi send_A6			; send 0 vector
+
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b110		; Writing #6 vector of A
+					jmp send_true_A7
+
+
+				send_A6:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b110
+
+				send_true_A7:
+					addi r18,  r7, 0x08		; i + 8 => row 
+					cmp r18, r5			; if (i+8)- rows in A > 0
+					bgzi send_A7			; send 0 vector
+
+					add r12, r12, r15		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r1		; adjusting for start location from start of A
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector A
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector A
+					writeA v1, v2, 0b111		; Writing #7 vector of A
+					jmp send_row_B
+
+
+				send_A7:
+					vsplat 0b1111, v1, r20
+					writeA v1, v1, 0b111
+
+
+
+			;; Sending row B
+			send_row_B:
+
+				lih r10, 0x00000		; init ii = 0
+				lil r10, 0x00000
+
+				mul r13, r8, r19		; start col for B adjusting for offset, col number = j
+				add r11, r9, r10		; row number = (k+ii)
+				mul r12, r11, r16		; start row for B adjusting for offset
+
+				addi r18,  r9, 0x01		; k + 1 => row 
+				cmp r18, r4			; if (k+1)- rows in B > 0
+				bgzi send_B0			; send 0 vector
+
+				send_true_B0:
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b000		; Writing #0 vector of B
+					jmp send_true_B1
+				
+				send_B0:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b000
+
+				send_true_B1:
+					addi r18,  r9, 0x02		; k + 2 => row 
+					cmp r18, r4			; if (k+2)- rows in B > 0
+					bgzi send_B1			; send 0 vector
+	
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b001		; Writing #1 vector of B
+					jmp send_true_B2
+
+				send_B1:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b001
+
+				send_true_B2:
+					addi r18,  r9, 0x03		; k + 3 => row 
+					cmp r18, r4			; if (k+3)- rows in B > 0
+					bgzi send_B2			; send 0 vector
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b010		; Writing #2 vector of B
+					jmp send_true_B3
+
+				send_B2:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b010
+
+				send_true_B3:
+					addi r18,  r9, 0x04		; k + 4 => row 
+					cmp r18, r4			; if (k+4)- rows in B > 0
+					bgzi send_B3			; send 0 vector
+	
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b011		; Writing #3 vector of B
+					jmp send_true_B4
+
+				send_B3:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b011
+
+				send_true_B4:
+					addi r18,  r9, 0x05		; k + 5 => row 
+					cmp r18, r4			; if (k+5)- rows in B > 0
+					bgzi send_B4			; send 0 vector
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b100		; Writing #4 vector of B
+					jmp send_true_B5
+
+				send_B4:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b100
+
+				send_true_B5:
+					addi r18,  r9, 0x06		; k + 6 => row 
+					cmp r18, r4			; if (k+6)- rows in B > 0
+					bgzi send_B5			; send 0 vector
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b101		; Writing #5 vector of B
+					jmp send_true_B6
+
+				send_B5:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b101
+
+				send_true_B6:
+					addi r18,  r9, 0x07		; k + 7 => row 
+					cmp r18, r4			; if (k+7)- rows in B > 0
+					bgzi send_B6			; send 0 vector
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b110		; Writing #6 vector of B
+					jmp send_true_B7
+
+				send_B6:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b110
+
+				send_true_B7:
+					addi r18,  r9, 0x08		; k + 8 => row 
+					cmp r18, r4			; if (k+8)- rows in B > 0
+					bgzi send_B7			; send 0 vector
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r2		; adjusting for start location from start of B								
+					vldi 0b1111, v1, [r14+=0x00] 	; Getting first four elements of vector B
+					addi r14, r14, 0x10
+					vldi 0b1111, v2, [r14+=0x00]	; Getting second four elements of vector B
+					writeB v1, v2, 0b111		; Writing #7 vector of B
+					jmp start_mult
+
+				send_B7:
+					vsplat 0b1111, v1, r20
+					writeB v1, v1, 0b111
+		
+
+			start_mult:
+
+				systolicstep				; start systolic array multiplication 1
+				systolicstep				; start systolic array multiplication 2
+				systolicstep				; start systolic array multiplication 3
+				systolicstep				; start systolic array multiplication 4
+				systolicstep				; start systolic array multiplication 5
+				systolicstep				; start systolic array multiplication 6
+				systolicstep				; start systolic array multiplication 7
+				systolicstep				; start systolic array multiplication 8
+				systolicstep				; start systolic array multiplication 9
+				systolicstep				; start systolic array multiplication 10
+				systolicstep				; start systolic array multiplication 11
+				systolicstep				; start systolic array multiplication 12
+				systolicstep				; start systolic array multiplication 13
+				systolicstep				; start systolic array multiplication 14
+				systolicstep				; start systolic array multiplication 15
+				systolicstep				; start systolic array multiplication 16
+				systolicstep				; start systolic array multiplication 17
+				systolicstep				; start systolic array multiplication 18
+				systolicstep				; start systolic array multiplication 19
+				systolicstep				; start systolic array multiplication 20
+				systolicstep				; start systolic array multiplication 21
+				systolicstep				; start systolic array multiplication 22
+				systolicstep				; start systolic array multiplication 23
+				systolicstep				; start systolic array multiplication 24
+
+
+				addi r9, r9, 0x08		; update loop var k
+				cmp r9, r4			; k - (number of cols in A or rows in B)
+				blzi send_row_A		
+			
+			
+			
+			store_in_C:
+				
+				addi r24, r8, 0x00
+				cmp r24, r23			; if col == r23 (cols rounded to CEIL mult of 4)
+				bezi end_of_store_in_C
+
+				addi r24, r8, 0x04		; add 4 to columns number => j + 4 => (0+4), (8+4), (16+4)
+
+				lih r10, 0x0000			; init ii = 0
+				lil r10, 0x0000
+
+				mul r13, r8, r19		; start col for C adjusting for offset, col number = j
+				add r11, r7, r10		; row number = (i+ii)
+				mul r12, r11, r16		; start row for C adjusting for offset
+
+				store_C0:
+					addi r18,  r11, 0x01		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x00, 0x00		; low bits of row 0
+					readC v2, 0x00, 0x01		; high bits of row 0
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C1
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+
+				store_C1:
+					addi r18,  r11, 0x02		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+				
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x01, 0x00		; low bits of row 1
+					readC v2, 0x01, 0x01		; high bits of row 1
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C2
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+
+				store_C2:
+					addi r18,  r11, 0x03		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x02, 0x00		; low bits of row 2
+					readC v2, 0x02, 0x01		; high bits of row 2
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C3
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+				
+				store_C3:
+					addi r18,  r11, 0x04		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x03, 0x00		; low bits of row 3
+					readC v2, 0x03, 0x01		; high bits of row 3
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C4
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+				
+				store_C4:
+					addi r18,  r11, 0x05		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x04, 0x00		; low bits of row 4
+					readC v2, 0x04, 0x01		; high bits of row 4
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C5
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+				
+				store_C5:
+					addi r18,  r11, 0x06		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+	
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x05, 0x00		; low bits of row 5
+					readC v2, 0x05, 0x01		; high bits of row 5
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C6
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+				
+				store_C6:
+					addi r18,  r11, 0x07		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x06, 0x00		; low bits of row 6
+					readC v2, 0x06, 0x01		; high bits of row 6
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi store_C7
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+				
+				store_C7:
+					addi r18,  r11, 0x08		; k + 1 => row 
+					cmp r18, r5			; if (k+1)- rows in A > 0
+					bgzi end_of_store_in_C
+
+					add r12, r12, r16		; Go to next row with offset
+					add r14, r12, r13		; start location = row + col
+					add r14, r14, r3		; adjusting for start location from start of C	
+					readC v1, 0x07, 0x00		; low bits of row 7
+					readC v2, 0x07, 0x01		; high bits of row 7
+					vsti 0b1111, [r14+=0x00], v1	; store lower bits of row 0
+
+					cmp r24, r23
+					bezi end_of_store_in_C
+
+					addi r14, r14, 0x10		; going to next vector
+					vsti 0b1111, [r14+=0x00], v2	; store higher bits of row 0
+
+			end_of_store_in_C:
+				bkpt 0x0010	
+			
+
+			addi r8, r8, 0x08			; update loop var j
+			cmp r8, r6				; j - (numbers of cols in B)
+			blzi loop_two
+
+
+		addi r7, r7, 0x08				; update loop var i
+		cmp r7, r5					; i - (numbers of rows in A)
+		blzi loop_one
