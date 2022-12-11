@@ -172,6 +172,6 @@ depthwise_convolution_stride1:
 
 
 ; Include needed subfiles
-%include padding_code.txt
-%include im2ColStrideOne_code.txt
-%include matmul.txt
+%include "padding_code.txt"
+%include "im2ColStrideOne_code.txt"
+%include "matmul.txt"
