@@ -20,6 +20,19 @@ matmulmodule:
 	st36 [r30+0x48], r10
 	st36 [r30+0x50], r31
 
+
+	addi r21, r4, 0x07
+	shri r21, r21, 0x03					;cols in A rounded CEILING of mult of 8
+	shli r21, r21, 0x03
+
+	addi r22, r6, 0x07 
+	shri r22, r22, 0x03					;cols in B rounded CEILING of mult of 8
+	shli r22, r22, 0x03	
+
+	addi r23, r6, 0x03 
+	shri r23, r23, 0x02					;cols in B rounded CEILING of mult of 4
+	shli r23, r23, 0x02	
+	
 	;; FLOAT SIZE 0x04
 	lih r19, 0x0000						
 	lil r19, 0x0004
