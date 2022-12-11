@@ -1,16 +1,16 @@
 ; Define initial reg vals
-lil r1, 0x0000
-lil r2, 0x1000
-lil r3, 10
-lil r4, 8			; (r3-2)
-lil r30, 0xF000
+;lil r1, 0x0000
+;lil r2, 0x1000
+;lil r3, 10
+;lil r4, 8			; (r3-2)
+;lil r30, 0xF000
 
 ; Call func
-bkpt 0x01
-jal imTwoColStrideOneTwoD
-bkpt 0x10
+;bkpt 0x01
+;jal imTwoColStrideOneTwoD
+;bkpt 0x10
 
-halt
+;halt
 
 ;; Pull in the needed values for the current convolution
 ;; input_data start location, output_data write location
@@ -120,7 +120,7 @@ imTwoColStrideOneTwoD:
 		cmp r25, r5				; (padded width) - (r5 + 4) > 0
 		bgzi im_two_one_x_loop_start	; Branch to start of x loop
 		
-		bkpt 0x06
+		;bkpt 0x06
 		
 	; Branch to y_loop_start (check if r6 + 1 == width of input data)
 	addi r6, r6, 0x01

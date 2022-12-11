@@ -1,11 +1,69 @@
 ; Setup regs
-lil r1, 0x0000
-lil r2, 0x1000
-lil r3, 0x2000
-lil r4, 0x3000
-lil r5, 16
-lil r6, 3
-lil r30, 0x7000
+lil r1, 0x1000
+lil r2, 0x3000
+lil r3, 0x5000
+lil r4, 0x7000
+lil r5, 7
+lil r6, 1
+lil r30, 0x9000
+
+lil r11, 0x0000
+lih r11, 0x0FE0		; the number 1 in floating point
+lil r12, 0x00
+lih r12, 0x00
+vsplat 0b1111, v20, r12 ; Zeros
+vsplat 0b1111, v21, r12
+vsplat 0b0001, v21, r11	; Middle with 1
+
+lih r11, 0x00
+lil r11, 0x00
+lih r13, 0x00
+lil r13, 0x10
+; Use r11
+fill_weights:
+	mul r15, r11, r13
+	add r15, r4, r15		; filter location
+	vsti 0b1111, [r15+=0x10], v20
+	vsti 0b1111, [r15+=0x10], v21
+	vsti 0b1111, [r15+=0x10], v20
+	vsti 0b1111, [r15+=0x10], v20
+	
+addi r11, r11, 0x01
+cmp r11, r6; # r11 < num filters
+blzi layer_loop
+
+lih r11, 0x00
+lil r11, 0x00
+lil r13, 0x00
+lil r14, 0x20
+fill_matrix:
+	;vsplat 0b1111, v21, r12
+	
+	addi r13, r13, 0x01
+	vsplat 0b0001, v21, r13
+	addi r13, r13, 0x01
+	vsplat 0b0010, v21, r13
+	addi r13, r13, 0x01
+	vsplat 0b0100, v21, r13
+	addi r13, r13, 0x01
+	vsplat 0b1000, v21, r13
+	
+	mul r15, r11, r14
+	add r15, r15, r1
+	vsti 0b1111, [r15+=0x10], v21
+	
+	addi r13, r13, 0x01
+	vsplat 0b0001, v21, r13
+	addi r13, r13, 0x01
+	vsplat 0b0010, v21, r13
+	addi r13, r13, 0x01
+	vsplat 0b0100, v21, r13
+	vsplat 0b1000, v21, r12
+	vsti 0b1111, [r15+=0x10], v21
+	
+addi r11, r11, 0x01
+cmp r11, r5
+blzi fill_matrix
 
 ; call function
 bkpt 0x01
@@ -20,7 +78,6 @@ halt
 ; r4 = Filter input location						- location 4
 ; r5 = width of matrix (x and y)
 ; r6 = depth of matrix (z) (number of filters)
-;
 depthwise_convolution_stride1:
 	; Stack stuff
 	subi r30, r30, 0x58
@@ -41,7 +98,6 @@ depthwise_convolution_stride1:
 	; r2 = Location 2 (ouptut)
 	; r3 = width (x and y length)
 	; r4 = depth (z length)
-	
 	; Reorganizes Registers for Padding
 	; r1 <= r1; r2 <= r2; r3 <= r5; r4 <= r6
 	and r3, r5, r5
@@ -49,6 +105,7 @@ depthwise_convolution_stride1:
 	
 	; pad the matrix
 	; push_stack_caller(padMatrix)
+	jal padMatrix
 	bkpt 0x02
 	
 	;; For loop iterating through each z layer
@@ -61,7 +118,6 @@ depthwise_convolution_stride1:
 		; r2 = Location 3 + ( (width^2+7)>>3<<5 * 9 * (curr depth) ;FloatSizeBakedInto<<4) (output)
 		; r3 = width (x and y) - pad matrix (width + 2)
 		; r4 = num im2col columns (per row)- this is calculated from width (width + 2 - 2)
-		
 		;peek_stack()
 		ld36 r1, [r30+0x00]
 		ld36 r2, [r30+0x08]
@@ -93,6 +149,7 @@ depthwise_convolution_stride1:
 		addi r4, r5, 0x00
 		
 		; CALL IM2COL
+		jal imTwoColStrideOneTwoD
 		bkpt 0x03
 		
 		;; MatMul
@@ -102,7 +159,6 @@ depthwise_convolution_stride1:
 		; r4 = width of matrix - common length (3x3 for filter size)
 		; r5 = # cols for r1 (A matrix) - number of filters
 		; r6 = # rows in r2 (B matrix) - number of im2col columns
-		
 		;peek_stack()
 		ld36 r1, [r30+0x00]
 		ld36 r2, [r30+0x08]
@@ -142,6 +198,7 @@ depthwise_convolution_stride1:
 		addi r6, r13, 0x00
 		
 		; CALL MATMUL
+		jal matmulmodule
 		bkpt 0x04
 		
 	;; Check loop condition
@@ -166,10 +223,6 @@ depthwise_convolution_stride1:
 	addi r30, r30, 0x58
 	jmpr r31, 0x00
 	halt
-
-
-
-
 
 ; Include needed subfiles
 %include "padding_code.txt"
