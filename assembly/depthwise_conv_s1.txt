@@ -198,8 +198,16 @@ depthwise_convolution_stride1:
 		addi r6, r13, 0x00
 		
 		; CALL MATMUL
-		jal matmulmodule
 		bkpt 0x04
+		jal matmulmodule
+		bkpt 0x05
+		;peek_stack()
+		ld36 r1, [r30+0x00]
+		ld36 r2, [r30+0x08]
+		ld36 r3, [r30+0x10]
+		ld36 r4, [r30+0x18]
+		ld36 r5, [r30+0x20]
+		ld36 r6, [r30+0x28]
 		
 	;; Check loop condition
 	; branch if r9 < r6 (r9-r6<0)
@@ -218,7 +226,6 @@ depthwise_convolution_stride1:
 	ld36 r8, [r30+0x38]
 	ld36 r9, [r30+0x40]
 	ld36 r10, [r30+0x48]
-	ld36 r31, [r30+0x50]
 	ld36 r31, [r30+0x50]
 	addi r30, r30, 0x58
 	jmpr r31, 0x00
