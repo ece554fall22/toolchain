@@ -229,6 +229,7 @@ depthwise_convolution_stride1:
 		addi r12, r12, 0x03
 		shri r12, r12, 0x02
 		shli r12, r12, 0x04
+		mul r12, r12, r9
 		
 		addi r13, r5, 0x03
 		shri r13, r13, 0x02
@@ -236,6 +237,7 @@ depthwise_convolution_stride1:
 		
 		mul r14, r13, r5
 		shli r14, r14, 0x02
+		mul r14, r14, r9
 		
 		add r2, r1, r14
 		add r1, r7, r12
