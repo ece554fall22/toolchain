@@ -1,0 +1,126 @@
+;lil r1, 0x0000
+;lil r2, 0x1000
+;lil r3, 7
+;lil r4, 2
+;lil r30, 0x3000
+
+;bkpt 0x01
+;jal alignMatrix
+;bkpt 0x02
+
+
+;; Take in matmul matrix and align it to vector width
+; r1 = input_data start location
+; r2 = output_data 
+; r3 = output_width (input_width = output_width^2 then aligned)
+; r4 = num matrices
+
+alignMatrix:
+	; Push to stack
+	subi r30, r30, 0x58
+	st36 [r30+0x00], r1
+	st36 [r30+0x08], r2
+	st36 [r30+0x10], r3
+	st36 [r30+0x18], r4
+	st36 [r30+0x20], r5
+	st36 [r30+0x28], r6
+	st36 [r30+0x30], r7
+	st36 [r30+0x38], r8
+	st36 [r30+0x40], r9
+	st36 [r30+0x48], r10
+	st36 [r30+0x50], r31
+	
+	lih r5, 0x0000
+	lil r5, 0x0000
+	
+	lih r20, 0x0000		; 0 value
+	lil r20, 0x0000
+	
+	addi r12, r3, 0x03	; Length of padded row
+	shri r12, r12, 0x02
+	shli r12, r12, 0x02
+	
+	mul r15, r12, r3	; Offset for each filter
+	shli r15, r15, 0x02
+	
+	mul r18, r3, r3; Input width (padded)
+	addi r18, r18, 0x03
+	shri r18, r18, 0x02
+	shli r18, r18, 0x04
+	
+	filter_loop_start:
+		mul r17, r15, r5
+		add r16, r17, r2
+		
+		mul r19, r18, r5
+		add r21, r19, r1
+	
+		lih r9, 0x0000
+		lil r9, 0x0000
+		new_row_loop_strt:
+			
+			lih r6, 0x0000
+			lil r6, 0x0000
+			row_loop_start:
+				vsplat 0b1111, v1, r20
+				sub r7, r3, r6		; how many values left in row (value is 1+)
+				
+				ld32 r8, [r21+0x0]
+				addi r21, r21, 0x04
+				vsplat 0b0001, v1, r8
+				cmpi r7, 0x01		; 1 value left
+				blei end_of_row
+				
+				ld32 r8, [r21+0x0]
+				addi r21, r21, 0x04
+				vsplat 0b0010, v1, r8
+				cmpi r7, 0x02		; 2 values left
+				blei end_of_row
+				
+				ld32 r8, [r21+0x0]
+				addi r21, r21, 0x04
+				vsplat 0b0100, v1, r8
+				cmpi r7, 0x03		; 3 values left
+				blei end_of_row
+				
+				ld32 r8, [r21+0x0]
+				addi r21, r21, 0x04
+				vsplat 0b1000, v1, r8
+				cmpi r7, 0x04		; 4+ values left
+				
+				end_of_row:
+					mul r13, r12, r9
+					add r13, r13, r6
+					shli r13, r13, 0x02
+				
+					add r14, r13, r16
+					vsti 0b1111, [r14+=0x00], v1
+
+			addi r6, r6, 0x04
+			cmp r6, r3
+			blzi row_loop_start
+			
+		addi r9, r9, 0x01
+		cmp r9, r3
+		blzi new_row_loop_strt
+		
+	addi r5, r5, 0x01
+	cmp r5, r4
+	blzi filter_loop_start
+	
+	; Pop Stack
+	ld36 r1, [r30+0x00]
+	ld36 r2, [r30+0x08]
+	ld36 r3, [r30+0x10]
+	ld36 r4, [r30+0x18]
+	ld36 r5, [r30+0x20]
+	ld36 r6, [r30+0x28]
+	ld36 r7, [r30+0x30]
+	ld36 r8, [r30+0x38]
+	ld36 r9, [r30+0x40]
+	ld36 r10, [r30+0x48]
+	ld36 r31, [r30+0x50]
+	ld36 r31, [r30+0x50]
+	addi r30, r30, 0x58
+	jmpr r31, 0x00
+	

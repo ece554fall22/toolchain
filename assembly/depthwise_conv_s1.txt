@@ -5,7 +5,8 @@ lil r3, 0x5000
 lil r4, 0x7000
 lil r5, 7
 lil r6, 1
-lil r30, 0x9000
+lil r7, 0x9000
+lil r30, 0xb000
 
 lil r11, 0x0000
 lih r11, 0x0FE0		; the number 1 in floating point
@@ -78,6 +79,7 @@ halt
 ; r4 = Filter input location						- location 4
 ; r5 = width of matrix (x and y)
 ; r6 = depth of matrix (z) (number of filters)
+; r7 = Output of matmul
 depthwise_convolution_stride1:
 	; Stack stuff
 	subi r30, r30, 0x58
@@ -125,6 +127,8 @@ depthwise_convolution_stride1:
 		ld36 r4, [r30+0x18]
 		ld36 r5, [r30+0x20]
 		ld36 r6, [r30+0x28]
+		ld36 r7, [r30+0x30]
+		ld36 r8, [r30+0x38]
 		
 		addi r12, r5, 0x05
 		shri r12, r12, 0x02
@@ -166,6 +170,8 @@ depthwise_convolution_stride1:
 		ld36 r4, [r30+0x18]
 		ld36 r5, [r30+0x20]
 		ld36 r6, [r30+0x28]
+		ld36 r7, [r30+0x30]
+		ld36 r8, [r30+0x38]
 		
 		lih r12, 0x00
 		lil r12, 0x10
@@ -190,7 +196,7 @@ depthwise_convolution_stride1:
 		shli r15, r15, 0x02			; r3 offset
 		
 		add r2, r3, r14
-		add r3, r1, r15
+		add r3, r7, r15
 		add r1, r4, r12
 		addi r4, r16, 0x00
 		lih r5, 0x00
@@ -198,9 +204,8 @@ depthwise_convolution_stride1:
 		addi r6, r13, 0x00
 		
 		; CALL MATMUL
-		bkpt 0x04
 		jal matmulmodule
-		bkpt 0x05
+		bkpt 0x04
 		;peek_stack()
 		ld36 r1, [r30+0x00]
 		ld36 r2, [r30+0x08]
@@ -208,6 +213,47 @@ depthwise_convolution_stride1:
 		ld36 r4, [r30+0x18]
 		ld36 r5, [r30+0x20]
 		ld36 r6, [r30+0x28]
+		ld36 r7, [r30+0x30]
+		ld36 r8, [r30+0x38]
+		
+		; r1 = input_data start location
+		; r2 = output_data 
+		; r3 = output_width (input_width = output_width^2 then aligned)
+		; r4 = num matrices (num filters)
+		
+		; r1 <= r7 + (width*width then padded * float_size)
+		; r2 <= r1 + (padded width * width * FLOAT_SIZE)
+		; r3 <= r5	width
+		; r4 <= r6	depth
+		mul r12, r5, r5
+		addi r12, r12, 0x03
+		shri r12, r12, 0x02
+		shli r12, r12, 0x04
+		
+		addi r13, r5, 0x03
+		shri r13, r13, 0x02
+		shli r13, r13, 0x02
+		
+		mul r14, r13, r5
+		shli r14, r14, 0x02
+		
+		add r2, r1, r14
+		add r1, r7, r12
+		and r3, r5, r5
+		and r4, r6, r6
+		
+		; Call align
+		jal alignMatrix
+		bkpt 0x05
+		
+		ld36 r1, [r30+0x00]
+		ld36 r2, [r30+0x08]
+		ld36 r3, [r30+0x10]
+		ld36 r4, [r30+0x18]
+		ld36 r5, [r30+0x20]
+		ld36 r6, [r30+0x28]
+		ld36 r7, [r30+0x30]
+		ld36 r8, [r30+0x38]
 		
 	;; Check loop condition
 	; branch if r9 < r6 (r9-r6<0)
@@ -235,3 +281,5 @@ depthwise_convolution_stride1:
 %include "padding_code.txt"
 %include "im2ColStrideOne_code.txt"
 %include "matmul.txt"
+%include "align_data.txt"
+
