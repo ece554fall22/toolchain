@@ -1,15 +1,16 @@
 ; Setup regs
-lil r1, 0x1000
-lil r2, 0x3000
-lil r3, 0x5000
-lil r4, 0x7000
-lil r5, 7
+lil r1, 0x2000
+lil r2, 0x4000
+lil r3, 0x6000
+lil r4, 0x8000
+lil r5, 8
 lil r6, 1
-lil r7, 0x9000
-lil r30, 0xb000
+lil r7, 0xa000
+lil r30, 0xc000
 
 lil r11, 0x0000
-lih r11, 0x0FE0		; the number 1 in floating point
+;lih r11, 0x0FE0		; the number 1 in floating point
+lih r11, 0x1000		; the number 2 in floating point
 lil r12, 0x00
 lih r12, 0x00
 vsplat 0b1111, v20, r12 ; Zeros
@@ -33,38 +34,49 @@ addi r11, r11, 0x01
 cmp r11, r6; # r11 < num filters
 blzi layer_loop
 
-lih r11, 0x00
-lil r11, 0x00
-lil r13, 0x00
-lil r14, 0x20
-fill_matrix:
-	;vsplat 0b1111, v21, r12
-	
-	addi r13, r13, 0x01
-	vsplat 0b0001, v21, r13
-	addi r13, r13, 0x01
-	vsplat 0b0010, v21, r13
-	addi r13, r13, 0x01
-	vsplat 0b0100, v21, r13
-	addi r13, r13, 0x01
-	vsplat 0b1000, v21, r13
-	
-	mul r15, r11, r14
-	add r15, r15, r1
-	vsti 0b1111, [r15+=0x10], v21
-	
-	addi r13, r13, 0x01
-	vsplat 0b0001, v21, r13
-	addi r13, r13, 0x01
-	vsplat 0b0010, v21, r13
-	addi r13, r13, 0x01
-	vsplat 0b0100, v21, r13
-	vsplat 0b1000, v21, r12
-	vsti 0b1111, [r15+=0x10], v21
-	
-addi r11, r11, 0x01
-cmp r11, r5
-blzi fill_matrix
+lih r20, 0x00
+lil r20, 0x00
+lil r13, 0x00		; number put into memory
+lil r14, 0x20		; amount of memory per row (vector aligned)
+
+yepthatsalabel:
+	lih r11, 0x00
+	lil r11, 0x00
+	fill_matrix:
+		;vsplat 0b1111, v21, r12
+		
+		addi r13, r13, 0x01
+		vsplat 0b0001, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0010, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0100, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b1000, v21, r13
+		
+		mul r23, r20, r14
+		mul r23, r23, r5
+		mul r15, r11, r14
+		add r15, r15, r23
+		add r15, r15, r1
+		vsti 0b1111, [r15+=0x10], v21
+		
+		addi r13, r13, 0x01
+		vsplat 0b0001, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0010, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0100, v21, r13
+		;vsplat 0b1000, v21, r12
+		vsti 0b1111, [r15+=0x10], v21
+		
+	addi r11, r11, 0x01
+	cmp r11, r5
+	blzi fill_matrix
+
+addi r20, r20, 0x01
+cmp r20, r6
+blzi yepthatsalabel
 
 ; call function
 bkpt 0x01
