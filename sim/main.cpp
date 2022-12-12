@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-#include <Eigen/Dense>
 #include <argparse/argparse.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>

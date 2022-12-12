@@ -14,10 +14,10 @@ libsim = static_library(
     include_directories: sim_inc,
     dependencies: sim_deps)
 
+libsim_dep = declare_dependency(link_with: libsim, include_directories: sim_inc, dependencies: sim_deps)
+
 sim_exe = executable('sim', files('main.cpp'),
-                     include_directories: sim_inc,
-                     link_with: [libsim],
-                     dependencies: [argparse_dep, json_dep] + sim_deps)
+                     dependencies: [libsim_dep, argparse_dep, json_dep, fmt_dep])
 
 test_instruction_impl = executable('test_instruction_impl',
     'tests/instruction_impl.cpp',
