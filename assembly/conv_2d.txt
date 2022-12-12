@@ -231,6 +231,10 @@ convolution_stride2:
 	and r5, r6, r6			; # filters = r6
 	and r6 r13, r13
 	
+	; CALL MATMUL
+	jal matmulmodule
+	bkpt 0x04
+	
 	; Align matrix
 	; r1 = input_data start location
 	; r2 = output_data
@@ -245,6 +249,10 @@ convolution_stride2:
 	and r1, r7, r7
 	shri r3, r5, 0x01
 	and r4, r6, r6
+	
+	; Call align
+	jal alignMatrix
+	bkpt 0x05
 	
 	; Return to caller function
 	ld36 r1, [r30+0x00]

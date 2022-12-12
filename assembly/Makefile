@@ -1,3 +1,10 @@
+
+c2:
+		mkdir -p temp
+		nasm -e conv_2d.txt -o temp/conv_2d.s
+		../builddir/asm/asm -o temp/conv_2d.bin temp/conv_2d.s
+		../builddir/sim/sim temp/conv_2d.bin --trace temp/conv_2d.trace
+
 s2:
 		mkdir -p temp
 		nasm -e depthwise_conv_s2.txt -o temp/depth_s2.s
