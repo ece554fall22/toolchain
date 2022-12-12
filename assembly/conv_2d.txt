@@ -246,6 +246,16 @@ convolution_stride2:
 	; r2 <= r1 + (padded width * width * FLOAT_SIZE)
 	; r3 <= r15	width (r5>>1)
 	; r4 <= r6	depth
+	;peek_stack()
+	ld36 r1, [r30+0x00]
+	ld36 r2, [r30+0x08]
+	ld36 r3, [r30+0x10]
+	ld36 r4, [r30+0x18]
+	ld36 r5, [r30+0x20]
+	ld36 r6, [r30+0x28]
+	ld36 r7, [r30+0x30]
+	ld36 r8, [r30+0x38]
+	
 	and r2, r1, r1
 	and r1, r7, r7
 	shri r3, r5, 0x01
