@@ -102,7 +102,7 @@ blzi yepthatsalabel
 
 ; call function
 bkpt 0x01
-jal depthwise_convolution_stride2
+jal convolution_stride2
 bkpt 0x0a
 halt
 
@@ -114,7 +114,7 @@ halt
 ; r5 = width of matrix (x and y)
 ; r6 = depth of matrix (z) (number of filters)
 ; r7 = Output of matmul
-depthwise_convolution_stride2:
+convolution_stride2:
 	; Stack stuff
 	subi r30, r30, 0x58
 	st36 [r30+0x00], r1
@@ -136,9 +136,10 @@ depthwise_convolution_stride2:
 	; r4 = depth (z length)
 	
 	; Reorganizes Registers for Padding
-	; r1 <= r1; r2 <= r2; r3 <= r5; r4 <= r6
+	; r1 <= r1; r2 <= r2; r3 <= r5; r4 <= 3
 	and r3, r5, r5
-	and r4, r6, r6
+	lih r4, 0x00
+	lil r4, 0x03
 	
 	; pad the matrix
 	; push_stack_caller(padMatrix)
@@ -148,7 +149,7 @@ depthwise_convolution_stride2:
 	;; For loop iterating through each z layer
 	lih r9, 0x0000
 	lil r9, 0x0000		; Z loop var
-	
+
 	s2_layer_loop:
 		;; im2col (stride 2 2d)
 		; r1 = Location 2 + ( ((width+2+3)>>2<<2) * (width+2) * (curr depth) * FLOAT_SIZE )
@@ -192,117 +193,18 @@ depthwise_convolution_stride2:
 		; CALL IM2COL
 		jal imTwoColStrideTwoTwoD
 		bkpt 0x03
-		
-		;; MatMul
-		; r1 = Location 4 + 16 * (curr depth) * FLOAT_SIZE (Input)
-		; r2 = Location 3 + ( ( ((width+1)/2)^2+7)>>3<<5 * 9 * (curr depth) ;FloatSizeBakedInto<<4) (input)
-		; r3 = Location 1 + (((width/2)+3)>>2<<2) * (width/2) * (curr depth) * FLOAT_SIZE (Output)
-		; r4 = width of matrix - common length (3x3 for filter size)
-		; r5 = # cols for r1 (A matrix) - number of filters
-		; r6 = # rows in r2 (B matrix) - number of im2col columns
-		
-		;peek_stack()
-		ld36 r1, [r30+0x00]
-		ld36 r2, [r30+0x08]
-		ld36 r3, [r30+0x10]
-		ld36 r4, [r30+0x18]
-		ld36 r5, [r30+0x20]
-		ld36 r6, [r30+0x28]
-		ld36 r7, [r30+0x30]
-		ld36 r8, [r30+0x38]
-		
-		lih r12, 0x00
-		lil r12, 0x10
-		mul r12, r12, r9
-		shli r12, r12, 0x02			; r1 offset
-		
-		addi r16, r5, 0x01
-		shri r16, r16, 0x01
-		mul r13, r16, r16
-		addi r13, r13, 0x03
-		shri r13, r13, 0x02
-		shli r13, r13, 0x02			; r6 (align to 4)
-		
-		mul r14, r16, r16
-		addi r14, r14, 0x07
-		shri r14, r14, 0x03
-		shli r14, r14, 0x05			; (align to 8)
-		lih r16, 0x00
-		lil r16, 0x09
-		mul r14, r14, r16
-		mul r14, r14, r9			; r2 offset
-		
-		shri r17, r5, 0x01			; width/2
-		addi r15, r17, 0x03
-		shri r15, r15, 0x02
-		shli r15, r15, 0x02
-		mul r15, r15, r17
-		mul r15, r15, r9
-		shli r15, r15, 0x02			; r3 offset
-		
-		add r2, r3, r14
-		add r3, r7, r15
-		add r1, r4, r12
-		addi r4, r16, 0x00
-		lih r5, 0x00
-		lil r5, 0x01		; r5 = 1 because depthwise
-		addi r6, r13, 0x00
-		
-		; CALL MATMUL
-		jal matmulmodule
-		bkpt 0x04
-		
-		;peek_stack()
-		ld36 r1, [r30+0x00]
-		ld36 r2, [r30+0x08]
-		ld36 r3, [r30+0x10]
-		ld36 r4, [r30+0x18]
-		ld36 r5, [r30+0x20]
-		ld36 r6, [r30+0x28]
-		ld36 r7, [r30+0x30]
-		ld36 r8, [r30+0x38]
-		
-		; r1 = input_data start location
-		; r2 = output_data 
-		; r3 = output_width (input_width = output_width^2 then aligned)
-		; r4 = num matrices (num filters)
-		
-		; r1 <= r7 + (width*width then padded * float_size)
-		; r2 <= r1 + (padded width * width * FLOAT_SIZE)
-		; r3 <= r15	width (r5>>1)
-		; r4 <= r6	depth
-		shri r15, r5, 0x01		; width
-		
-		mul r12, r15, r15
-		addi r12, r12, 0x07
-		shri r12, r12, 0x03
-		shli r12, r12, 0x05
-		mul r12, r12, r9
-		
-		addi r13, r15, 0x03
-		shri r13, r13, 0x02
-		shli r13, r13, 0x02
-		
-		mul r14, r13, r15
-		shli r14, r14, 0x02
-		mul r14, r14, r9
-		
-		add r2, r1, r14
-		add r1, r7, r12
-		and r3, r15, r15
-		lih r4, 0x00
-		lil r4, 0x01
-		;and r4, r6, r6
-		
-		; Call align
-		jal alignMatrix
-		bkpt 0x05
-		
 	;; Check loop condition
-	; branch if r9 < r6 (r9-r6<0)
+	; branch if r9 < r6 (r9-3<0)
 	addi r9, r9, 0x01
-	cmp r9, r6
+	cmpi r9, 0x03
 	blzi s2_layer_loop
+	
+	; Matmul
+	
+	; Align matrix
+	
+	
+	
 	
 	; Return to caller function
 	ld36 r1, [r30+0x00]
