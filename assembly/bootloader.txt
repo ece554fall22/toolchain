@@ -1,0 +1,24 @@
+;; Make sure that the host can get CSRs
+; Read first mem addr
+lih r0, 0x0000
+lil r0, 0x1000		; Read mem addr
+lih r3, 0x0000
+lil r3, 0x2000		; Write mem addr
+
+ld32, r2, [r1+0x00]
+
+; Check if mem addr is non-zero
+cmpi r2, 0x00
+bezi zero_addr
+lih r4, 0x00
+lil r4, 0x01
+
+; Write to readback mem addr: 1 if nonzero, 2 if zero
+st32 [r3+0x00], r4
+halt
+
+zero_addr:
+	lih r4, 0x00
+	lil r4, 0x02
+	st32 [r3+0x00], r4
+	halt
