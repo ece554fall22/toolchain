@@ -44,9 +44,9 @@ alignMatrix:
 	shli r15, r15, 0x02
 	
 	mul r18, r3, r3; Input width (padded)
-	addi r18, r18, 0x03
-	shri r18, r18, 0x02
-	shli r18, r18, 0x04
+	addi r18, r18, 0x07
+	shri r18, r18, 0x03
+	shli r18, r18, 0x05
 	
 	filter_loop_start:
 		mul r17, r15, r5
