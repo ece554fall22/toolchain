@@ -11,6 +11,8 @@ module vector_execute(
 
 logic [31:0] reg_data;
 
-vector_alu(.v1(vdata1), .v2(vdata2), .r1(data1), .r2(data2), .op(control.vector_alu_op), .imm(immediate), .clk(clk), .rst_n(rst_n), .en(1'b1), .vout(vdata_out), .rout(reg_data));
+vector_alu v_alu (.v1(vdata1), .v2(vdata2), .r1(data1), .r2(data2), .op(control.vector_alu_op), .imm(immediate), .clk(clk), .rst_n(rst_n), .en(1'b1), .vout(vdata_out), .rout(reg_data));
 
 assign rdata_out = {4'b0, reg_data};
+
+endmodule

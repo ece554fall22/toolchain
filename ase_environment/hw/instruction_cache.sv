@@ -29,7 +29,7 @@ logic [2:0] plru;
 logic [3:0] match;
 logic [1:0] victimway, fwd_way, fwd_way_reg;
 
-instruction_blockram data_blockram(.clk(clk), .clk2(clk), .rd_addr(rd_addr), .wr_data(w_data), 
+instruction_blockram data_blockram(.clk(clk), .rd_addr(rd_addr), .wr_data(w_data), 
 	.wr_index(wr_index), .wr_en(w), .data_out(block_data_out));
 
 icache_metadata_registers metadata(.clk(clk), .rst(rst), .rd_addr(r_index),.wr_data(metadata_in), 

@@ -2,7 +2,8 @@
 
 #include "AFU.h"
 
-class CardInterface : public Accelerator {
+class CardInterface  {
+  public:
 
     AFU afu;
     uint8_t* cardMem;
@@ -23,4 +24,5 @@ class CardInterface : public Accelerator {
     virtual void unhaltCores(uint64_t cores);
 
     virtual auto checkDirty() -> uint64_t;
-}
+};
+

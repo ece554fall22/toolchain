@@ -9,7 +9,7 @@ BBB_LIB_DIR = ${FPGA_BBB_CCI_INSTALL}/lib64/
 # Build directory
 OBJDIR = obj
 CFLAGS += -I./$(OBJDIR)
-CPPFLAGS += -I./$(OBJDIR) -I$(BBB_DIR)
+CPPFLAGS += -I./$(OBJDIR) -I$(BBB_DIR) -std=c++2a
 
 LDFLAGS += -lopae-cxx-core -L$(BBB_LIB_DIR) -lMPF-cxx -lMPF
 

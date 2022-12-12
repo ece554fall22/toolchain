@@ -9,7 +9,6 @@ CardInterface::CardInterface(AFU&& afu, uint8_t* cardMem) : afu{std::move(afu)} 
 
 CardInterface::~CardInterface() {
     afu.free(cardMem);
-    ~afu();
 }
 
 void CardInterface::copyToCard(void* hostSrc, uint64_t cardDest, uint64_t len) {

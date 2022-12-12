@@ -1,4 +1,4 @@
-module branch_jump_decoder(branch_jump, branch_type, branch_register, immediate, register, pc, nz, ez, lz, gz, le, ge, pc_next);
+module branch_jump_decoder(branch_jump, branch_type, branch_register, immediate, register, zero, sign, overflow, pc, pc_next);
 input [1:0] branch_jump;
 input [2:0] branch_type;
 input branch_register, zero, sign, overflow;
@@ -16,7 +16,7 @@ assign ez = zero;
 assign lz = sign & !overflow;
 assign gz = !sign & !overflow;
 assign le = lz | ez;
-assign gz = gz | ez;
+assign ge = gz | ez;
 
 always_comb begin
     branch = (branch_type == 3'b000) ? ((nz) ? ((branch_register) ? pc + register + immediate: pc + immediate) : pc):

@@ -1,33 +1,9 @@
-// Copyright (c) 2020 University of Florida
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// Greg Stitt
-// University of Florida
-//
-// Description: This application demonstrates a DMA AFU where the FPGA transfers
-// data from an input array into an output array.
-// 
-// The example demonstrates an extension of the AFU wrapper class that uses
-// AFU::malloc() to dynamically allocate virtually contiguous memory that can
-// be accessed by both software and the AFU.
 
-// INSTRUCTIONS: Change the configuration settings in config.h to test 
-// different types of data.
-
+#include <filesystem>
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 
 #include <opae/utils.h>
@@ -46,16 +22,10 @@
 
 using namespace std;
 
+unsigned long stringToPositiveInt(char *str);
+void printUsage(char *name); 
+bool checkUsage(int argc, char* argv[]);
 
-void copyToCard(void* hostSrc, uint64_t cardDest, uint64_t len);
-void copyFromCard(void* hostDst, uint64_t cardSrc, uint64_t len);
-
-void resetCores(uint64_t cores);
-void haltCores(uint64_t cores);
-void unhaltCores(uint64_t cores);
-auto checkDirty() -> uint64_t;
-
-void loadMemoryImage(MemSystem& dest, const std::string& path, uint64_t num_bytes);
 
 int main(int argc, char *argv[]) {
 
@@ -63,8 +33,7 @@ int main(int argc, char *argv[]) {
     printUsage(argv[0]);
     return EXIT_FAILURE;
   }
-``
-  uint8_t* hostMem;
+
  
 
   try {
@@ -78,16 +47,34 @@ int main(int argc, char *argv[]) {
     bool failed = false;
     uint64_t resultAddr = 0; // TODO enter this when starting program
     uint64_t resultSize = 0; // TODO enter this when starting program (in number of bytes)
-    uint8_t* result = malloc(resultSize);
+    void* result = malloc(resultSize);
+
+    std::string path = argv[1];
+    if (!std::filesystem::is_regular_file(path)) {
+        throw runtime_error("[!] "+ path +  " is not a file");
+    }
+    std::ifstream fBin(path, std::ios::binary);
+    if (!fBin.is_open()) {
+        throw runtime_error("[!] can't open "+ path);
+    }
+    fBin.seekg(0, std::ios::end);
+    size_t fsize = fBin.tellg();
+    if (fsize % 4 != 0) {
+	    std::cerr << "filesize should be a multiple of 4\n";
+	    std::exit(1);
+    }
+    std::vector<uint32_t> codeImage(fsize/4);
+    // WARNING WARNING TODO(erin): only works on little-endian architectures
+    fBin.seekg(0);
+    fBin.read(reinterpret_cast<char*>(codeImage.data()), fsize);
 
 
-     loadMemoryImage(hostMem, &argv[1], argv[2]); // can loadm mem right into card if needed/wanted
     //for (unsigned test=0; test < num_tests; test++) {
  
-      iface.copyToCard(hostMem, 0, sizeof(*hostMem));
+      iface.copyToCard(codeImage.data(), 0x0, codeImage.size()*4);
       iface.sendStart();
       iface.resetCores(1);
-      iface.unahltCores(1);
+      iface.unhaltCores(1);
 
       // Wait until the FPGA is done.
       while (iface.checkDirty() == 0) {
@@ -102,7 +89,6 @@ int main(int argc, char *argv[]) {
       // TODO output results to file????
     
       // Free the allocated memory.
-      ~iface();
       free(result);
     //} 
 
@@ -142,18 +128,6 @@ int main(int argc, char *argv[]) {
 }
 
 
-void loadMemoryImage(void* dest, const std::string& path, uint64_t num_bytes) { // not sure if void* type is okay here
-    if (!std::filesystem::is_regular_file(path)) {
-        throw runtime_error("[!] `{}` is not a file\n", path);
-    }
-    std::ifstream fBin(path, std::ios::binary);
-    if (!fBin.is_open()) {
-        throw runtime_error("[!] can't open `{}`\n", path);
-    }
-    // WARNING WARNING TODO(erin): only works on little-endian architectures
-    fBin.read(dest, num_bytes);
-}
-
 // Returns unsigned long representation of string str.
 // Throws an exception if str is not a positive integer.
 unsigned long stringToPositiveInt(char *str) {
@@ -168,10 +142,11 @@ unsigned long stringToPositiveInt(char *str) {
   return 0;  
 }
 
-bool checkUsage(int argc, *argv[]) { // could use some work
+bool checkUsage(int argc, char* argv[]) { // could use some work
     if (argc == 3) {
     try {
-      stringToPositiveInt(argv[1]);
+      stringToPositiveInt(argv[2]);
+      return true;
     }
     catch (const runtime_error& e) {    
       return false;
