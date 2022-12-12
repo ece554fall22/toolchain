@@ -155,7 +155,7 @@ padMatrix:
 			padding_three:
 				vswizzle 0b1111, v1, v1, 0, 0, 1, 2
 				vsplat 0b0001, v1, r17
-				vsplat 0b1100, v1, r10
+				vsplat 0b1000, v1, r10
 				
 			padding_end_of_row:
 				vsti 0b1111, [r2+=0x00], v1

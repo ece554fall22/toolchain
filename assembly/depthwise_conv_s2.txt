@@ -100,15 +100,6 @@ addi r20, r20, 0x01
 cmp r20, r6
 blzi yepthatsalabel
 
-; Setup regs
-lil r1, 0x0000
-lil r2, 0x1000
-lil r3, 0x2000
-lil r4, 0x3000
-lil r5, 16
-lil r6, 3
-lil r30, 0x7000
-
 ; call function
 bkpt 0x01
 jal depthwise_convolution_stride2
