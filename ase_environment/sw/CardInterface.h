@@ -2,9 +2,8 @@
 
 #include "AFU.h"
 
-class CardInterface  {
+class CardInterface {
   public:
-
     AFU afu;
     uint8_t* cardMem;
     CardInterface(AFU&& afu, uint8_t* cardMem);
@@ -12,7 +11,7 @@ class CardInterface  {
     virtual ~CardInterface();
 
     virtual void copyToCard(void* hostSrc, uint64_t cardDest, uint64_t len);
-    
+
     virtual void copyFromCard(void* hostDst, uint64_t cardSrc, uint64_t len);
 
     virtual void sendStart();
@@ -25,4 +24,3 @@ class CardInterface  {
 
     virtual auto checkDirty() -> uint64_t;
 };
-
