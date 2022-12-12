@@ -30,7 +30,6 @@ instruction_cache.sv
 memA.sv
 memB.sv
 mem_controller.sv
-memory_map.sv
 mem.sv
 metadata_registers.sv
 next_metadata_comb.sv
@@ -49,5 +48,8 @@ Vector_ALU.sv
 vector_execute.sv
 vector_register_file.sv
 wb.sv
+control_pipeline.sv
+mem_wb.sv
+control_interface.sv
 
 QI:afu.qsf

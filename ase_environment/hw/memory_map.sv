@@ -118,7 +118,7 @@ module memory_map
 	    
             case (mmio.rd_addr)
 
-	      16'h0052: mmio.rd_data[$size(rd_addr)-1:0] <= rd_addr;
+	      16'h0052: mmio.rd_data[$size(start_addr)-1:0] <= start_addr;
 	      16'h0054: mmio.rd_data[0] <= reset;     	     
 	      16'h0056: mmio.rd_data[0] <= unhalt;
          16'h0058: mmio.rd_data[0] <= done;

@@ -32,7 +32,6 @@ always_comb begin
     control.r_type = '0;
     control.scalar_op_sel = '0;
     control.synch_op = '0;
-    control.branch_control = '0;
     control.matmul_idx = '0;
     control.matmul_opcode = '0;
     control.matmul_high_low = 0;
@@ -49,6 +48,7 @@ always_comb begin
     control.v_read2 = 0;
     control.store_immediate = 0;
     control.mask = inst[3:0];
+    control.scalar_alu_op = '0;
     case (op_code)
         halt: begin
             control.halt = 1;
@@ -239,7 +239,7 @@ always_comb begin
         end
         cmpi: begin
             control.alu_operands = 1;
-            contol.scalar_alu_op = 4'b1000;
+            control.scalar_alu_op = 4'b1000;
             control.imm_type = 4'b0111;
             control.r_read1 = 1;
         end
@@ -339,7 +339,7 @@ always_comb begin
         end
         vsma: begin
             control.vector_wr_en = 1;
-            contro.vector_alu_op = VVsma;
+            control.vector_alu_op = VVsma;
             control.vector_read_register1 = inst[14:10];
             control.vector_read_register2 = inst[9:5];
             control.v_read1 = 1;
