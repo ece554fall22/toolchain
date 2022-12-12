@@ -3,8 +3,8 @@ lil r1, 0x2000
 lil r2, 0x4000
 lil r3, 0x6000
 lil r4, 0x8000
-lil r5, 7
-lil r6, 2
+lil r5, 14
+lil r6, 1
 lil r7, 0xa000
 lil r30, 0xc000
 
@@ -37,7 +37,7 @@ blzi fill_weights
 lih r20, 0x00
 lil r20, 0x00
 lil r13, 0x00		; number put into memory
-lil r14, 0x20		; amount of memory per row (vector aligned)
+lil r14, 0x40		; amount of memory per row (vector aligned)
 
 yepthatsalabel:
 	lih r11, 0x00
@@ -67,9 +67,29 @@ yepthatsalabel:
 		vsplat 0b0010, v21, r13
 		addi r13, r13, 0x01
 		vsplat 0b0100, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b1000, v21, r13
+		vsti 0b1111, [r15+=0x10], v21
+		
+		addi r13, r13, 0x01
+		vsplat 0b0001, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0010, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0100, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b1000, v21, r13
+		vsti 0b1111, [r15+=0x10], v21
+		
+		addi r13, r13, 0x01
+		vsplat 0b0001, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b0010, v21, r13
+		;addi r13, r13, 0x01
+		;vsplat 0b0100, v21, r13
 		;addi r13, r13, 0x01
 		;vsplat 0b1000, v21, r13
-		vsplat 0b1000, v21, r12
+		vsplat 0b1100, v21, r12
 		vsti 0b1111, [r15+=0x10], v21
 		
 	addi r11, r11, 0x01
@@ -80,9 +100,18 @@ addi r20, r20, 0x01
 cmp r20, r6
 blzi yepthatsalabel
 
+; Setup regs
+lil r1, 0x0000
+lil r2, 0x1000
+lil r3, 0x2000
+lil r4, 0x3000
+lil r5, 16
+lil r6, 3
+lil r30, 0x7000
+
 ; call function
 bkpt 0x01
-jal depthwise_convolution_stride1
+jal depthwise_convolution_stride2
 bkpt 0x0a
 halt
 
@@ -93,8 +122,8 @@ halt
 ; r4 = Filter input location						- location 4
 ; r5 = width of matrix (x and y)
 ; r6 = depth of matrix (z) (number of filters)
-; r7 = Output of matmul
-depthwise_convolution_stride1:
+;
+depthwise_convolution_stride2:
 	; Stack stuff
 	subi r30, r30, 0x58
 	st36 [r30+0x00], r1
@@ -114,6 +143,7 @@ depthwise_convolution_stride1:
 	; r2 = Location 2 (ouptut)
 	; r3 = width (x and y length)
 	; r4 = depth (z length)
+	
 	; Reorganizes Registers for Padding
 	; r1 <= r1; r2 <= r2; r3 <= r5; r4 <= r6
 	and r3, r5, r5
@@ -128,12 +158,12 @@ depthwise_convolution_stride1:
 	lih r9, 0x0000
 	lil r9, 0x0000		; Z loop var
 	
-	layer_loop:
+	s2_layer_loop:
 		;; im2col (stride 2 2d)
-		; r1 = Location 2 + ( ((width+2+3)>>2<<2) * (width+2) * (curr depth) * FLOAT_SIZE)
-		; r2 = Location 3 + ( (width^2+7)>>3<<5 * 9 * (curr depth) ;FloatSizeBakedInto<<4) (output)
+		; r1 = Location 2 + ( ((width+2+3)>>2<<2) * (width+2) * (curr depth) * FLOAT_SIZE )
+		; r2 = Location 3 + ( ((width+1)/2)^2+7)>>3<<5 * 9 * (curr depth) ) ;FloatSizeBakedInto<<4 (output)
 		; r3 = width (x and y) - pad matrix (width + 2)
-		; r4 = num im2col columns (per row)- this is calculated from width (width + 2 - 2)
+		; r4 = num im2col columns (per row)- this is calculated from width (width + 2)/2
 		;peek_stack()
 		ld36 r1, [r30+0x00]
 		ld36 r2, [r30+0x08]
@@ -152,7 +182,9 @@ depthwise_convolution_stride1:
 		mul r12, r12, r9
 		shli r12, r12, 0x02			; r1 offset
 		
-		mul r15, r5, r5
+		addi r16, r5, 0x01
+		shri r16, r16, 0x01
+		mul r15, r16, r16
 		addi r15, r15, 0x07
 		shri r15, r15, 0x03
 		shli r15, r15, 0x05
@@ -164,19 +196,20 @@ depthwise_convolution_stride1:
 		add r1, r2, r12
 		add r2, r3, r15
 		addi r3, r5, 0x02
-		addi r4, r5, 0x00
+		addi r4, r16, 0x00
 		
 		; CALL IM2COL
-		jal imTwoColStrideOneTwoD
+		jal imTwoColStrideTwoTwoD
 		bkpt 0x03
 		
 		;; MatMul
 		; r1 = Location 4 + 16 * (curr depth) * FLOAT_SIZE (Input)
-		; r2 = Location 3 + ( (width^2+3)>>2<<4 * 9 * (curr depth) ;FloatSizeBakedInto<<4) (input)
-		; r3 = Location 1 + (width+3)>>2<<2 * (width) * (curr depth) * FLOAT_SIZE (Output)
+		; r2 = Location 3 + ( ( ((width+1)/2)^2+7)>>3<<5 * 9 * (curr depth) ;FloatSizeBakedInto<<4) (input)
+		; r3 = Location 1 + (((width/2)+3)>>2<<2) * (width/2) * (curr depth) * FLOAT_SIZE (Output)
 		; r4 = width of matrix - common length (3x3 for filter size)
 		; r5 = # cols for r1 (A matrix) - number of filters
 		; r6 = # rows in r2 (B matrix) - number of im2col columns
+		
 		;peek_stack()
 		ld36 r1, [r30+0x00]
 		ld36 r2, [r30+0x08]
@@ -192,12 +225,14 @@ depthwise_convolution_stride1:
 		mul r12, r12, r9
 		shli r12, r12, 0x02			; r1 offset
 		
-		mul r13, r5, r5
+		addi r16, r5, 0x01
+		shri r16, r16, 0x01
+		mul r13, r16, r16
 		addi r13, r13, 0x03
 		shri r13, r13, 0x02
 		shli r13, r13, 0x02			; r6 (align to 4)
 		
-		mul r14, r5, r5
+		mul r14, r16, r16
 		addi r14, r14, 0x07
 		shri r14, r14, 0x03
 		shli r14, r14, 0x05			; (align to 8)
@@ -206,15 +241,16 @@ depthwise_convolution_stride1:
 		mul r14, r14, r16
 		mul r14, r14, r9			; r2 offset
 		
-		addi r15, r5, 0x03
+		shri r17, r5, 0x01			; width/2
+		addi r15, r17, 0x03
 		shri r15, r15, 0x02
 		shli r15, r15, 0x02
-		mul r15, r15, r5
+		mul r15, r15, r17
 		mul r15, r15, r9
 		shli r15, r15, 0x02			; r3 offset
 		
 		add r2, r3, r14
-		add r3, r7, r15
+		add r3, r1, r15
 		add r1, r4, r12
 		addi r4, r16, 0x00
 		lih r5, 0x00
@@ -224,6 +260,7 @@ depthwise_convolution_stride1:
 		; CALL MATMUL
 		jal matmulmodule
 		bkpt 0x04
+		
 		;peek_stack()
 		ld36 r1, [r30+0x00]
 		ld36 r2, [r30+0x08]
@@ -241,25 +278,27 @@ depthwise_convolution_stride1:
 		
 		; r1 <= r7 + (width*width then padded * float_size)
 		; r2 <= r1 + (padded width * width * FLOAT_SIZE)
-		; r3 <= r5	width
+		; r3 <= r15	width (r5>>1)
 		; r4 <= r6	depth
-		mul r12, r5, r5
+		shri r15, r5, 0x01		; width
+		
+		mul r12, r15, r15
 		addi r12, r12, 0x07
 		shri r12, r12, 0x03
 		shli r12, r12, 0x05
 		mul r12, r12, r9
 		
-		addi r13, r5, 0x03
+		addi r13, r15, 0x03
 		shri r13, r13, 0x02
 		shli r13, r13, 0x02
 		
-		mul r14, r13, r5
+		mul r14, r13, r15
 		shli r14, r14, 0x02
 		mul r14, r14, r9
 		
 		add r2, r1, r14
 		add r1, r7, r12
-		and r3, r5, r5
+		and r3, r15, r15
 		lih r4, 0x00
 		lil r4, 0x01
 		;and r4, r6, r6
@@ -268,20 +307,11 @@ depthwise_convolution_stride1:
 		jal alignMatrix
 		bkpt 0x05
 		
-		ld36 r1, [r30+0x00]
-		ld36 r2, [r30+0x08]
-		ld36 r3, [r30+0x10]
-		ld36 r4, [r30+0x18]
-		ld36 r5, [r30+0x20]
-		ld36 r6, [r30+0x28]
-		ld36 r7, [r30+0x30]
-		ld36 r8, [r30+0x38]
-		
 	;; Check loop condition
 	; branch if r9 < r6 (r9-r6<0)
 	addi r9, r9, 0x01
 	cmp r9, r6
-	blzi layer_loop
+	blzi s2_layer_loop
 	
 	; Return to caller function
 	ld36 r1, [r30+0x00]
@@ -295,13 +325,13 @@ depthwise_convolution_stride1:
 	ld36 r9, [r30+0x40]
 	ld36 r10, [r30+0x48]
 	ld36 r31, [r30+0x50]
+	ld36 r31, [r30+0x50]
 	addi r30, r30, 0x58
 	jmpr r31, 0x00
-	halt
+halt
 
 ; Include needed subfiles
 %include "padding_code.txt"
-%include "im2ColStrideOne_code.txt"
+%include "im2ColStrideTwo_code.txt"
 %include "matmul.txt"
 %include "align_data.txt"
-
