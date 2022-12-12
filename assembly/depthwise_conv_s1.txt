@@ -9,8 +9,8 @@ lil r7, 0xa000
 lil r30, 0xc000
 
 lil r11, 0x0000
-;lih r11, 0x0FE0		; the number 1 in floating point
-lih r11, 0x1000		; the number 2 in floating point
+lih r11, 0x0FE0		; the number 1 in floating point
+;lih r11, 0x1000		; the number 2 in floating point
 lil r12, 0x00
 lih r12, 0x00
 vsplat 0b1111, v20, r12 ; Zeros
@@ -32,7 +32,7 @@ fill_weights:
 	
 addi r11, r11, 0x01
 cmp r11, r6; # r11 < num filters
-blzi layer_loop
+blzi fill_weights
 
 lih r20, 0x00
 lil r20, 0x00
@@ -67,6 +67,8 @@ yepthatsalabel:
 		vsplat 0b0010, v21, r13
 		addi r13, r13, 0x01
 		vsplat 0b0100, v21, r13
+		addi r13, r13, 0x01
+		vsplat 0b1000, v21, r13
 		;vsplat 0b1000, v21, r12
 		vsti 0b1111, [r15+=0x10], v21
 		
@@ -254,7 +256,9 @@ depthwise_convolution_stride1:
 		add r2, r1, r14
 		add r1, r7, r12
 		and r3, r5, r5
-		and r4, r6, r6
+		lih r4, 0x00
+		lil r4, 0x01
+		;and r4, r6, r6
 		
 		; Call align
 		jal alignMatrix
