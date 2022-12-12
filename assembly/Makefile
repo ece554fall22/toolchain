@@ -17,3 +17,8 @@ s1:
 		../builddir/asm/asm -o temp/depth_s1.bin temp/depth_s1.s
 		../builddir/sim/sim temp/depth_s1.bin --trace temp/depth_s1.trace
 		
+host:
+		mkdir -p temp
+		nasm -e bootloader.txt -o temp/bootloader.s
+		../builddir/asm/asm -o temp/bootloader.bin temp/bootloader.s
+		
