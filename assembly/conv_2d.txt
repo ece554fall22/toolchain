@@ -229,7 +229,7 @@ convolution_stride2:
 	lih r4, 0x00
 	lil r4, 27
 	and r5, r6, r6			; # filters = r6
-	and r6 r13, r13
+	and r6, r13, r13
 	
 	; CALL MATMUL
 	jal matmulmodule
