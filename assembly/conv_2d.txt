@@ -200,11 +200,51 @@ convolution_stride2:
 	blzi s2_layer_loop
 	
 	; Matmul
+	; r1 = Location 4
+	; r2 = Location 3	 (input)
+	; r3 = Location 1	 (Output)
+	; r4 = width of matrix - (3x3x3 for filter size)
+	; r5 = # cols for r1 (A matrix) - number of filters
+	; r6 = # rows in r2 (B matrix) (((r5+1)/2)^2+3)>>2<<2 - number of im2col columns
+	;peek_stack()
+	ld36 r1, [r30+0x00]
+	ld36 r2, [r30+0x08]
+	ld36 r3, [r30+0x10]
+	ld36 r4, [r30+0x18]
+	ld36 r5, [r30+0x20]
+	ld36 r6, [r30+0x28]
+	ld36 r7, [r30+0x30]
+	ld36 r8, [r30+0x38]
+	addi r16, r5, 0x01
+	shri r16, r16, 0x01
+	mul r13, r16, r16
+	addi r13, r13, 0x03
+	shri r13, r13, 0x02
+	shli r13, r13, 0x02		; num im2col cols
+	
+	
+	and r2, r3, r3
+	and r1, r4, r4
+	and r3, r1, r1
+	lih r4, 0x00
+	lil r4, 27
+	and r5, r6, r6			; # filters = r6
+	and r6 r13, r13
 	
 	; Align matrix
+	; r1 = input_data start location
+	; r2 = output_data
+	; r3 = output_width (input_width = output_width^2 then aligned)
+	; r4 = num matrices (num filters)
 	
-	
-	
+	; r1 <= r7 + (width*width then padded * float_size)
+	; r2 <= r1 + (padded width * width * FLOAT_SIZE)
+	; r3 <= r15	width (r5>>1)
+	; r4 <= r6	depth
+	and r2, r1
+	and r1, r7, r7
+	shri r3, r5, 0x01
+	and r4, r6, r6
 	
 	; Return to caller function
 	ld36 r1, [r30+0x00]
