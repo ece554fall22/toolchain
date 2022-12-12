@@ -20,7 +20,7 @@ vsplat 0b0001, v21, r11	; Middle with 1
 lih r11, 0x00
 lil r11, 0x00
 lih r13, 0x00
-lil r13, 0x10
+lil r13, 0x40
 ; Use r11
 fill_weights:
 	mul r15, r11, r13
@@ -195,8 +195,12 @@ depthwise_convolution_stride1:
 		mul r13, r5, r5
 		addi r13, r13, 0x03
 		shri r13, r13, 0x02
-		shli r13, r13, 0x02			; r6
-		shli r14, r13, 0x02
+		shli r13, r13, 0x02			; r6 (align to 4)
+		
+		mul r14, r5, r5
+		addi r14, r14, 0x07
+		shri r14, r14, 0x03
+		shli r14, r14, 0x05			; (align to 8)
 		lih r16, 0x00
 		lil r16, 0x09
 		mul r14, r14, r16
@@ -240,9 +244,9 @@ depthwise_convolution_stride1:
 		; r3 <= r5	width
 		; r4 <= r6	depth
 		mul r12, r5, r5
-		addi r12, r12, 0x03
-		shri r12, r12, 0x02
-		shli r12, r12, 0x04
+		addi r12, r12, 0x07
+		shri r12, r12, 0x03
+		shli r12, r12, 0x05
 		mul r12, r12, r9
 		
 		addi r13, r5, 0x03
