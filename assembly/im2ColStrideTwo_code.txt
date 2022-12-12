@@ -1,0 +1,333 @@
+; Define initial reg vals
+;lil r1, 0x0000
+;lil r2, 0x1000
+;lil r3, 0x000a
+;lil r4, 4			; (r3>>1) ->9/2=4
+;lil r30, 0xF000
+
+; Call func
+;bkpt 0x01
+;jal imTwoColStrideTwoTwoD
+;bkpt 0x10
+
+;halt
+
+;; Pull in the needed values for the current convolution
+;; input_data start location, output_data write location
+;; width of input data (number of rows or len(input_data)), # of output cols
+;; need 4 regs
+; r1 = input_data start location
+; r2 = output_data write location
+; r3 = width of input data
+; r4 = # of output cols
+imTwoColStrideTwoTwoD:
+	; Push to stack
+	subi r30, r30, 0x58
+	st36 [r30+0x00], r1
+	st36 [r30+0x08], r2
+	st36 [r30+0x10], r3
+	st36 [r30+0x18], r4
+	st36 [r30+0x20], r5
+	st36 [r30+0x28], r6 
+	st36 [r30+0x30], r7
+	st36 [r30+0x38], r8
+	st36 [r30+0x40], r9
+	st36 [r30+0x48], r10
+	st36 [r30+0x50], r31
+	
+	; store r31 -> r23
+	;and r23, r31, r31
+	
+	;; Set up loop y loop var
+	lih r6, 0x00000		; init y loop var = 0
+	lil r6, 0x00000
+	
+	addi r25, r3, 0x03	; (the ceiled width) r25 = (r3 + 3) >> 2 << 2
+	shri r25, r25, 0x02
+	shli r25, r25, 0x02
+	
+	;; For loop y_filter starts
+	im_two_two_y_loop_start:
+
+		lih r5, 0x00000		; init x loop var = 0
+		lil r5, 0x00000
+
+		;; For loop x_filter starts
+		im_two_two_x_loop_start:
+			;; Get input vector
+			
+			;bkpt 0x02
+			
+			mul r12, r25, r6
+			add r12, r12, r5		; r12 = r5 + r6 * r25 (x + y*width)
+			shli r13, r12, 0x02		; r13 = r12 * FLOAT_SIZE same as r13 = r12 << 2 (a float is 0x4)
+			add r14, r1, r13
+			vldi 0b1111, v1, [r14+=0x00]
+			; At this point v1 holds the input values
+			; Take each value into floating point regs
+			vidx r26, v1, 0x0
+			vidx r27, v1, 0x1
+			vidx r28, v1, 0x2
+			vidx r29, v1, 0x3
+			
+			;; 2UP code start
+				andi r20, r6, 0x01		; check if y % 2 = 0
+				cmpi r20, 0x00
+				bnzi im_two_two_one_up_start
+				cmpi r6, 0x02			; Check if y < 2 (to skip 2UP)
+				blzi im_two_two_one_up_start
+				
+				; write_output_elements(0x06, 0x02) ; Use to write vals to output
+				; r10 = col_offset
+				lih r10, 0x0000
+				lil r10, 0x06
+				; r7 = y_offset
+				lih r7, 0x0000
+				lil r7, 0x01
+				jal im_two_two_write_output_elements
+
+			im_two_two_one_up_start:
+				;; 1UP code starts
+				andi r20, r6, 0x01		; check if y % 2 = 1
+				cmpi r20, 0x00
+				bezi im_two_two_zero_up_start
+				cmpi r6, 0x01			; Check if y < 1 (to skip 1UP)
+				blzi im_two_two_zero_up_start
+				subi r19, r3, 0x01		; Also check if y >= (width of input) - 1
+				cmp r6, r19
+				bgei im_two_two_zero_up_start
+				
+				; write_output_elements(0x03, 0x01)	; Use to write vals to output
+				; r10 = col_offset
+				lih r10, 0x0000
+				lil r10, 0x03
+				; r7 = y_offset
+				lih r7, 0x0000
+				lil r7, 0x00
+				jal im_two_two_write_output_elements
+
+			im_two_two_zero_up_start:
+				;; 0UP code starts
+				andi r20, r6, 0x01		; check if y % 2 = 0
+				cmpi r20, 0x00
+				bnzi im_two_two_check_branch_conditionals
+				subi r19, r3, 0x02	; Check if y >= (width of input) - 2
+				cmp r6, r19
+				bgei im_two_two_check_branch_conditionals
+				
+				; write_output_elements(0x00, 0x00)	; Use to write vals to output
+				; r10 = col_offset
+				lih r10, 0x0000
+				lil r10, 0x00
+				; r7 = y_offset
+				lih r7, 0x0000
+				lil r7, 0x00
+				jal im_two_two_write_output_elements
+
+		im_two_two_check_branch_conditionals:
+		;; Check loop conditionals
+		; Branch to x_loop_start (check if r5 + 4 < width of input data)
+		addi r5, r5, 0x04
+		cmp r25, r5				; (padded width) - (r5 + 4) > 0
+		bgzi im_two_two_x_loop_start	; Branch to start of x loop
+		
+		;bkpt 0x06
+		
+	; Branch to y_loop_start (check if r6 + 1 == width of input data)
+	addi r6, r6, 0x01
+	cmp r3, r6
+	bgzi im_two_two_y_loop_start	; branch to start of y loop
+
+	;; Pad the ends of rows before returning
+	lih r5, 0x00000		; init x loop var = 0
+	lil r5, 0x00001
+	lih r18, 0x0000
+	lil r18, 0x0000
+	vsplat 0b1111, v3, r18
+	im_two_one_align_padding:
+		; Gets the end of the line
+		mul r12, r4, r4		; vals written to this - 1
+		addi r13, r12, 0x03	; (4 aligned width) r12 = (r4*r4 + 3) >> 2 << 2
+		shri r13, r13, 0x02
+		shli r13, r13, 0x02
+		addi r16, r12, 0x07	; (8 aligned width) r12 = (r4*r4 + 7) >> 2 << 2
+		shri r16, r16, 0x03
+		shli r16, r16, 0x03
+		; Pull last vector
+		subi r15, r5, 0x01
+		mul r14, r16, r15
+		add r14, r14, r13
+		subi r14, r14, 0x04
+		shli r14, r14, 0x02
+		add r14, r14, r2
+		vldi 0b1111, v2, [r14+=0x00]
+		
+		; Get difference between aligned and unaligned (0-3)
+		sub r15, r13, r12
+		; If 0, skip
+		cmpi r15, 0x00
+		bezi im_two_one_end_align
+		
+		; If 1, fill last
+		vsplat 0b1000, v2, r18
+		cmpi r15, 0x01
+		bezi im_two_one_end_align
+		
+		; If 2, fill last two
+		vsplat 0b1100, v2, r18
+		cmpi r15, 0x02
+		bezi im_two_one_end_align
+		
+		; If 3, fill last three
+		vsplat 0b1110, v2, r18
+		
+		im_two_one_end_align:
+		vsti 0b1111, [r14+=0x00], v2
+		
+		; Check if 4 or 8 aligned
+		cmp r16, r13		; if r16 = r13 then write 0 vector to end
+		bezi eight_aligned
+		addi r14, r14, 0x010
+		vsti 0b1111, [r14+=0x00], v3
+		
+		eight_aligned:
+		
+	; Branch to align_padding
+	addi r5, r5, 0x01
+	cmpi r5, 0x09
+	blei im_two_one_align_padding
+
+	;; If y loop not branched to, then im2col is done, so return here
+	; Pop Stack
+	ld36 r1, [r30+0x00]
+	ld36 r2, [r30+0x08]
+	ld36 r3, [r30+0x10]
+	ld36 r4, [r30+0x18]
+	ld36 r5, [r30+0x20]
+	ld36 r6, [r30+0x28]
+	ld36 r7, [r30+0x30]
+	ld36 r8, [r30+0x38]
+	ld36 r9, [r30+0x40]
+	ld36 r10, [r30+0x48]
+	ld36 r31, [r30+0x50]
+	ld36 r31, [r30+0x50]
+	addi r30, r30, 0x58
+	jmpr r31, 0x00
+	
+	; load r31 <- r23
+	;and r31, r23, r23
+	;jmpr r31, 0x0
+halt
+
+; r1 = input_data start location
+; r2 = output_data write location
+; r3 = width of input data
+; r25 = padded width of input
+; r4 = # of output cols
+; r5 = x loop var
+; r6 = y loop var
+; r26 = v1.0
+; r27 = v1.1
+; r28 = v1.2
+; r29 = v1.3
+; v1 = input_data values
+;; For all data values:
+; This will be the vector taken
+; input_data[y][x] = r1 + (r6 * r3 + r5) * FLOAT_SIZE
+; input_data[y][x] = r1 + (r6 * r25 + r5) * FLOAT_SIZE
+; We then can index into the vector to see the 4 values (or fewer) pulled
+;					START LOCATION + row offset + (x + y * (width of input data))
+; output_data[row][col] = r2 + (col * r4) + ((r5 + offset) * FLOAT_SIZE + (r6 + offset) * FLOAR_SIZE * r3)
+;%macro write_output_elements(imm col_offset (r10), imm y_offset (r7))
+im_two_two_write_output_elements:
+	; store r31 -> r24
+	and r24, r31, r31
+	
+	;; 2 left
+	; Skip if r5 == 0
+		lih r9, 0x0000
+		lil r9, 0x0000
+		subi r9, r9, 0x01	; Load -0x02 into r9 (how left or right from start)
+		cmpi r5, 0x00
+		bezi zero_left
+		addi r11, r10, 0x02
+		;write_output_location(r26, r11, -0x02, y_offset)
+		; r11 = column_index - already assigned
+		; r9 = x_offset - assignment already done
+		; r7 = y_offset - no assignment needed
+		; r8 = input_reg - do before calling
+		and r8, r26, r26
+		jal im_two_two_write_output_location
+
+	zero_left:
+		;; 0 left
+		; Skip if r1 + 2 >= r3
+		addi r9, r9, 0x01
+		addi r19, r5, 0x02
+		cmp r19, r3
+		bgei two_right
+		addi r11, r10, 0x00
+		; write_output_location(r26, r11, 0x00, y_offset)
+		and r8, r26, r26
+		jal im_two_two_write_output_location
+		addi r11, r10, 0x01
+		; write_output_location(r27, r11, 0x00, y_offset)
+		and r8, r27, r27
+		jal im_two_two_write_output_location			;;;;;;;;;;;;;;;;;;; THIS HERE IS CULPRIT
+		addi r11, r10, 0x02
+		; write_output_location(r28, r11, 0x00, y_offset)
+		and r8, r28, r28
+		jal im_two_two_write_output_location
+
+	two_right:
+		;; 2 right
+		; Skip if r1 + 4 >= r3
+		addi r9, r9, 0x01
+		addi r19, r5, 0x04
+		cmp r19, r3
+		bgei write_return
+		addi r11, r10, 0x00
+		; write_output_location(r28, r11, 0x02, y_offset)
+		and r8, r28, r28
+		jal im_two_two_write_output_location
+		addi r11, r10, 0x01
+		; write_output_location(r29, r11, 0x02, y_offset)
+		and r8, r29, r29
+		jal im_two_two_write_output_location
+
+	write_return:
+		; load r31 <- r24
+		and r31, r24, r24
+		jmpr r31, 0x0
+halt
+;%endmacro
+
+;; write_output_location performs a write to an output location based on given register and locations
+;					START LOCATION + row offset + (x + y * (padded width of input data))
+; output_data[row][col] = r2 + (col * ceil(r4*r4)) + ((r5 + x_offset) + (r6 - y_offset) * r4) * FLOAT_SIZE
+;%macro write_output_location(reg input_reg, reg column_index, imm x_offset, imm y_offset)
+; r8 = input_reg
+; r11 = column_index - already assigned
+; r9 = x_offset - assignment already done
+; r7 = y_offset - no assignment needed
+im_two_two_write_output_location:
+	mul r12, r4, r4
+	addi r12, r12, 0x07	; (the padded width) r12 = (r4*r4 + 3) >> 2 << 2
+	shri r12, r12, 0x03
+	shli r12, r12, 0x05	; number of vectors, no floats so x16 instead of x4
+	mul r12, r12, r11	; this is the column offset
+	shri r13, r5, 0x01
+	add r13, r13, r9		; total_x = x_val/2 + x_offset
+	shri r14, r6, 0x01
+	sub r14, r14, r7		; total_y = y_val/2 - y_offset
+	mul r14, r14, r4
+	add r15, r13, r14
+	shli r15, r15, 0x02			; this is the row offset
+	add r16, r2, r12
+	add r17, r16, r15			; this is the output location
+	; Store to r17 with value of input reg
+	st32 [r17+0x00], r8
+	
+	jmpr r31, 0x0
+halt
+;%endmacro
