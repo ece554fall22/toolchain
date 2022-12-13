@@ -35,6 +35,7 @@ convolution_stride2:
 	
 	; pad the matrix
 	; push_stack_caller(padMatrix)
+	bkpt 0x02
 	jal padMatrix
 	bkpt 0x02
 	
@@ -83,6 +84,7 @@ convolution_stride2:
 		addi r4, r16, 0x00
 		
 		; CALL IM2COL
+		bkpt 0x03
 		jal imTwoColStrideTwoTwoD
 		bkpt 0x03
 	;; Check loop condition
@@ -125,6 +127,7 @@ convolution_stride2:
 	and r6, r13, r13
 	
 	; CALL MATMUL
+	bkpt 0x04
 	jal matmulmodule
 	bkpt 0x04
 	
@@ -154,6 +157,7 @@ convolution_stride2:
 	and r4, r6, r6
 	
 	; Call align
+	bkpt 0x05
 	jal alignMatrix
 	bkpt 0x05
 	
