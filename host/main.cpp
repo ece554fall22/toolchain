@@ -26,6 +26,8 @@ auto parseArgs(int argc, char* argv[]) -> argparse::ArgumentParser {
     ap.add_argument("codeimage");
     ap.add_argument("files").nargs(argparse::nargs_pattern::any);
 
+    ap.add_argument("-o").help("<base>:<len>:<outfile.bin>");
+
     ap.add_argument("--mem-size")
         .help("size of emulated memory space, as # of 32-bit words. must be a "
               "multiple of 128 bits. default is 1MiB")
@@ -131,10 +133,10 @@ struct SimulatedCard : public Accelerator {
     }
 };
 
-struct DataImage {
-    uint64_t base;
-    std::vector<uint32_t> buf;
-};
+// struct DataImage {
+//     uint64_t base;
+//     std::vector<uint32_t> buf;
+// };
 
 std::vector<uint32_t> readbin(const std::string& path) {
     if (!std::filesystem::is_regular_file(path)) {
@@ -215,7 +217,6 @@ int main(int argc, char* argv[]) {
 
         auto path = els[1];
 
-        //        images.push_back({*baseaddr, readbin(path)});
         auto buf = readbin(path);
         card.copyToCard(buf.data(), *baseaddr, buf.size() * 4);
     }
@@ -227,6 +228,31 @@ int main(int argc, char* argv[]) {
             card.cpu.dump();
             break;
         }
+    }
+
+    if (auto outdesc = ap.present<std::string>("-o")) {
+        auto els = split(*outdesc, ':');
+        assert(els.size() == 3);
+
+        auto baseaddr = parse_addr(els[0]);
+        if (!baseaddr) {
+            std::cerr << "[!] bad address\n";
+            std::exit(1);
+        }
+
+        auto len = parse_addr(els[1]);
+        if (!len) {
+            std::cerr << "[!] bad length\n";
+            std::exit(1);
+        }
+
+        auto path = els[2];
+
+        std::vector<uint32_t> buf(*len);
+        card.copyFromCard(buf.data(), *baseaddr, buf.size() * 4);
+
+        std::ofstream fOut(path, std::ios::trunc | std::ios::binary);
+        fOut.write(reinterpret_cast<char*>(buf.data()), buf.size() * 4);
     }
 
     return 0;
