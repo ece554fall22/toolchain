@@ -24,13 +24,16 @@ using namespace std;
 
 unsigned long stringToPositiveNum(char* str, int radix);
 void printUsage(char* name);
-bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart, uint64_t* weightsStart,
-                uint64_t* resultStart, uint64_t* resultSize);
+bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart,
+                uint64_t* weightsStart, uint64_t* resultStart,
+                uint64_t* resultSize);
 
 int main(int argc, char* argv[]) {
 
-// USAGE: ./afu_ase <code_filepath> <datamatrix_filepath> <assembly address to write datamatrix> 
-//      <weights_filepath> <assembly address to write weights> <starting address of results> <length of results>
+    // USAGE: ./afu_ase <code_filepath> <datamatrix_filepath> <assembly address
+    // to write datamatrix>
+    //      <weights_filepath> <assembly address to write weights> <starting
+    //      address of results> <length of results>
 
     std::string codeFilepath = argv[1];
     std::string dataMatrixFilepath = argv[2];
@@ -40,7 +43,8 @@ int main(int argc, char* argv[]) {
     uint64_t resultStart;
     uint64_t resultSize;
 
-    if (!checkUsage(argc, argv, &dataMatrixStart, &weightsStart, &resultStart, &resultSize)) { 
+    if (!checkUsage(argc, argv, &dataMatrixStart, &weightsStart, &resultStart,
+                    &resultSize)) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
@@ -51,7 +55,6 @@ int main(int argc, char* argv[]) {
         // the specified ID
         AFU afu(AFU_ACCEL_UUID);
         uint8_t* cardMem;
-
 
         // read code image file
         if (!std::filesystem::is_regular_file(codeFilepath)) {
@@ -72,8 +75,6 @@ int main(int argc, char* argv[]) {
         codeBin.seekg(0);
         codeBin.read(reinterpret_cast<char*>(codeImage.data()), fsize);
 
-
-        
         // read data matrix file
         if (!std::filesystem::is_regular_file(dataMatrixFilepath)) {
             throw runtime_error("[!] " + dataMatrixFilepath + " is not a file");
@@ -92,9 +93,6 @@ int main(int argc, char* argv[]) {
         // WARNING WARNING TODO(erin): only works on little-endian architectures
         dataMatBin.seekg(0);
         dataMatBin.read(reinterpret_cast<char*>(dataMatImage.data()), fsize);
-
-
-
 
         // read weights file
         if (!std::filesystem::is_regular_file(weightsFilepath)) {
@@ -115,20 +113,21 @@ int main(int argc, char* argv[]) {
         weightsBin.seekg(0);
         weightsBin.read(reinterpret_cast<char*>(weightsImage.data()), fsize);
 
-        uint64_t totalSize = codeImage.size() + dataMatImage.size() + weightsImage.size();
-        totalSize  = totalSize * 4 + resultSize;
-
+        uint64_t totalSize =
+            codeImage.size() + dataMatImage.size() + weightsImage.size();
+        totalSize = totalSize * 4 + resultSize;
 
         CardInterface iface(std::move(afu), cardMem, totalSize);
         bool failed = false;
         void* result = malloc(resultSize);
 
-
         // for (unsigned test=0; test < num_tests; test++) {
 
         iface.copyToCard(codeImage.data(), 0x0, codeImage.size() * 4);
-        iface.copyToCard(dataMatImage.data(), dataMatrixStart, dataMatImage.size() * 4);
-        iface.copyToCard(weightsImage.data(), weightsStart, weightsImage.size() * 4);
+        iface.copyToCard(dataMatImage.data(), dataMatrixStart,
+                         dataMatImage.size() * 4);
+        iface.copyToCard(weightsImage.data(), weightsStart,
+                         weightsImage.size() * 4);
         iface.sendStart();
         iface.resetCores(1);
         iface.unhaltCores(1);
@@ -195,9 +194,9 @@ unsigned long stringToPositiveNum(char* str, int radix) {
     return 0;
 }
 
-
-bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart, uint64_t* weightsStart,
-                uint64_t* resultStart, uint64_t* resultSize) {
+bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart,
+                uint64_t* weightsStart, uint64_t* resultStart,
+                uint64_t* resultSize) {
     if (argc == 8) {
         try {
             *dataMatrixStart = stringToPositiveNum(argv[3], 16);
@@ -215,8 +214,9 @@ bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart, uint64_t* wei
 
 void printUsage(char* name) {
 
-    cout  << " USAGE: ./afu_ase <code_filepath> <datamatrix_filepath> <assembly address to write datamatrix> 
-//      <weights_filepath> <assembly address to write weights> <starting address of results> <length of results>"
-            "file>\n";
+    cout
+        << " USAGE: ./afu_ase <code_filepath> <datamatrix_filepath> <assembly address to write datamatrix> 
+           //      <weights_filepath> <assembly address to write weights>
+           //      <starting address of results> <length of results>"
+           "file>\n";
 }
-
