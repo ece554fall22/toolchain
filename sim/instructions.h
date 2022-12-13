@@ -99,13 +99,13 @@ void xor_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 // SHL
 void shl(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
     cpu.r[rD].inner =
-        (cpu.r[rA].raw() << cpu.r[rB]._sgn_inner()) & bits<36>::mask;
+        (cpu.r[rA].raw() << cpu.r[rB].slice<3, 0>().raw()) & bits<36>::mask;
 }
 
 // SHR
 void shr(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
     cpu.r[rD].inner =
-        (cpu.r[rA].raw() >> cpu.r[rB]._sgn_inner()) & bits<36>::mask;
+        (cpu.r[rA].raw() >> cpu.r[rB].slice<3, 0>().raw()) & bits<36>::mask;
 }
 
 void cmp(CPUState& cpu, MemSystem& mem, reg_idx rA, reg_idx rB) {
