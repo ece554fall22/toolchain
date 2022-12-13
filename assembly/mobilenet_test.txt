@@ -4,7 +4,7 @@ lil r2, 0x4000
 lil r3, 0x6000
 lil r4, 0x8000
 lil r5, 14
-lil r6, 3
+lil r6, 1
 lil r7, 0xa000
 lil r30, 0xc000
 
@@ -24,8 +24,8 @@ vsplat 0b0100, v23, r11	; Middle 1 in last layer
 addi r15, r4, 0x00
 
 ; First filter
-vsti 0b1111, [r15+=0x10], v20
 vsti 0b1111, [r15+=0x10], v21
+vsti 0b1111, [r15+=0x10], v20
 vsti 0b1111, [r15+=0x10], v20
 vsti 0b1111, [r15+=0x10], v20
 vsti 0b1111, [r15+=0x10], v20
@@ -34,24 +34,24 @@ vsti 0b1111, [r15+=0x10], v20
 vsti 0b1111, [r15+=0x10], v20
 
 ; Second filter
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v22
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v22
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
 
 ; Third filter
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v23
-vsti 0b1111, [r15+=0x10], v20
-vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v23
+;vsti 0b1111, [r15+=0x10], v20
+;vsti 0b1111, [r15+=0x10], v20
 
 ;lih r11, 0x00
 ;lil r11, 0x00

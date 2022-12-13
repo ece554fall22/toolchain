@@ -96,7 +96,7 @@ convolution_stride2:
 	; Matmul
 	; r1 = Location 4
 	; r2 = Location 3	 (input)
-	; r3 = Location 1	 (Output)
+	; r3 = Location 7	 (Output)
 	; r4 = width of matrix - (3x3x3 for filter size)
 	; r5 = # cols for r1 (A matrix) - number of filters
 	; r6 = # rows in r2 (B matrix) (((r5+1)/2)^2+3)>>2<<2 - number of im2col columns
