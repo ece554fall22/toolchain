@@ -1,17 +1,17 @@
 ; Setup regs
-lih r1, 0x0001
+lih r1, 0x0001		; 0x40000
 lil r1, 0x0000		; Input location
-lih r2, 0x0002
+lih r2, 0x0003		; 0xc0000
 lil r2, 0x0000		; Padded location
-lih r3, 0x0003
+lih r3, 0x0005		; 0x140000
 lil r3, 0x0000		; Im2col location
-lih r3, 0x0004
-lil r4, 0x0000
+lih r4, 0x0007		; 0x1c0000
+lil r4, 0x0000		; Weights location
 lil r5, 224
 lil r6, 32
-lih r7, 0x0005
-lil r7, 0x0000
-lil r30, 0xF000
+lih r7, 0x0009		; 0x240000
+lil r7, 0x0000		; Matmul location
+lil r30, 0xF000		; Stack pointer
 
 bkpt 0x01
 jal convolution_stride2
