@@ -2,7 +2,7 @@ host:
 		mkdir -p temp
 		nasm -e mobilenet.txt -o temp/mobilenet.s
 		../builddir/asm/asm -o temp/mobilenet.bin temp/mobilenet.s
-		ninja -C ../builddir && ../builddir/host/host --mem-size 20971520 ./temp/mobilenet.bin 0x40000:./binary_files/image.bin 0x380000:./binary_files/weights_conv2d.bin -o 0x40000:0x62000:./temp/output.bin
+		ninja -C ../builddir && ../builddir/host/host --mem-size 20971520 ./temp/mobilenet.bin 0x40000:./binary_files/image.bin 0xc00000:./binary_files/weights_conv2d.bin -o 0x40000:0x62000:./temp/output.bin
 
 # ../builddir/host/host --mem-size 20971520 <code program> <progAddr1>:<prog1> <progAddrN>:<progN> -o <out_start_addr>:<out_length>:<out_file>
 
