@@ -3,7 +3,8 @@
 
 CardInterface::CardInterface(AFU&& afu, uint8_t* cardMem, uint64_t totalSize)
     : afu{std::move(afu)} {
-    cardMem = afu.malloc<dma_data_t>((size_t)totalSize); // not sure if this works lol
+    cardMem =
+        afu.malloc<dma_data_t>((size_t)totalSize); // not sure if this works lol
 }
 
 CardInterface::~CardInterface() { afu.free(cardMem); }

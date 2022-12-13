@@ -4,26 +4,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
 
 #include <linenoise.h>
 
 #include "cpu.h"
 #include <morph/bit_cast.h>
 #include <morph/decoder.h>
-
-auto split(const std::string& str, char delim = ' ')
-    -> std::vector<std::string> {
-    std::vector<std::string> elems;
-
-    std::stringstream stream(str);
-    std::string item;
-    while (getline(stream, item, delim)) {
-        elems.push_back(item);
-    }
-
-    return elems;
-}
+#include <morph/util.h>
 
 auto parsecmd(std::string&& line) -> std::optional<Command> {
     auto els = split(line, ' ');
