@@ -29,7 +29,7 @@ def cli(instr_count, constrain_regs, seed):
 
 # vldi, vsti, vldr, vstr, Vadd, Vsub, Vmult, Vdiv, Vdot, Vdota, Vindx, Vreduce,
 # Vsplat, Vswizzle, Vsadd, Vsmult, Vssub, Vsdiv, vsma, Vmax, Vmin
-    ops = ('Vadd', 'Vsub', 'Vmult', 'Vdiv')
+    ops = ('vsadd', 'vssub', 'vsmul', 'vsdiv')
     rng = Random(seed)
 
 
