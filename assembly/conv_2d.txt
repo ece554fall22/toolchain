@@ -16,30 +16,64 @@ lih r12, 0x00
 vsplat 0b1111, v20, r12 ; Zeros
 vsplat 0b1111, v21, r12
 vsplat 0b1111, v22, r12
-vsplat 0b0001, v21, r11	; Middle with 1
+vsplat 0b1111, v23, r12
+vsplat 0b0001, v21, r11	; Middle 1 in first layer
 vsplat 0b0010, v22, r11	; Middle 1 in center layer
+vsplat 0b0100, v23, r11	; Middle 1 in last layer
 
-lih r11, 0x00
-lil r11, 0x00
-lih r13, 0x00
-lil r13, 0x80
+addi r15, r4, 0x00
+
+; First filter
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v21
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+
+; Second filter
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v22
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+
+; Third filter
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v23
+vsti 0b1111, [r15+=0x10], v20
+vsti 0b1111, [r15+=0x10], v20
+
+;lih r11, 0x00
+;lil r11, 0x00
+;lih r13, 0x00
+;lil r13, 0x80
 ; Use r11
-fill_weights:
-	mul r15, r11, r13
-	add r15, r4, r15		; filter location
-	vsti 0b1111, [r15+=0x10], v20
-	;vsti 0b1111, [r15+=0x10], v21
-	vsti 0b1111, [r15+=0x10], v20
-	vsti 0b1111, [r15+=0x10], v20
-	vsti 0b1111, [r15+=0x10], v22
-	vsti 0b1111, [r15+=0x10], v20
-	vsti 0b1111, [r15+=0x10], v20
-	vsti 0b1111, [r15+=0x10], v20
-	vsti 0b1111, [r15+=0x10], v20
+;fill_weights:
+;	mul r15, r11, r13
+;	add r15, r4, r15		; filter location
+;	vsti 0b1111, [r15+=0x10], v20
+;	;vsti 0b1111, [r15+=0x10], v21
+;	vsti 0b1111, [r15+=0x10], v20
+;	vsti 0b1111, [r15+=0x10], v20
+;	vsti 0b1111, [r15+=0x10], v22
+;	vsti 0b1111, [r15+=0x10], v20
+;	vsti 0b1111, [r15+=0x10], v20
+;	vsti 0b1111, [r15+=0x10], v20
+;	vsti 0b1111, [r15+=0x10], v20
 	
-addi r11, r11, 0x01
-cmp r11, r6; # r11 < num filters
-blzi fill_weights
+;addi r11, r11, 0x01
+;cmp r11, r6; # r11 < num filters
+;blzi fill_weights
 
 lih r20, 0x00
 lil r20, 0x00
