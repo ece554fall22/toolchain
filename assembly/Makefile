@@ -20,7 +20,7 @@ boot:
 
 c2:
 		mkdir -p temp
-		nasm -e mobilenet.txt -o temp/conv_2d.s
+		nasm -e mobilenet_test.txt -o temp/conv_2d.s
 		../builddir/asm/asm -o temp/conv_2d.bin temp/conv_2d.s
 		../builddir/sim/sim temp/conv_2d.bin --trace temp/conv_2d.trace
 
