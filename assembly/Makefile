@@ -2,7 +2,7 @@ host:
 		mkdir -p temp
 		nasm -e mobilenet.txt -o temp/mobilenet.s
 		../builddir/asm/asm -o temp/mobilenet.bin temp/mobilenet.s
-		ninja -C ../builddir && ../builddir/host/host ./temp/mobilenet.bin 0x40000:./binary_files/image.bin 0x1c0000:./weights_conv2d.bin -o 0x40000:0x62000:./temp/mobilenet.out
+		ninja -C ../builddir && ../builddir/host/host ./temp/mobilenet.bin 0x40000:./binary_files/image.bin 0x1c0000:./binary_files/weights_conv2d.bin -o 0x40000:0x62000:./temp/mobilenet.out
 
 # ../builddir/host/host <code program> <progAddr1>:<prog1> <progAddrN>:<progN> -o <out_start_addr>:<out_length>:<out_file>
 
@@ -10,7 +10,7 @@ test:
 		mkdir -p temp
 		nasm -e bootloader.txt -o temp/bootloader.s
 		../builddir/asm/asm -o temp/bootloader.bin temp/bootloader.s
-		ninja -C ../builddir && ../builddir/host/host ./temp/bootloader.bin 0x2000:./weights_conv2d.bin -o 0x2000:0x02:./temp/test.out
+		ninja -C ../builddir && ../builddir/host/host ./temp/bootloader.bin 0x2000:./binary_files/weights_conv2d.bin -o 0x2000:0x02:./temp/test.out
 
 # For Allison :)
 boot:
