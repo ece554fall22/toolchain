@@ -2,9 +2,9 @@ host:
 		mkdir -p temp
 		nasm -e mobilenet.txt -o temp/mobilenet.s
 		../builddir/asm/asm -o temp/mobilenet.bin temp/mobilenet.s
-		ninja -C builddir && ../builddir/host/host ../builddir/smoketest/basic_emission.bin 0x1000:a.bin 0x2000:c.bin
+		ninja -C builddir && ../builddir/host/host ./temp/mobilenet.bin 0x1000:a.bin 0x2000:c.bin
 
-# ../builddir/host/host <code program> <progAddr1>:<prog1> <progAddrN>:<progN>
+# ../builddir/host/host <code program> <progAddr1>:<prog1> <progAddrN>:<progN> <out_start_addr>:<out_length>:<out_file>
 
 c2:
 		mkdir -p temp
