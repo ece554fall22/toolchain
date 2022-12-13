@@ -12,6 +12,11 @@ test:
 		../builddir/asm/asm -o temp/bootloader.bin temp/bootloader.s
 		ninja -C ../builddir && ../builddir/host/host ./temp/bootloader.bin 0x2000:./weights_conv2d.bin -o 0x2000:0x02:./temp/test.out
 
+boot:
+		mkdir -p temp
+		nasm -e bootloader.txt -o temp/bootloader.s
+		../builddir/asm/asm -o temp/bootloader.bin temp/bootloader.s
+
 c2:
 		mkdir -p temp
 		nasm -e mobilenet.txt -o temp/conv_2d.s
