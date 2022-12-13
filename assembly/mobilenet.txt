@@ -147,4 +147,4 @@ jal convolution_stride2
 bkpt 0x0a
 halt
 
-%include "mobilenet.txt"
+%include "conv_2d.txt"
