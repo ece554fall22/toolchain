@@ -146,7 +146,7 @@ void cmpinc(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA, reg_idx rB) {
 }
 
 void not_(CPUState& cpu, MemSystem& mem, reg_idx rD, reg_idx rA) {
-    cpu.r[rD] = ~cpu.r[rD];
+    cpu.r[rD] = ~cpu.r[rA];
 }
 
 // -- scalar float instructions
