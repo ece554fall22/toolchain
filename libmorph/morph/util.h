@@ -1,7 +1,10 @@
 #pragma once
 
-#include <fmt/core.h>
+#include <sstream>
 #include <string>
+#include <vector>
+
+#include <fmt/core.h>
 
 /// --- "we have Rust at home"
 class Unimplemented : public std::logic_error {
@@ -41,3 +44,16 @@ class Panic : public std::logic_error {
 template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 // explicit deduction
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+inline auto split(const std::string& str, char delim = ' ')
+    -> std::vector<std::string> {
+    std::vector<std::string> elems;
+
+    std::stringstream stream(str);
+    std::string item;
+    while (getline(stream, item, delim)) {
+        elems.push_back(item);
+    }
+
+    return elems;
+}

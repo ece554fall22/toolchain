@@ -18,11 +18,16 @@
 #include "debugger.h"
 #include "iproxy.h"
 #include "trace.h"
+#include <morph/util.h>
 
 auto parseArgs(int argc, char* argv[]) -> argparse::ArgumentParser {
     argparse::ArgumentParser ap("host");
 
     ap.add_argument("codeimage");
+    ap.add_argument("files").nargs(argparse::nargs_pattern::any);
+
+    ap.add_argument("-o").help("<base>:<len>:<outfile.bin>");
+
     ap.add_argument("--mem-size")
         .help("size of emulated memory space, as # of 32-bit words. must be a "
               "multiple of 128 bits. default is 1MiB")
@@ -128,6 +133,56 @@ struct SimulatedCard : public Accelerator {
     }
 };
 
+// struct DataImage {
+//     uint64_t base;
+//     std::vector<uint32_t> buf;
+// };
+
+std::vector<uint32_t> readbin(const std::string& path) {
+    if (!std::filesystem::is_regular_file(path)) {
+        fmt::print(stderr, "[!] `{}` is not a file\n", path);
+        exit(1);
+    }
+    std::ifstream fBin(path, std::ios::binary);
+    if (!fBin.is_open()) {
+        fmt::print(stderr, "[!] can't open `{}`\n", path);
+        exit(1);
+    }
+    fBin.seekg(0, std::ios::end);
+    size_t fsize = fBin.tellg();
+    if (fsize % 4 != 0) {
+        fmt::print(stderr,
+                   "[!] loaded files must be a multiple of 4 bytes pls\n");
+        std::exit(1);
+    }
+    std::vector<uint32_t> buf(fsize / 4);
+    fBin.seekg(0);
+    fBin.read(reinterpret_cast<char*>(buf.data()), fsize);
+
+    return buf;
+}
+
+auto parse_addr(const std::string& s) -> std::optional<uint64_t> {
+    auto sAddr = std::string_view(s);
+
+    std::from_chars_result res{};
+    uint64_t val;
+    if (sAddr.starts_with("0x")) {
+        sAddr.remove_prefix(2);
+        res =
+            std::from_chars(sAddr.data(), sAddr.data() + sAddr.size(), val, 16);
+    } else {
+        res =
+            std::from_chars(sAddr.data(), sAddr.data() + sAddr.size(), val, 10);
+    }
+
+    if (res.ec == std::errc{} && res.ptr == (sAddr.data() + sAddr.size())) {
+        return val;
+    } else {
+        return std::nullopt;
+    }
+}
+
 int main(int argc, char* argv[]) {
     auto ap = parseArgs(argc, argv);
 
@@ -144,29 +199,27 @@ int main(int argc, char* argv[]) {
     SimulatedCard card(memSize);
 
     // -- load code image
-    auto codePath = ap.get<std::string>("codeimage");
-    if (!std::filesystem::is_regular_file(codePath)) {
-        fmt::print(stderr, "[!] `{}` is not a file\n", codePath);
-        exit(1);
-    }
-    std::ifstream fBin(codePath, std::ios::binary);
-    if (!fBin.is_open()) {
-        fmt::print(stderr, "[!] can't open `{}`\n", codePath);
-        exit(1);
-    }
-    fBin.seekg(0, std::ios::end);
-    size_t fsize = fBin.tellg();
-    if (fsize % 4 != 0) {
-        fmt::print(stderr,
-                   "[!] load a code image thats a multiple of 4 bytes pls\n");
-        std::exit(1);
-    }
-    std::vector<uint32_t> codeImage(fsize / 4);
-    fBin.seekg(0);
-    fBin.read(reinterpret_cast<char*>(codeImage.data()), fsize);
+    auto codeImage = readbin(ap.get<std::string>("codeimage"));
 
     // -- copy code image to card
     card.copyToCard(codeImage.data(), 0x0, codeImage.size() * 4);
+
+    // -- load other images
+    for (auto pair : ap.get<std::vector<std::string>>("files")) {
+        auto els = split(pair, ':');
+        assert(els.size() == 2);
+
+        auto baseaddr = parse_addr(els[0]);
+        if (!baseaddr) {
+            std::cerr << "[!] bad address\n";
+            std::exit(1);
+        }
+
+        auto path = els[1];
+
+        auto buf = readbin(path);
+        card.copyToCard(buf.data(), *baseaddr, buf.size() * 4);
+    }
 
     // -- run processor
     while (!card.cpu.isHalted()) {
@@ -175,6 +228,31 @@ int main(int argc, char* argv[]) {
             card.cpu.dump();
             break;
         }
+    }
+
+    if (auto outdesc = ap.present<std::string>("-o")) {
+        auto els = split(*outdesc, ':');
+        assert(els.size() == 3);
+
+        auto baseaddr = parse_addr(els[0]);
+        if (!baseaddr) {
+            std::cerr << "[!] bad address\n";
+            std::exit(1);
+        }
+
+        auto len = parse_addr(els[1]);
+        if (!len) {
+            std::cerr << "[!] bad length\n";
+            std::exit(1);
+        }
+
+        auto path = els[2];
+
+        std::vector<uint32_t> buf(*len);
+        card.copyFromCard(buf.data(), *baseaddr, buf.size() * 4);
+
+        std::ofstream fOut(path, std::ios::trunc | std::ios::binary);
+        fOut.write(reinterpret_cast<char*>(buf.data()), buf.size() * 4);
     }
 
     return 0;
