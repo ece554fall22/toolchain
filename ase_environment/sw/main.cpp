@@ -1,4 +1,5 @@
 
+// main.cpp version for full demo
 
 #include <cmath>
 #include <cstdlib>
@@ -22,13 +23,29 @@
 
 using namespace std;
 
-unsigned long stringToPositiveInt(char* str);
+unsigned long stringToPositiveNum(char* str, int radix);
 void printUsage(char* name);
-bool checkUsage(int argc, char* argv[]);
+bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart, uint64_t* weightsStart,
+                uint64_t* resultStart, uint64_t* resultSize);
+std::vector<uint32_t> readbin(const std::string& path);
 
 int main(int argc, char* argv[]) {
 
-    if (!checkUsage(argc, argv)) { // TODO check usage for new inputs
+    // USAGE: ./afu_ase <code_filepath> <datamatrix_filepath> <assembly address
+    // to write datamatrix>
+    //      <weights_filepath> <assembly address to write weights> <starting
+    //      address of results> <length of results>
+
+    std::string codeFilepath = argv[1];
+    std::string dataMatrixFilepath = argv[2];
+    uint64_t dataMatrixStart;
+    std::string weightsFilepath = argv[4];
+    uint64_t weightsStart;
+    uint64_t resultStart;
+    uint64_t resultSize;
+
+    if (!checkUsage(argc, argv, &dataMatrixStart, &weightsStart, &resultStart,
+                    &resultSize)) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
@@ -39,51 +56,46 @@ int main(int argc, char* argv[]) {
         // the specified ID
         AFU afu(AFU_ACCEL_UUID);
         uint8_t* cardMem;
-        CardInterface iface(std::move(afu), cardMem);
 
+
+        auto codeImage = readbin(codeFilepath);
+        auto dataMatImage = readbin(dataMatrixFilepath);
+        auto weightsImage = readbin(weightsFilepath);
+
+
+        uint64_t totalSize = codeImage.size() + dataMatImage.size() + weightsImage.size();
+        totalSize  = totalSize * 4 + resultSize;
+
+
+        CardInterface iface(std::move(afu), cardMem, totalSize);
         bool failed = false;
-        uint64_t resultAddr = 0; // TODO enter this when starting program
-        uint64_t resultSize =
-            0; // TODO enter this when starting program (in number of bytes)
         void* result = malloc(resultSize);
 
-        std::string path = argv[1];
-        if (!std::filesystem::is_regular_file(path)) {
-            throw runtime_error("[!] " + path + " is not a file");
-        }
-        std::ifstream fBin(path, std::ios::binary);
-        if (!fBin.is_open()) {
-            throw runtime_error("[!] can't open " + path);
-        }
-        fBin.seekg(0, std::ios::end);
-        size_t fsize = fBin.tellg();
-        if (fsize % 4 != 0) {
-            std::cerr << "filesize should be a multiple of 4\n";
-            std::exit(1);
-        }
-        std::vector<uint32_t> codeImage(fsize / 4);
-        // WARNING WARNING TODO(erin): only works on little-endian architectures
-        fBin.seekg(0);
-        fBin.read(reinterpret_cast<char*>(codeImage.data()), fsize);
 
         // for (unsigned test=0; test < num_tests; test++) {
 
         iface.copyToCard(codeImage.data(), 0x0, codeImage.size() * 4);
+        iface.copyToCard(dataMatImage.data(), dataMatrixStart,
+                         dataMatImage.size() * 4);
+        iface.copyToCard(weightsImage.data(), weightsStart,
+                         weightsImage.size() * 4);
         iface.sendStart();
         iface.resetCores(1);
         iface.unhaltCores(1);
 
         // Wait until the FPGA is done.
-        while (iface.checkDirty() == 0) {
-#ifdef SLEEP_WHILE_WAITING
+        while (iface.checkDirty() == 0) { 
+#ifdef SLEEP_WHILE_WAITING // remove define when synthesizing
             this_thread::sleep_for(chrono::milliseconds(SLEEP_MS));
 #endif
         }
 
         iface.haltCores(1);
-        iface.copyFromCard(result, resultAddr, resultSize);
+        iface.copyFromCard(result, resultAddr, resultSize*4);
 
-        // TODO output results to file????
+        std::ofstream fOut('results.txt', std::ios::trunc | std::ios::binary);
+        fOut.write(reinterpret_cast<char*>(result, resultSize * 4);
+        
 
         // Free the allocated memory.
         free(result);
@@ -121,24 +133,54 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
 }
 
+std::vector<uint32_t> readbin(const std::string& path) {
+    if (!std::filesystem::is_regular_file(path)) {
+        fmt::print(stderr, "[!] `{}` is not a file\n", path);
+        exit(1);
+    }
+    std::ifstream fBin(path, std::ios::binary);
+    if (!fBin.is_open()) {
+        fmt::print(stderr, "[!] can't open `{}`\n", path);
+        exit(1);
+    }
+    fBin.seekg(0, std::ios::end);
+    size_t fsize = fBin.tellg();
+    if (fsize % 4 != 0) {
+        fmt::print(stderr,
+                   "[!] loaded files must be a multiple of 4 bytes pls\n");
+        std::exit(1);
+    }
+    std::vector<uint32_t> buf(fsize / 4);
+    fBin.seekg(0);
+    fBin.read(reinterpret_cast<char*>(buf.data()), fsize);
+
+    return buf;
+}
+
+
 // Returns unsigned long representation of string str.
 // Throws an exception if str is not a positive integer.
-unsigned long stringToPositiveInt(char* str) {
+unsigned long stringToPositiveNum(char* str, int radix) {
 
     char* p;
-    long num = strtol(str, &p, 10);
+    long num = strtol(str, &p, radix);
     if (p != 0 && *p == '\0' && num > 0) {
         return num;
     }
 
-    throw runtime_error("String is not a positive integer.");
+    throw runtime_error("String is not a positive number with base " + radix);
     return 0;
 }
 
-bool checkUsage(int argc, char* argv[]) { // could use some work
-    if (argc == 3) {
+bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart,
+                uint64_t* weightsStart, uint64_t* resultStart,
+                uint64_t* resultSize) {
+    if (argc == 8) {
         try {
-            stringToPositiveInt(argv[2]);
+            *dataMatrixStart = stringToPositiveNum(argv[3], 16);
+            *weightsStart = stringToPositiveNum(argv[5], 16);
+            *resultStart = stringToPositiveNum(argv[6], 16);
+            *resultSize = stringToPostiveNum(argv[7], 10);
             return true;
         } catch (const runtime_error& e) {
             return false;
@@ -150,7 +192,9 @@ bool checkUsage(int argc, char* argv[]) { // could use some work
 
 void printUsage(char* name) {
 
-    cout << "Usage: " << name
-         << " <filename of binary mem file> <number of bytes in binary mem "
-            "file>\n";
+    cout
+        << " USAGE: ./afu_ase <code_filepath> <datamatrix_filepath> <assembly address to write datamatrix> 
+           //      <weights_filepath> <assembly address to write weights>
+           //      <starting address of results> <length of results>"
+           "file>\n";
 }
