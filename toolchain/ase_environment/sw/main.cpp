@@ -1,4 +1,4 @@
-
+// main.cpp version for full demo
 
 #include <cmath>
 #include <cstdlib>
@@ -26,6 +26,7 @@ unsigned long stringToPositiveNum(char* str, int radix);
 void printUsage(char* name);
 bool checkUsage(int argc, char* argv[], uint64_t* dataMatrixStart, uint64_t* weightsStart,
                 uint64_t* resultStart, uint64_t* resultSize);
+std::vector<uint32_t> readbin(const std::string& path);
 
 int main(int argc, char* argv[]) {
 
@@ -53,67 +54,10 @@ int main(int argc, char* argv[]) {
         uint8_t* cardMem;
 
 
-        // read code image file
-        if (!std::filesystem::is_regular_file(codeFilepath)) {
-            throw runtime_error("[!] " + codeFilepath + " is not a file");
-        }
-        std::ifstream codeBin(codeFilepath, std::ios::binary);
-        if (!codeBin.is_open()) {
-            throw runtime_error("[!] can't open " + codeFilepath);
-        }
-        codeBin.seekg(0, std::ios::end);
-        size_t fsize = codeBin.tellg();
-        if (fsize % 4 != 0) {
-            std::cerr << "filesize should be a multiple of 4\n";
-            std::exit(1);
-        }
-        std::vector<uint32_t> codeImage(fsize / 4);
-        // WARNING WARNING TODO(erin): only works on little-endian architectures
-        codeBin.seekg(0);
-        codeBin.read(reinterpret_cast<char*>(codeImage.data()), fsize);
+        auto codeImage = readbin(codeFilepath);
+        auto dataMatImage = readbin(dataMatrixFilepath);
+        auto weightsImage = readbin(weightsFilepath);
 
-
-        
-        // read data matrix file
-        if (!std::filesystem::is_regular_file(dataMatrixFilepath)) {
-            throw runtime_error("[!] " + dataMatrixFilepath + " is not a file");
-        }
-        std::ifstream dataMatBin(dataMatrixFilepath, std::ios::binary);
-        if (!dataMatBin.is_open()) {
-            throw runtime_error("[!] can't open " + dataMatrixFilepath);
-        }
-        dataMatBin.seekg(0, std::ios::end);
-        fsize = dataMatBin.tellg();
-        if (fsize % 4 != 0) {
-            std::cerr << "filesize should be a multiple of 4\n";
-            std::exit(1);
-        }
-        std::vector<uint32_t> dataMatImage(fsize / 4);
-        // WARNING WARNING TODO(erin): only works on little-endian architectures
-        dataMatBin.seekg(0);
-        dataMatBin.read(reinterpret_cast<char*>(dataMatImage.data()), fsize);
-
-
-
-
-        // read weights file
-        if (!std::filesystem::is_regular_file(weightsFilepath)) {
-            throw runtime_error("[!] " + weightsFilepath + " is not a file");
-        }
-        std::ifstream weightsBin(weightsFilepath, std::ios::binary);
-        if (!weightsBin.is_open()) {
-            throw runtime_error("[!] can't open " + weightsFilepath);
-        }
-        weightsBin.seekg(0, std::ios::end);
-        fsize = weightsBin.tellg();
-        if (fsize % 4 != 0) {
-            std::cerr << "filesize should be a multiple of 4\n";
-            std::exit(1);
-        }
-        std::vector<uint32_t> weightsImage(fsize / 4);
-        // WARNING WARNING TODO(erin): only works on little-endian architectures
-        weightsBin.seekg(0);
-        weightsBin.read(reinterpret_cast<char*>(weightsImage.data()), fsize);
 
         uint64_t totalSize = codeImage.size() + dataMatImage.size() + weightsImage.size();
         totalSize  = totalSize * 4 + resultSize;
@@ -121,7 +65,7 @@ int main(int argc, char* argv[]) {
 
         CardInterface iface(std::move(afu), cardMem, totalSize);
         bool failed = false;
-        void* result = malloc(resultSize);
+        void* result = malloc(resultSize * 4);
 
 
         // for (unsigned test=0; test < num_tests; test++) {
@@ -134,16 +78,18 @@ int main(int argc, char* argv[]) {
         iface.unhaltCores(1);
 
         // Wait until the FPGA is done.
-        while (iface.checkDirty() == 0) {
-#ifdef SLEEP_WHILE_WAITING
+        while (iface.checkDirty() == 0) { 
+#ifdef SLEEP_WHILE_WAITING // remove define when synthesizing
             this_thread::sleep_for(chrono::milliseconds(SLEEP_MS));
 #endif
         }
 
         iface.haltCores(1);
-        iface.copyFromCard(result, resultAddr, resultSize);
+        iface.copyFromCard(result, resultAddr, resultSize*4);
 
-        // TODO output results to file????
+        std::ofstream fOut('results.txt', std::ios::trunc | std::ios::binary);
+        fOut.write(reinterpret_cast<char*>(result, resultSize * 4);
+        
 
         // Free the allocated memory.
         free(result);
@@ -180,6 +126,31 @@ int main(int argc, char* argv[]) {
 
     return EXIT_FAILURE;
 }
+
+std::vector<uint32_t> readbin(const std::string& path) {
+    if (!std::filesystem::is_regular_file(path)) {
+        fmt::print(stderr, "[!] `{}` is not a file\n", path);
+        exit(1);
+    }
+    std::ifstream fBin(path, std::ios::binary);
+    if (!fBin.is_open()) {
+        fmt::print(stderr, "[!] can't open `{}`\n", path);
+        exit(1);
+    }
+    fBin.seekg(0, std::ios::end);
+    size_t fsize = fBin.tellg();
+    if (fsize % 4 != 0) {
+        fmt::print(stderr,
+                   "[!] loaded files must be a multiple of 4 bytes pls\n");
+        std::exit(1);
+    }
+    std::vector<uint32_t> buf(fsize / 4);
+    fBin.seekg(0);
+    fBin.read(reinterpret_cast<char*>(buf.data()), fsize);
+
+    return buf;
+}
+
 
 // Returns unsigned long representation of string str.
 // Throws an exception if str is not a positive integer.
