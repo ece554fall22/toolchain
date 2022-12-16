@@ -44,7 +44,8 @@ def cli(instr_count, constrain_regs, seed):
     # seed in random values for all registers
     print(';; preseed values for registers')
     for r in ALLREGS:
-        print(f'vsplat 0xF, v{r}, r{r}')
+        mask = rands(rng, 4)
+        print(f'vsplat {mask:#x}, v{r}, r{r}')
 
     # then generate `instr_count` random ops
     print(';; random scalar arithmetic')
