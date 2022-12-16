@@ -44,17 +44,17 @@ def cli(instr_count, constrain_regs, seed):
     # seed in random values for all registers
     print(';; preseed values for registers')
     for r in ALLREGS:
-        print(f'vsplat v{r}, r{r}, 0xF')
+        print(f'vsplat 0xF, v{r}, r{r}')
 
     # then generate `instr_count` random ops
     print(';; random scalar arithmetic')
     for _ in range(instr_count):
         op = rng.choice(ops)
-            vD = rng.choice(regset)
-            vA = rng.choice(regset)
-            vB = rng.choice(regset)
-            imm = rands(rng, 4)
-            print(f'{op:4} v{vD}, v{vA}, {imm:#x}')
+        vD = rng.choice(regset)
+        vA = rng.choice(regset)
+        vB = rng.choice(regset)
+        imm = rands(rng, 4)
+        print(f'{op:4} v{vD}, v{vA}, {imm:#x}')
 
 if __name__ == '__main__':
     cli()
